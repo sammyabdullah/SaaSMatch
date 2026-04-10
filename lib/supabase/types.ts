@@ -1,10 +1,16 @@
 /**
- * Hand-written TypeScript types that mirror the Supabase schema.
- *
- * Once you have a live Supabase project, replace this file with the
- * generated output from:
- *   npx supabase gen types typescript --project-id <your-project-id> > lib/supabase/types.ts
+ * Hand-written Database type for SaaSMatch.
+ * Replace with the generated output once you have a live project:
+ *   npx supabase gen types typescript --project-id <id> > lib/supabase/types.ts
  */
+
+export type Json =
+  | string
+  | number
+  | boolean
+  | null
+  | { [key: string]: Json | undefined }
+  | Json[]
 
 export type UserRole = 'founder' | 'investor' | 'admin'
 export type FounderStage = 'pre-seed' | 'seed' | 'series-a' | 'series-b'
@@ -15,7 +21,7 @@ export type FounderStatus = 'pending' | 'active' | 'expired' | 'closed'
 export type MatchStatus = 'active' | 'responded' | 'expired' | 'closed'
 export type FlagSide = 'founder' | 'investor'
 
-export interface Database {
+export type Database = {
   public: {
     Tables: {
       profiles: {
@@ -35,6 +41,7 @@ export interface Database {
           role?: UserRole
           email?: string
         }
+        Relationships: []
       }
 
       founder_profiles: {
@@ -92,7 +99,40 @@ export interface Database {
           created_at?: string
           updated_at?: string
         }
-        Update: Partial<Omit<Database['public']['Tables']['founder_profiles']['Insert'], 'id'>>
+        Update: {
+          company_name?: string
+          location?: string
+          founded_year?: number
+          stage?: FounderStage
+          arr_range?: ArrRange
+          arr_exact?: number | null
+          mom_growth_pct?: number
+          nrr_pct?: number
+          acv_usd?: number
+          gtm_motion?: GtmMotion
+          revenue_model?: RevenueModel
+          raising_amount_usd?: number
+          wants_lead?: boolean
+          wants_board_seat?: boolean
+          check_size_min_usd?: number
+          check_size_max_usd?: number
+          geography_preference?: string
+          why_now?: string
+          product_categories?: string[]
+          status?: FounderStatus
+          profile_expires_at?: string | null
+          is_approved?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'founder_profiles_id_fkey'
+            columns: ['id']
+            isOneToOne: true
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
+          }
+        ]
       }
 
       investor_profiles: {
@@ -140,7 +180,35 @@ export interface Database {
           created_at?: string
           updated_at?: string
         }
-        Update: Partial<Omit<Database['public']['Tables']['investor_profiles']['Insert'], 'id'>>
+        Update: {
+          firm_name?: string
+          partner_name?: string
+          location?: string
+          check_size_min_usd?: number
+          check_size_max_usd?: number
+          stages?: FounderStage[]
+          leads_rounds?: boolean
+          takes_board_seat?: boolean
+          geography_focus?: string
+          saas_subcategories?: string[]
+          arr_sweet_spot_min?: number
+          arr_sweet_spot_max?: number
+          thesis_statement?: string
+          value_beyond_capital?: string
+          typical_response_days?: number
+          is_approved?: boolean
+          last_active_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'investor_profiles_id_fkey'
+            columns: ['id']
+            isOneToOne: true
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
+          }
+        ]
       }
 
       flags: {
@@ -158,7 +226,8 @@ export interface Database {
           flagged_by: FlagSide
           created_at?: string
         }
-        Update: never
+        Update: Record<string, never>
+        Relationships: []
       }
 
       matches: {
@@ -186,6 +255,7 @@ export interface Database {
           investor_responded_at?: string | null
           status?: MatchStatus
         }
+        Relationships: []
       }
 
       investor_warnings: {
@@ -206,7 +276,12 @@ export interface Database {
         Update: {
           resolved_at?: string | null
         }
+        Relationships: []
       }
+    }
+
+    Views: {
+      [_ in never]: never
     }
 
     Functions: {
@@ -233,6 +308,10 @@ export interface Database {
       founder_status: FounderStatus
       match_status: MatchStatus
       flag_side: FlagSide
+    }
+
+    CompositeTypes: {
+      [_ in never]: never
     }
   }
 }
