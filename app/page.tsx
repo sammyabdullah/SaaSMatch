@@ -3,13 +3,11 @@ import Link from 'next/link'
 export default function Home() {
   return (
     <div className="max-w-2xl mx-auto px-6 py-32 text-center">
-      <h1 className="text-3xl font-semibold text-gray-900 mb-4">SaaSMatch</h1>
       <p className="text-gray-500 text-lg mb-2">
-        A private platform connecting SaaS founders with the right investors.
+        A free platform connecting SaaS founders with SaaS investors.
       </p>
       <p className="text-gray-500 text-lg mb-12">
-        Both sides apply. Profiles are curated. Introductions happen only when
-        there&apos;s mutual interest.
+        Both sides apply and introductions happen only when there&apos;s mutual interest.
       </p>
       <div className="flex flex-col sm:flex-row gap-4 justify-center">
         <Link
