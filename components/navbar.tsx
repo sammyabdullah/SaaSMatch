@@ -3,10 +3,15 @@ import { createClient } from '@/lib/supabase/server'
 import SignOutButton from './sign-out-button'
 
 export default async function Navbar() {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  let user = null
+
+  try {
+    const supabase = await createClient()
+    const { data } = await supabase.auth.getUser()
+    user = data.user
+  } catch {
+    // Supabase env vars missing or unreachable — show unauthenticated nav
+  }
 
   return (
     <nav className="border-b border-gray-100">
