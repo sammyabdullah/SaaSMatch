@@ -21,7 +21,7 @@ export async function signUp(email: string, password: string, role: string) {
     return { error: error.message }
   }
 
-  redirect('/onboarding')
+  redirect('/login?verify=1')
 }
 
 export async function signIn(email: string, password: string) {

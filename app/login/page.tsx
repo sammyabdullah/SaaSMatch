@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import { signIn } from '@/app/actions/auth'
 
 export default function LoginPage() {
@@ -9,6 +10,8 @@ export default function LoginPage() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const searchParams = useSearchParams()
+  const justSignedUp = searchParams.get('verify') === '1'
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -24,6 +27,12 @@ export default function LoginPage() {
 
   return (
     <div className="max-w-md mx-auto px-6 py-24">
+      {justSignedUp && (
+        <p className="text-sm text-orange-500 mb-6">
+          We just sent you a confirmation email. Go click it, and come on back.
+        </p>
+      )}
+
       <div className="mb-8">
         <h1 className="text-2xl font-semibold text-gray-900">
           Log in to SaaSMatch
