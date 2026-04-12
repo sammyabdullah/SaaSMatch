@@ -3,7 +3,7 @@ import Link from 'next/link'
 export default function Home() {
   return (
     <div className="max-w-2xl mx-auto px-6 py-32 text-center">
-      <p className="text-gray-500 text-base mb-12 max-w-lg mx-auto">
+      <p className="text-gray-500 text-base mb-12">
         A free platform connecting SaaS founders with SaaS investors. Both sides apply and introductions happen only when there&apos;s mutual interest.
       </p>
       <div className="flex flex-col sm:flex-row gap-4 justify-center">
