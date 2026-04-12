@@ -48,6 +48,7 @@ export type Database = {
         Row: {
           id: string
           company_name: string
+          website: string | null
           location: string
           founded_year: number
           stage: FounderStage
@@ -92,6 +93,7 @@ export type Database = {
           check_size_max_usd: number
           geography_preference: string
           why_now: string
+          website?: string | null
           product_categories?: string[]
           status?: FounderStatus
           profile_expires_at?: string | null

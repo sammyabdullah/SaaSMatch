@@ -11,6 +11,7 @@ import type {
 
 export interface FounderProfileInput {
   company_name: string
+  website: string
   location: string
   founded_year: number
   stage: FounderStage
@@ -21,13 +22,8 @@ export interface FounderProfileInput {
   acv_usd: number
   gtm_motion: GtmMotion
   revenue_model: RevenueModel
-  why_now: string
   raising_amount_usd: number
-  wants_lead: boolean
-  wants_board_seat: boolean
-  check_size_min_usd: number
-  check_size_max_usd: number
-  geography_preference: string
+  why_now: string
 }
 
 export interface InvestorProfileInput {
@@ -60,6 +56,12 @@ export async function submitFounderProfile(data: FounderProfileInput) {
   const { error } = await supabase.from('founder_profiles').insert({
     id: user.id,
     ...data,
+    // Fields removed from form — set safe defaults
+    wants_lead: false,
+    wants_board_seat: false,
+    check_size_min_usd: 0,
+    check_size_max_usd: 0,
+    geography_preference: '',
     status: 'pending',
     is_approved: false,
   })
