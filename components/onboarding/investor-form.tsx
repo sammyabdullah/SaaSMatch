@@ -247,11 +247,6 @@ export default function InvestorForm() {
             onChange={(v) => set('leads_rounds', v)}
             label="I lead rounds"
           />
-          <Toggle
-            checked={form.takes_board_seat}
-            onChange={(v) => set('takes_board_seat', v)}
-            label="I take board seats"
-          />
         </div>
 
         <div>
