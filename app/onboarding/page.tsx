@@ -53,14 +53,7 @@ export default async function OnboardingPage() {
     return (
       <div className="max-w-xl mx-auto px-6 py-12">
         <div className="mb-8">
-          <p className="text-sm text-gray-500 mb-1">Investor profile</p>
-          <h1 className="text-2xl font-semibold text-gray-900">
-            Complete your thesis profile
-          </h1>
-          <p className="text-sm text-gray-500 mt-2">
-            A complete thesis profile is required before you can browse
-            founders.
-          </p>
+          <h1 className="text-2xl font-bold text-gray-900">Investor Profile</h1>
         </div>
         <InvestorForm />
       </div>
