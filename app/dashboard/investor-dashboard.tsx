@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createAdminClient } from '@/lib/supabase/server'
 import { fmtDate, fmtArrRange, fmtStage, daysUntil } from '@/lib/format'
 import MarkRespondedButton from './mark-responded-button'

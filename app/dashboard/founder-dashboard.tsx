@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createAdminClient } from '@/lib/supabase/server'
 import { fmtDate, daysUntil, fmtStage } from '@/lib/format'
 import UnflagFounderFlag from './unflag-founder-flag'

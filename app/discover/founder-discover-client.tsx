@@ -3,7 +3,7 @@
 import { useState, useMemo, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { flagInvestor, unflagInvestor } from '@/app/actions/discover'
-import { fmtUsd, fmtStage, fmtArrRange } from '@/lib/format'
+import { fmtUsd, fmtStage } from '@/lib/format'
 import type { Database } from '@/lib/supabase/types'
 
 type InvestorProfileRow = Database['public']['Tables']['investor_profiles']['Row']
