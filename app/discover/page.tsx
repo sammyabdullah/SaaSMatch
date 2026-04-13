@@ -6,6 +6,8 @@ import type {
   Database,
 } from '@/lib/supabase/types'
 
+export const dynamic = 'force-dynamic'
+
 type FounderProfileRow = Database['public']['Tables']['founder_profiles']['Row']
 type InvestorProfileRow = Database['public']['Tables']['investor_profiles']['Row']
 

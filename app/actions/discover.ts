@@ -16,7 +16,15 @@ export async function flagInvestor(investorId: string): Promise<{ error?: string
     flagged_by: 'founder',
   })
 
-  if (error) return { error: error.message }
+  if (error) {
+    // 23505 = unique_violation: flag already exists, treat as success
+    if (error.code === '23505') {
+      revalidatePath('/discover')
+      revalidatePath('/dashboard')
+      return { success: true }
+    }
+    return { error: error.message }
+  }
   revalidatePath('/discover')
   revalidatePath('/dashboard')
   return { success: true }
@@ -55,7 +63,15 @@ export async function flagFounder(founderId: string): Promise<{ error?: string; 
     flagged_by: 'investor',
   })
 
-  if (error) return { error: error.message }
+  if (error) {
+    // 23505 = unique_violation: flag already exists, treat as success
+    if (error.code === '23505') {
+      revalidatePath('/discover')
+      revalidatePath('/dashboard')
+      return { success: true }
+    }
+    return { error: error.message }
+  }
   revalidatePath('/discover')
   revalidatePath('/dashboard')
   return { success: true }
