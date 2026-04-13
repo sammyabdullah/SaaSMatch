@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { unflagInvestor } from '@/app/actions/discover'
 
 interface Props {
@@ -8,6 +9,7 @@ interface Props {
 }
 
 export default function UnflagFounderFlag({ investorId }: Props) {
+  const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [done, setDone] = useState(false)
 
@@ -16,6 +18,7 @@ export default function UnflagFounderFlag({ investorId }: Props) {
     await unflagInvestor(investorId)
     setDone(true)
     setLoading(false)
+    router.refresh()
   }
 
   if (done) {

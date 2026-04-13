@@ -3,6 +3,8 @@ import { redirect } from 'next/navigation'
 import FounderDashboard from './founder-dashboard'
 import InvestorDashboard from './investor-dashboard'
 
+export const dynamic = 'force-dynamic'
+
 export default async function DashboardPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()

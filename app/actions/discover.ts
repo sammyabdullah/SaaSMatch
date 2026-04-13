@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 
 export async function flagInvestor(investorId: string): Promise<{ error?: string; success?: boolean }> {
@@ -25,7 +25,9 @@ export async function unflagInvestor(investorId: string): Promise<{ error?: stri
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
 
-  const { error } = await supabase
+  // Use admin client to bypass RLS (no DELETE policy exists for founders/investors)
+  const admin = await createAdminClient()
+  const { error } = await admin
     .from('flags')
     .delete()
     .eq('founder_id', user.id)
@@ -60,7 +62,9 @@ export async function unflagFounder(founderId: string): Promise<{ error?: string
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
 
-  const { error } = await supabase
+  // Use admin client to bypass RLS (no DELETE policy exists for founders/investors)
+  const admin = await createAdminClient()
+  const { error } = await admin
     .from('flags')
     .delete()
     .eq('investor_id', user.id)

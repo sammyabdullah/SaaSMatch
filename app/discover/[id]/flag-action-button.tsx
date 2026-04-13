@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { flagInvestor, unflagInvestor, flagFounder, unflagFounder } from '@/app/actions/discover'
 
 interface Props {
@@ -11,6 +12,7 @@ interface Props {
 }
 
 export default function FlagActionButton({ targetId, mode, isAlreadyFlagged, flagCount }: Props) {
+  const router = useRouter()
   const [flagged, setFlagged] = useState(isAlreadyFlagged)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -30,6 +32,7 @@ export default function FlagActionButton({ targetId, mode, isAlreadyFlagged, fla
       setError(result.error)
     } else {
       setFlagged(true)
+      router.refresh()
     }
     setLoading(false)
   }
@@ -47,6 +50,7 @@ export default function FlagActionButton({ targetId, mode, isAlreadyFlagged, fla
       setError(result.error)
     } else {
       setFlagged(false)
+      router.refresh()
     }
     setLoading(false)
   }

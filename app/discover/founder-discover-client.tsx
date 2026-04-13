@@ -154,6 +154,7 @@ export default function FounderDiscoverClient({
     setFlagStates((prev) => ({ ...prev, [investorId]: 'pending_undo' }))
 
     await flagInvestor(investorId)
+    router.refresh()
 
     const t = setTimeout(() => {
       setFlagStates((prev) => ({ ...prev, [investorId]: 'flagged' }))
@@ -171,6 +172,7 @@ export default function FounderDiscoverClient({
       return next
     })
     await unflagInvestor(investorId)
+    router.refresh()
   }
 
   const inputCls =
