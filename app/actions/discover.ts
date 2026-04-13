@@ -16,6 +16,7 @@ export async function flagInvestor(investorId: string): Promise<{ error?: string
 
   if (error) return { error: error.message }
   revalidatePath('/discover')
+  revalidatePath('/dashboard')
   return { success: true }
 }
 
@@ -33,6 +34,7 @@ export async function unflagInvestor(investorId: string): Promise<{ error?: stri
 
   if (error) return { error: error.message }
   revalidatePath('/discover')
+  revalidatePath('/dashboard')
   return { success: true }
 }
 
@@ -49,6 +51,7 @@ export async function flagFounder(founderId: string): Promise<{ error?: string; 
 
   if (error) return { error: error.message }
   revalidatePath('/discover')
+  revalidatePath('/dashboard')
   return { success: true }
 }
 
@@ -66,6 +69,7 @@ export async function unflagFounder(founderId: string): Promise<{ error?: string
 
   if (error) return { error: error.message }
   revalidatePath('/discover')
+  revalidatePath('/dashboard')
   return { success: true }
 }
 
