@@ -1,16 +1,30 @@
-import { getUser } from '@/lib/auth'
+import { createClient } from '@/lib/supabase/server'
+import { redirect } from 'next/navigation'
+import FounderDashboard from './founder-dashboard'
+import InvestorDashboard from './investor-dashboard'
 
 export default async function DashboardPage() {
-  const { profile } = await getUser()
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
 
-  return (
-    <div className="max-w-4xl mx-auto px-6 py-16">
-      <h1 className="text-2xl font-semibold text-gray-900 mb-2">Dashboard</h1>
-      <p className="text-sm text-gray-500">
-        Signed in as{' '}
-        <span className="font-medium text-gray-700">{profile.role}</span>.
-        The matching interface is coming next.
-      </p>
-    </div>
-  )
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('role')
+    .eq('id', user.id)
+    .single()
+
+  if (!profile) redirect('/login')
+
+  if (profile.role === 'founder') {
+    return <FounderDashboard userId={user.id} />
+  }
+
+  if (profile.role === 'investor') {
+    return <InvestorDashboard userId={user.id} />
+  }
+
+  // Admin or unknown — redirect to admin or home
+  if (profile.role === 'admin') redirect('/admin')
+  redirect('/login')
 }

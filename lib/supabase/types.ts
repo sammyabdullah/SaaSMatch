@@ -154,6 +154,7 @@ export type Database = {
           arr_sweet_spot_max: number
           thesis_statement: string
           value_beyond_capital: string
+          portfolio_count: number
           is_approved: boolean
           last_active_at: string | null
           created_at: string
@@ -175,6 +176,7 @@ export type Database = {
           arr_sweet_spot_max: number
           thesis_statement: string
           value_beyond_capital: string
+          portfolio_count?: number
           is_approved?: boolean
           last_active_at?: string | null
           created_at?: string
@@ -195,6 +197,7 @@ export type Database = {
           arr_sweet_spot_max?: number
           thesis_statement?: string
           value_beyond_capital?: string
+          portfolio_count?: number
           is_approved?: boolean
           last_active_at?: string | null
           updated_at?: string
@@ -275,6 +278,23 @@ export type Database = {
         Update: {
           resolved_at?: string | null
         }
+        Relationships: []
+      }
+
+      profile_views: {
+        Row: {
+          id: string
+          investor_id: string
+          founder_id: string
+          viewed_at: string
+        }
+        Insert: {
+          id?: string
+          investor_id: string
+          founder_id: string
+          viewed_at?: string
+        }
+        Update: Record<string, never>
         Relationships: []
       }
     }

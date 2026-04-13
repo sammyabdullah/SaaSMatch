@@ -36,6 +36,24 @@ export default async function Navbar() {
         <div className="flex items-center gap-5">
           {user ? (
             <>
+              <Link
+                href="/dashboard"
+                className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                Dashboard
+              </Link>
+              <Link
+                href="/discover"
+                className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                Discover
+              </Link>
+              <Link
+                href="/account"
+                className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                Account
+              </Link>
               {role === 'admin' && (
                 <Link
                   href="/admin"
