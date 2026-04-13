@@ -49,7 +49,7 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 export default async function FounderDashboard({ userId }: Props) {
-  const admin = await createAdminClient()
+  const admin = createAdminClient()
 
   // Flags used (founder flagging investors)
   const { count: flagsUsed } = await admin
@@ -138,13 +138,6 @@ export default async function FounderDashboard({ userId }: Props) {
 
   return (
     <div className="max-w-5xl mx-auto px-6 py-12">
-      {/* TEMP DEBUG — remove after fix */}
-      <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-xs font-mono break-all">
-        <p><strong>userId (querying with):</strong> {userId}</p>
-        <p><strong>flagsUsed count:</strong> {flagsUsed ?? 'null'}</p>
-        <p><strong>myFlags rows:</strong> {myFlags?.length ?? 'null'}</p>
-      </div>
-
       <div className="mb-8">
         <h1 className="text-2xl font-semibold text-gray-900">Founder Dashboard</h1>
         <p className="text-sm text-gray-500 mt-1">Track your matches, flags, and profile activity.</p>

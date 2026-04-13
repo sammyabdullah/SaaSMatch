@@ -26,7 +26,7 @@ export default async function DiscoverPage() {
 
   if (!profile) redirect('/login')
 
-  const admin = await createAdminClient()
+  const admin = createAdminClient()
 
   if (profile.role === 'founder') {
     // Fetch approved investors

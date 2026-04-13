@@ -9,7 +9,7 @@ export async function flagInvestor(investorId: string): Promise<{ error?: string
   if (!user) return { error: 'Not authenticated' }
 
   // Use admin client to bypass RLS for reliable inserts
-  const admin = await createAdminClient()
+  const admin = createAdminClient()
   const { error } = await admin.from('flags').insert({
     founder_id: user.id,
     investor_id: investorId,
@@ -36,7 +36,7 @@ export async function unflagInvestor(investorId: string): Promise<{ error?: stri
   if (!user) return { error: 'Not authenticated' }
 
   // Use admin client to bypass RLS (no DELETE policy exists for founders/investors)
-  const admin = await createAdminClient()
+  const admin = createAdminClient()
   const { error } = await admin
     .from('flags')
     .delete()
@@ -56,7 +56,7 @@ export async function flagFounder(founderId: string): Promise<{ error?: string; 
   if (!user) return { error: 'Not authenticated' }
 
   // Use admin client to bypass RLS for reliable inserts
-  const admin = await createAdminClient()
+  const admin = createAdminClient()
   const { error } = await admin.from('flags').insert({
     founder_id: founderId,
     investor_id: user.id,
@@ -83,7 +83,7 @@ export async function unflagFounder(founderId: string): Promise<{ error?: string
   if (!user) return { error: 'Not authenticated' }
 
   // Use admin client to bypass RLS (no DELETE policy exists for founders/investors)
-  const admin = await createAdminClient()
+  const admin = createAdminClient()
   const { error } = await admin
     .from('flags')
     .delete()

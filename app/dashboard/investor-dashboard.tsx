@@ -58,7 +58,7 @@ function anonFounderName(
 }
 
 export default async function InvestorDashboard({ userId }: Props) {
-  const admin = await createAdminClient()
+  const admin = createAdminClient()
 
   // Founders browsed this week
   const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()

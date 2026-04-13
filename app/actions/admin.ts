@@ -21,7 +21,7 @@ async function requireAdmin() {
 export async function approveFounder(founderId: string) {
   await requireAdmin()
 
-  const admin = await createAdminClient()
+  const admin = createAdminClient()
   const { error } = await admin
     .from('founder_profiles')
     .update({ is_approved: true, status: 'active' })
@@ -35,7 +35,7 @@ export async function approveFounder(founderId: string) {
 export async function approveInvestor(investorId: string) {
   await requireAdmin()
 
-  const admin = await createAdminClient()
+  const admin = createAdminClient()
   const { error } = await admin
     .from('investor_profiles')
     .update({ is_approved: true })
@@ -49,7 +49,7 @@ export async function approveInvestor(investorId: string) {
 export async function rejectInvestor(investorId: string) {
   await requireAdmin()
 
-  const admin = await createAdminClient()
+  const admin = createAdminClient()
   const { error } = await admin
     .from('investor_profiles')
     .delete()
@@ -63,7 +63,7 @@ export async function rejectInvestor(investorId: string) {
 export async function rejectFounder(founderId: string) {
   await requireAdmin()
 
-  const admin = await createAdminClient()
+  const admin = createAdminClient()
   const { error } = await admin
     .from('founder_profiles')
     .update({ status: 'closed' })

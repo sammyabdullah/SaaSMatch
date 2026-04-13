@@ -120,7 +120,7 @@ export async function deleteAccount(): Promise<void> {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/')
 
-  const admin = await createAdminClient()
+  const admin = createAdminClient()
 
   const { data: profile } = await supabase
     .from('profiles')

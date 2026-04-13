@@ -20,7 +20,7 @@ export default async function AccountPage() {
 
   if (!profile) redirect('/login')
 
-  const admin = await createAdminClient()
+  const admin = createAdminClient()
 
   let founderData = null
   let investorData = null

@@ -35,7 +35,7 @@ export default async function ProfileDetailPage({ params }: Props) {
 
   if (!profile) redirect('/login')
 
-  const admin = await createAdminClient()
+  const admin = createAdminClient()
 
   if (profile.role === 'investor') {
     // Investor viewing a founder profile

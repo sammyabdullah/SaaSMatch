@@ -41,7 +41,7 @@ export default async function AdminPage() {
   if (profile?.role !== 'admin') redirect('/dashboard')
 
   // Use admin client to bypass RLS and see all profiles
-  const admin = await createAdminClient()
+  const admin = createAdminClient()
 
   const { data: pending } = await admin
     .from('founder_profiles')
