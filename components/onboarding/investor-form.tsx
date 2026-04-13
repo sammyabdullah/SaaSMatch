@@ -153,7 +153,7 @@ export default function InvestorForm() {
               value={form.firm_name}
               onChange={(e) => set('firm_name', e.target.value)}
               className={inputCls}
-              placeholder="Sequoia Capital"
+              placeholder="Blossom Street Capital"
             />
           </div>
           <div>
