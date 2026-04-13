@@ -8,7 +8,9 @@ export async function flagInvestor(investorId: string): Promise<{ error?: string
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
 
-  const { error } = await supabase.from('flags').insert({
+  // Use admin client to bypass RLS for reliable inserts
+  const admin = await createAdminClient()
+  const { error } = await admin.from('flags').insert({
     founder_id: user.id,
     investor_id: investorId,
     flagged_by: 'founder',
@@ -45,7 +47,9 @@ export async function flagFounder(founderId: string): Promise<{ error?: string; 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
 
-  const { error } = await supabase.from('flags').insert({
+  // Use admin client to bypass RLS for reliable inserts
+  const admin = await createAdminClient()
+  const { error } = await admin.from('flags').insert({
     founder_id: founderId,
     investor_id: user.id,
     flagged_by: 'investor',

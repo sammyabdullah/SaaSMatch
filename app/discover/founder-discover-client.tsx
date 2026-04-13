@@ -102,6 +102,7 @@ export default function FounderDiscoverClient({
   // Flags state
   const [flaggedIds, setFlaggedIds] = useState<Set<string>>(new Set(myFlaggedInvestorIds))
   const [flagStates, setFlagStates] = useState<Record<string, FlagState>>({})
+  const [flagErrors, setFlagErrors] = useState<Record<string, string>>({})
   const timeoutRefs = useRef<Record<string, ReturnType<typeof setTimeout>>>({})
 
   // Per-card thesis expand state
@@ -152,8 +153,18 @@ export default function FounderDiscoverClient({
     if (flagsUsed >= 10) return
     setFlaggedIds((prev) => new Set(Array.from(prev).concat(investorId)))
     setFlagStates((prev) => ({ ...prev, [investorId]: 'pending_undo' }))
+    setFlagErrors((prev) => ({ ...prev, [investorId]: '' }))
 
-    await flagInvestor(investorId)
+    const result = await flagInvestor(investorId)
+
+    if (result?.error) {
+      // Roll back optimistic update on error
+      setFlaggedIds((prev) => { const next = new Set(prev); next.delete(investorId); return next })
+      setFlagStates((prev) => ({ ...prev, [investorId]: 'idle' }))
+      setFlagErrors((prev) => ({ ...prev, [investorId]: result.error! }))
+      return
+    }
+
     router.refresh()
 
     const t = setTimeout(() => {
@@ -366,6 +377,9 @@ export default function FounderDiscoverClient({
 
                 {/* Flag button */}
                 <div onClick={(e) => e.stopPropagation()}>
+                  {flagErrors[inv.id] && (
+                    <p className="text-xs text-red-500 mb-1">{flagErrors[inv.id]}</p>
+                  )}
                   {flagState === 'idle' && (
                     <button
                       onClick={() => handleFlag(inv.id)}
