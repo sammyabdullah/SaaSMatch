@@ -32,7 +32,6 @@ interface FormState {
   arr_sweet_spot_min: string
   arr_sweet_spot_max: string
   thesis_statement: string
-  value_beyond_capital: string
   typical_response_days: string
 }
 
@@ -42,7 +41,7 @@ const empty: FormState = {
   stages: [], leads_rounds: false, takes_board_seat: false,
   geography_focus: '', saas_subcategories: [],
   arr_sweet_spot_min: '', arr_sweet_spot_max: '',
-  thesis_statement: '', value_beyond_capital: '',
+  thesis_statement: '',
   typical_response_days: '',
 }
 
@@ -76,8 +75,6 @@ export default function InvestorForm() {
     if (Number(form.arr_sweet_spot_min) > Number(form.arr_sweet_spot_max))
       return 'ARR min must be ≤ max.'
     if (!form.thesis_statement.trim()) return 'Thesis statement is required.'
-    if (!form.value_beyond_capital.trim())
-      return 'Value beyond capital is required.'
     if (!form.typical_response_days || Number(form.typical_response_days) <= 0)
       return 'Typical response days is required.'
     return null
@@ -104,7 +101,6 @@ export default function InvestorForm() {
       arr_sweet_spot_min: Number(form.arr_sweet_spot_min),
       arr_sweet_spot_max: Number(form.arr_sweet_spot_max),
       thesis_statement: form.thesis_statement,
-      value_beyond_capital: form.value_beyond_capital,
       typical_response_days: Number(form.typical_response_days),
     })
 
@@ -338,23 +334,6 @@ export default function InvestorForm() {
           </p>
         </div>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            What you bring beyond capital{' '}
-            <span className="text-gray-400 font-normal">(max 300 characters)</span>
-          </label>
-          <textarea
-            value={form.value_beyond_capital}
-            onChange={(e) => set('value_beyond_capital', e.target.value)}
-            maxLength={300}
-            rows={3}
-            className={inputCls + ' resize-none'}
-            placeholder="GTM support, enterprise intros, hiring network…"
-          />
-          <p className="text-xs text-gray-400 text-right mt-1">
-            {form.value_beyond_capital.length}/300
-          </p>
-        </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">

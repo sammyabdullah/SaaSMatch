@@ -40,7 +40,6 @@ export interface InvestorProfileInput {
   arr_sweet_spot_min: number
   arr_sweet_spot_max: number
   thesis_statement: string
-  value_beyond_capital: string
   typical_response_days: number
 }
 
@@ -85,6 +84,7 @@ export async function submitInvestorProfile(data: InvestorProfileInput) {
   const { error } = await supabase.from('investor_profiles').insert({
     id: user.id,
     ...data,
+    value_beyond_capital: '',
     is_approved: false,
   })
 
