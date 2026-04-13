@@ -84,7 +84,6 @@ export async function submitInvestorProfile(data: InvestorProfileInput) {
     id: user.id,
     ...data,
     value_beyond_capital: '',
-    typical_response_days: 14,
     is_approved: false,
   })
 
