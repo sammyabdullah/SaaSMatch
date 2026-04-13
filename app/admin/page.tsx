@@ -1,6 +1,6 @@
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { ApproveButton, RejectButton } from './approve-button'
+import { ApproveButton, RejectButton, ApproveInvestorButton, RejectInvestorButton } from './approve-button'
 
 function fmt(value: string) {
   return value.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
@@ -50,8 +50,21 @@ export default async function AdminPage() {
     .neq('status', 'closed')
     .order('created_at', { ascending: true })
 
-  const { data: approved } = await admin
+  const { data: approvedFounders } = await admin
     .from('founder_profiles')
+    .select('*, profiles(email)')
+    .eq('is_approved', true)
+    .order('created_at', { ascending: false })
+    .limit(20)
+
+  const { data: pendingInvestors } = await admin
+    .from('investor_profiles')
+    .select('*, profiles(email)')
+    .eq('is_approved', false)
+    .order('created_at', { ascending: true })
+
+  const { data: approvedInvestors } = await admin
+    .from('investor_profiles')
     .select('*, profiles(email)')
     .eq('is_approved', true)
     .order('created_at', { ascending: false })
@@ -64,19 +77,18 @@ export default async function AdminPage() {
         <p className="text-sm text-gray-500 mt-1">Review and approve founder profiles.</p>
       </div>
 
-      {/* Pending */}
+      {/* Pending Founders */}
       <section className="mb-14">
         <div className="flex items-center gap-3 mb-6">
-          <h2 className="text-base font-semibold text-gray-900">Pending approval</h2>
+          <h2 className="text-base font-semibold text-gray-900">Founders — pending approval</h2>
           {pending && pending.length > 0 && (
             <span className="text-xs font-medium bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
               {pending.length}
             </span>
           )}
         </div>
-
         {!pending || pending.length === 0 ? (
-          <p className="text-sm text-gray-400">No profiles pending approval.</p>
+          <p className="text-sm text-gray-400">No founders pending approval.</p>
         ) : (
           <div className="space-y-6">
             {pending.map((fp) => (
@@ -86,15 +98,50 @@ export default async function AdminPage() {
         )}
       </section>
 
-      {/* Approved */}
-      <section>
-        <h2 className="text-base font-semibold text-gray-900 mb-6">Recently approved</h2>
-        {!approved || approved.length === 0 ? (
-          <p className="text-sm text-gray-400">No approved profiles yet.</p>
+      {/* Pending Investors */}
+      <section className="mb-14">
+        <div className="flex items-center gap-3 mb-6">
+          <h2 className="text-base font-semibold text-gray-900">Investors — pending approval</h2>
+          {pendingInvestors && pendingInvestors.length > 0 && (
+            <span className="text-xs font-medium bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
+              {pendingInvestors.length}
+            </span>
+          )}
+        </div>
+        {!pendingInvestors || pendingInvestors.length === 0 ? (
+          <p className="text-sm text-gray-400">No investors pending approval.</p>
         ) : (
           <div className="space-y-6">
-            {approved.map((fp) => (
+            {pendingInvestors.map((ip) => (
+              <InvestorCard key={ip.id} ip={ip} showActions />
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* Approved Founders */}
+      <section className="mb-14">
+        <h2 className="text-base font-semibold text-gray-900 mb-6">Founders — recently approved</h2>
+        {!approvedFounders || approvedFounders.length === 0 ? (
+          <p className="text-sm text-gray-400">No approved founders yet.</p>
+        ) : (
+          <div className="space-y-6">
+            {approvedFounders.map((fp) => (
               <FounderCard key={fp.id} fp={fp} showActions={false} />
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* Approved Investors */}
+      <section>
+        <h2 className="text-base font-semibold text-gray-900 mb-6">Investors — recently approved</h2>
+        {!approvedInvestors || approvedInvestors.length === 0 ? (
+          <p className="text-sm text-gray-400">No approved investors yet.</p>
+        ) : (
+          <div className="space-y-6">
+            {approvedInvestors.map((ip) => (
+              <InvestorCard key={ip.id} ip={ip} showActions={false} />
             ))}
           </div>
         )}
@@ -182,6 +229,75 @@ function FounderCard({
         <div className="flex gap-3 pt-2">
           <ApproveButton founderId={fp.id} />
           <RejectButton founderId={fp.id} />
+        </div>
+      )}
+    </div>
+  )
+}
+
+function InvestorCard({
+  ip,
+  showActions,
+}: {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ip: any
+  showActions: boolean
+}) {
+  const email = ip.profiles?.email ?? '—'
+
+  return (
+    <div className="border border-gray-200 rounded-lg p-6">
+      <div className="flex items-start justify-between gap-4 mb-5">
+        <div>
+          <h3 className="text-lg font-semibold text-gray-900">{ip.firm_name}</h3>
+          <p className="text-sm text-gray-700 mt-0.5">{ip.partner_name}</p>
+          <p className="text-sm text-gray-500 mt-0.5">{email}</p>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
+            ip.is_approved ? 'bg-green-50 text-green-700' : 'bg-amber-50 text-amber-700'
+          }`}>
+            {ip.is_approved ? 'Approved' : 'Pending'}
+          </span>
+          <span className="text-xs text-gray-400">{fmtDate(ip.created_at)}</span>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-3 mb-5 text-sm">
+        <Field label="Location" value={ip.location} />
+        <Field label="Check size" value={`${fmtUsd(ip.check_size_min_usd)} – ${fmtUsd(ip.check_size_max_usd)}`} />
+        <Field label="Leads rounds" value={ip.leads_rounds ? 'Yes' : 'No'} />
+        <Field label="Geography" value={ip.geography_focus} />
+        <Field label="ARR sweet spot" value={`${fmtUsd(ip.arr_sweet_spot_min)} – ${fmtUsd(ip.arr_sweet_spot_max)}`} />
+        <Field label="Stages" value={ip.stages?.map(fmt).join(', ') ?? '—'} />
+      </div>
+
+      {ip.saas_subcategories?.length > 0 && (
+        <div className="mb-5">
+          <p className="text-xs text-gray-400 mb-1.5">SaaS subcategories</p>
+          <div className="flex flex-wrap gap-1.5">
+            {ip.saas_subcategories.map((c: string) => (
+              <span key={c} className="text-xs bg-gray-100 text-gray-600 px-2.5 py-1 rounded-full">
+                {c}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {ip.thesis_statement && (
+        <div className="mb-5">
+          <p className="text-xs text-gray-400 mb-1">In their own words</p>
+          <p className="text-sm text-gray-700 bg-gray-50 rounded-md px-4 py-3 italic">
+            &ldquo;{ip.thesis_statement}&rdquo;
+          </p>
+        </div>
+      )}
+
+      {showActions && (
+        <div className="flex gap-3 pt-2">
+          <ApproveInvestorButton investorId={ip.id} />
+          <RejectInvestorButton investorId={ip.id} />
         </div>
       )}
     </div>

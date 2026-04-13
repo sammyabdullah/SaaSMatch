@@ -32,6 +32,34 @@ export async function approveFounder(founderId: string) {
   revalidatePath('/admin')
 }
 
+export async function approveInvestor(investorId: string) {
+  await requireAdmin()
+
+  const admin = await createAdminClient()
+  const { error } = await admin
+    .from('investor_profiles')
+    .update({ is_approved: true })
+    .eq('id', investorId)
+
+  if (error) throw new Error(error.message)
+
+  revalidatePath('/admin')
+}
+
+export async function rejectInvestor(investorId: string) {
+  await requireAdmin()
+
+  const admin = await createAdminClient()
+  const { error } = await admin
+    .from('investor_profiles')
+    .delete()
+    .eq('id', investorId)
+
+  if (error) throw new Error(error.message)
+
+  revalidatePath('/admin')
+}
+
 export async function rejectFounder(founderId: string) {
   await requireAdmin()
 
