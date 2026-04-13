@@ -6,6 +6,7 @@ import type { Database } from '@/lib/supabase/types'
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
+  const type = searchParams.get('type')
 
   if (code) {
     const cookieStore = await cookies()
@@ -29,13 +30,15 @@ export async function GET(request: NextRequest) {
     const { error } = await supabase.auth.exchangeCodeForSession(code)
 
     if (!error) {
-      // Sign the user back out — they confirmed their email,
-      // now they should log in properly.
+      if (type === 'recovery') {
+        // Keep the session so the user can set a new password
+        return NextResponse.redirect(`${origin}/reset-password`)
+      }
+      // Email confirmation — sign out and show confirmed page
       await supabase.auth.signOut()
       return NextResponse.redirect(`${origin}/auth/confirmed`)
     }
   }
 
-  // Something went wrong — send them to login and they can try again
   return NextResponse.redirect(`${origin}/login`)
 }

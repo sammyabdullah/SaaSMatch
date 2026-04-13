@@ -24,6 +24,19 @@ export default function RootLayout({
       <body className={`${geistSans.variable} font-sans bg-white text-gray-900 antialiased`}>
         <Navbar />
         <main>{children}</main>
+        <footer className="border-t border-gray-100 mt-auto">
+          <div className="max-w-6xl mx-auto px-6 h-12 flex items-center justify-center">
+            <p className="text-sm text-gray-400">
+              Questions?{' '}
+              <a
+                href="mailto:sammy@blossomstreetventures.com"
+                className="text-[#534AB7] hover:underline"
+              >
+                sammy@blossomstreetventures.com
+              </a>
+            </p>
+          </div>
+        </footer>
       </body>
     </html>
   )
