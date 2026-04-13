@@ -32,7 +32,6 @@ interface FormState {
   arr_sweet_spot_min: string
   arr_sweet_spot_max: string
   thesis_statement: string
-  typical_response_days: string
 }
 
 const empty: FormState = {
@@ -42,7 +41,6 @@ const empty: FormState = {
   geography_focus: '', saas_subcategories: [],
   arr_sweet_spot_min: '', arr_sweet_spot_max: '',
   thesis_statement: '',
-  typical_response_days: '',
 }
 
 const inputCls =
@@ -74,9 +72,7 @@ export default function InvestorForm() {
     if (!form.arr_sweet_spot_max) return 'ARR sweet spot max is required.'
     if (Number(form.arr_sweet_spot_min) > Number(form.arr_sweet_spot_max))
       return 'ARR min must be ≤ max.'
-    if (!form.thesis_statement.trim()) return 'Thesis statement is required.'
-    if (!form.typical_response_days || Number(form.typical_response_days) <= 0)
-      return 'Typical response days is required.'
+    if (!form.thesis_statement.trim()) return 'Please fill in the "In your own words" field.'
     return null
   }
 
@@ -101,7 +97,6 @@ export default function InvestorForm() {
       arr_sweet_spot_min: Number(form.arr_sweet_spot_min),
       arr_sweet_spot_max: Number(form.arr_sweet_spot_max),
       thesis_statement: form.thesis_statement,
-      typical_response_days: Number(form.typical_response_days),
     })
 
     if (result?.error) {
@@ -310,43 +305,23 @@ export default function InvestorForm() {
         </div>
       </section>
 
-      {/* Thesis */}
       <section className="space-y-4">
-        <h2 className="text-sm font-semibold text-gray-900 border-b border-gray-100 pb-2">
-          Your thesis
-        </h2>
-
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Thesis statement{' '}
-            <span className="text-gray-400 font-normal">(max 500 characters)</span>
+            In your own words{' '}
+            <span className="text-gray-400 font-normal">(max 250 characters)</span>
           </label>
           <textarea
             value={form.thesis_statement}
             onChange={(e) => set('thesis_statement', e.target.value)}
-            maxLength={500}
+            maxLength={250}
             rows={4}
             className={inputCls + ' resize-none'}
             placeholder="We focus on B2B SaaS companies building in…"
           />
           <p className="text-xs text-gray-400 text-right mt-1">
-            {form.thesis_statement.length}/500
+            {form.thesis_statement.length}/250
           </p>
-        </div>
-
-
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Typical days to respond after first meeting
-          </label>
-          <input
-            type="number"
-            value={form.typical_response_days}
-            onChange={(e) => set('typical_response_days', e.target.value)}
-            className={inputCls}
-            placeholder="14"
-            min={1}
-          />
         </div>
       </section>
 

@@ -40,7 +40,6 @@ export interface InvestorProfileInput {
   arr_sweet_spot_min: number
   arr_sweet_spot_max: number
   thesis_statement: string
-  typical_response_days: number
 }
 
 export async function submitFounderProfile(data: FounderProfileInput) {
@@ -85,6 +84,7 @@ export async function submitInvestorProfile(data: InvestorProfileInput) {
     id: user.id,
     ...data,
     value_beyond_capital: '',
+    typical_response_days: 0,
     is_approved: false,
   })
 
