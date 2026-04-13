@@ -4,11 +4,21 @@ import SignOutButton from './sign-out-button'
 
 export default async function Navbar() {
   let user = null
+  let role: string | null = null
 
   try {
     const supabase = await createClient()
     const { data } = await supabase.auth.getUser()
     user = data.user
+
+    if (user) {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+      role = profile?.role ?? null
+    }
   } catch {
     // Supabase env vars missing or unreachable — show unauthenticated nav
   }
@@ -26,6 +36,14 @@ export default async function Navbar() {
         <div className="flex items-center gap-5">
           {user ? (
             <>
+              {role === 'admin' && (
+                <Link
+                  href="/admin"
+                  className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
+                >
+                  Admin
+                </Link>
+              )}
               <span className="text-sm text-gray-400 hidden sm:block">
                 {user.email}
               </span>
