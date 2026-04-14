@@ -28,7 +28,7 @@ export default async function Navbar() {
       <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
         <Link
           href="/"
-          className="text-[#534AB7] font-semibold text-base tracking-tight"
+          className="text-[#534AB7] font-black text-xl tracking-widest uppercase"
         >
           UnlockedVC
         </Link>
