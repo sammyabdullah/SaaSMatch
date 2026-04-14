@@ -30,7 +30,7 @@ export default async function Navbar() {
           href="/"
           className="font-black text-2xl tracking-widest uppercase"
         >
-          <span className="text-black">Unlocked</span><span className="text-[#29ABE2]">VC</span>
+          <span style={{ color: '#000000' }}>Unlocked</span><span style={{ color: '#29ABE2' }}>VC</span>
         </Link>
 
         <div className="flex items-center gap-5">
