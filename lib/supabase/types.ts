@@ -260,27 +260,6 @@ export type Database = {
         Relationships: []
       }
 
-      investor_warnings: {
-        Row: {
-          id: string
-          investor_id: string
-          reason: string
-          issued_at: string
-          resolved_at: string | null
-        }
-        Insert: {
-          id?: string
-          investor_id: string
-          reason: string
-          issued_at?: string
-          resolved_at?: string | null
-        }
-        Update: {
-          resolved_at?: string | null
-        }
-        Relationships: []
-      }
-
       profile_views: {
         Row: {
           id: string

@@ -87,13 +87,6 @@ export default async function InvestorDashboard({ userId }: Props) {
     .eq('status', 'accepted')
     .order('responded_at', { ascending: false }) as { data: any[] | null }
 
-  // Warnings
-  const { count: warningCount } = await admin
-    .from('investor_warnings')
-    .select('id', { count: 'exact', head: true })
-    .eq('investor_id', userId)
-    .is('resolved_at', null)
-
   // Recently viewed founders
   const { data: recentViews } = await admin
     .from('profile_views')
@@ -113,18 +106,13 @@ export default async function InvestorDashboard({ userId }: Props) {
       </div>
 
       {/* Metric cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-10">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-10">
         <MetricCard label="Founders browsed this week" value={browsedThisWeek ?? 0} />
         <MetricCard label="Connections" value={totalConnections} accent={totalConnections > 0 ? 'green' : 'gray'} />
         <MetricCard
           label="Pending intros"
           value={pendingIntroductions}
           accent={pendingIntroductions > 0 ? 'amber' : 'gray'}
-        />
-        <MetricCard
-          label="Warnings"
-          value={warningCount ?? 0}
-          accent={(warningCount ?? 0) > 0 ? 'amber' : 'gray'}
         />
       </div>
 
