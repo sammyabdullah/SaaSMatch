@@ -25,7 +25,7 @@ export default function RootLayout({
         <Navbar />
         <main>{children}</main>
         <footer className="border-t border-gray-100 mt-auto">
-          <div className="max-w-6xl mx-auto px-6 h-12 flex items-center justify-center">
+          <div className="max-w-5xl mx-auto px-6 h-12 flex items-center justify-center">
             <p className="text-sm text-gray-400">
               Questions?{' '}
               <a

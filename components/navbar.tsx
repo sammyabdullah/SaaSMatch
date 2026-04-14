@@ -25,7 +25,7 @@ export default async function Navbar() {
 
   return (
     <nav className="border-b border-gray-100">
-      <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
+      <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
         <Link
           href="/"
           className="text-[#534AB7] font-semibold text-base tracking-tight"
