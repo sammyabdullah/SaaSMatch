@@ -30,7 +30,7 @@ export default async function Navbar() {
           href="/"
           className="text-[#534AB7] font-semibold text-base tracking-tight"
         >
-          SaaSMatch
+          UnlockedVC
         </Link>
 
         <div className="flex items-center gap-5">

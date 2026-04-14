@@ -1,5 +1,5 @@
 /**
- * Shared formatting utilities for SaaSMatch.
+ * Shared formatting utilities for UnlockedVC.
  */
 
 export function fmtUsd(n: number): string {

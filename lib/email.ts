@@ -2,7 +2,7 @@ import { Resend } from 'resend'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
-const FROM = 'SaaSMatch <noreply@blossomstreetventures.com>'
+const FROM = 'UnlockedVC <noreply@blossomstreetventures.com>'
 const ADMIN_EMAIL = 'sammy@blossomstreetventures.com'
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://saa-s-match.vercel.app'
 
@@ -30,9 +30,9 @@ export async function sendFounderFlaggedInvestorEmail({
   await resend.emails.send({
     from: FROM,
     to: investorEmail,
-    subject: 'SaaSMatch request',
+    subject: 'UnlockedVC request',
     html: `
-      <p>A founder in the SaaSMatch network has flagged your profile and would like to connect.</p>
+      <p>A founder in the UnlockedVC network has flagged your profile and would like to connect.</p>
 
       <table style="border-collapse:collapse;margin:16px 0">
         <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Stage</td><td style="font-size:13px">${fmtStage(founder.stage)}</td></tr>
@@ -50,7 +50,7 @@ export async function sendFounderFlaggedInvestorEmail({
 
       <p><a href="${APP_URL}/dashboard" style="background:#534AB7;color:white;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block">View in Dashboard</a></p>
 
-      <p style="color:#999;font-size:12px">You're receiving this because you have an approved investor profile on SaaSMatch.</p>
+      <p style="color:#999;font-size:12px">You're receiving this because you have an approved investor profile on UnlockedVC.</p>
     `,
   })
 }
@@ -78,9 +78,9 @@ export async function sendInvestorFlaggedFounderEmail({
   await resend.emails.send({
     from: FROM,
     to: founderEmail,
-    subject: 'SaaSMatch request',
+    subject: 'UnlockedVC request',
     html: `
-      <p><strong>${investor.firm_name}</strong> (${investor.partner_name}) has flagged your profile on SaaSMatch and would like to connect.</p>
+      <p><strong>${investor.firm_name}</strong> (${investor.partner_name}) has flagged your profile on UnlockedVC and would like to connect.</p>
 
       <table style="border-collapse:collapse;margin:16px 0">
         <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Firm</td><td style="font-size:13px">${investor.firm_name}</td></tr>
@@ -96,7 +96,7 @@ export async function sendInvestorFlaggedFounderEmail({
 
       <p><a href="${APP_URL}/dashboard" style="background:#534AB7;color:white;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block">View in Dashboard</a></p>
 
-      <p style="color:#999;font-size:12px">You're receiving this because you have an approved founder profile on SaaSMatch.</p>
+      <p style="color:#999;font-size:12px">You're receiving this because you have an approved founder profile on UnlockedVC.</p>
     `,
   })
 }
@@ -118,7 +118,7 @@ export async function sendConnectionAcceptedFounderEmail({
     to: founderEmail,
     subject: `${investorFirmName} accepted your connection request`,
     html: `
-      <p>Great news! <strong>${investorFirmName}</strong> (${investorPartnerName}) has accepted your introduction request on SaaSMatch.</p>
+      <p>Great news! <strong>${investorFirmName}</strong> (${investorPartnerName}) has accepted your introduction request on UnlockedVC.</p>
 
       <p>You can now reach them directly:</p>
       <p style="font-size:16px"><strong>${investorEmail}</strong></p>
@@ -149,7 +149,7 @@ export async function sendConnectionAcceptedInvestorEmail({
     html: `
       <p>Hi ${investorName},</p>
 
-      <p>A founder has accepted your introduction request on SaaSMatch.</p>
+      <p>A founder has accepted your introduction request on UnlockedVC.</p>
 
       <p><strong>Stage:</strong> ${fmtStage(founderStage)}<br>
       <strong>Categories:</strong> ${founderCategories.join(', ')}</p>
@@ -179,7 +179,7 @@ export async function sendAdminConnectionEmail({
     to: ADMIN_EMAIL,
     subject: `New connection: ${founderEmail} ↔ ${investorFirmName}`,
     html: `
-      <p>A new connection was made on SaaSMatch.</p>
+      <p>A new connection was made on UnlockedVC.</p>
       <p><strong>Founder:</strong> ${founderEmail}<br>
       <strong>Investor:</strong> ${investorFirmName} (${investorEmail})<br>
       <strong>Initiated by:</strong> ${initiatedBy}</p>

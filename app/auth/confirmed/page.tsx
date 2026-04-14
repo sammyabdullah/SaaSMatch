@@ -18,7 +18,7 @@ export default function ConfirmedPage() {
         Account confirmed
       </h1>
       <p className="text-sm text-gray-500 mb-8">
-        Your email has been verified. Return to SaaSMatch to log in.
+        Your email has been verified. Return to UnlockedVC to log in.
       </p>
       <Link
         href="/login"
