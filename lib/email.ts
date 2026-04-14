@@ -32,10 +32,8 @@ export async function sendFounderFlaggedInvestorEmail({
   await resend.emails.send({
     from: FROM,
     to: investorEmail,
-    subject: 'A SaaS founder has expressed interest in connecting with you',
+    subject: 'SaaSMatch request',
     html: `
-      <p>Hi ${investorName},</p>
-
       <p>A founder in the SaaSMatch network has flagged your profile and would like to connect.</p>
 
       <table style="border-collapse:collapse;margin:16px 0">
@@ -82,10 +80,8 @@ export async function sendInvestorFlaggedFounderEmail({
   await resend.emails.send({
     from: FROM,
     to: founderEmail,
-    subject: `${investor.firm_name} has expressed interest in your company`,
+    subject: 'SaaSMatch request',
     html: `
-      <p>Hi,</p>
-
       <p><strong>${investor.firm_name}</strong> (${investor.partner_name}) has flagged your profile on SaaSMatch and would like to connect.</p>
 
       <table style="border-collapse:collapse;margin:16px 0">
