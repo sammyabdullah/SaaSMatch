@@ -28,9 +28,9 @@ export default async function Navbar() {
       <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
         <Link
           href="/"
-          className="text-black font-black text-2xl tracking-widest uppercase"
+          className="font-black text-2xl tracking-widest uppercase"
         >
-          UnlockedVC
+          <span className="text-black">Unlocked</span><span className="text-[#29ABE2]">VC</span>
         </Link>
 
         <div className="flex items-center gap-5">

@@ -18,7 +18,7 @@ export default function ConfirmedPage() {
         Account confirmed
       </h1>
       <p className="text-sm text-gray-500 mb-8">
-        Your email has been verified. Return to UnlockedVC to log in.
+        Your email has been verified. Return to <span className="font-black tracking-widest uppercase text-sm"><span className="text-black">Unlocked</span><span className="text-[#29ABE2]">VC</span></span> to log in.
       </p>
       <Link
         href="/login"

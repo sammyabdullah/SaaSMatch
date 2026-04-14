@@ -35,7 +35,7 @@ function LoginForm() {
 
       <div className="mb-8">
         <h1 className="text-2xl font-semibold text-gray-900">
-          Log in to UnlockedVC
+          Log in to <span className="font-black tracking-widest uppercase"><span className="text-black">Unlocked</span><span className="text-[#29ABE2]">VC</span></span>
         </h1>
       </div>
 
