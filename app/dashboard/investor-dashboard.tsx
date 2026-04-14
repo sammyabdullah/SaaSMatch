@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { createAdminClient } from '@/lib/supabase/server'
-import { fmtDate, fmtArrRange, fmtStage, daysUntil } from '@/lib/format'
-import MarkRespondedButton from './mark-responded-button'
+import { fmtDate, fmtArrRange, fmtStage } from '@/lib/format'
 import UnflagInvestorFlag from './unflag-investor-flag'
+import AcceptDeclineFlag from './accept-decline-flag'
 
 interface Props {
   userId: string
@@ -35,24 +35,7 @@ function MetricCard({
   )
 }
 
-function StatusBadge({ status }: { status: string }) {
-  const cls =
-    status === 'active'
-      ? 'bg-amber-50 text-amber-700'
-      : status === 'responded'
-      ? 'bg-green-50 text-green-700'
-      : 'bg-gray-100 text-gray-500'
-  return (
-    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${cls}`}>
-      {status.charAt(0).toUpperCase() + status.slice(1)}
-    </span>
-  )
-}
-
-function anonFounderName(
-  productCategories: string[] | null,
-  location: string
-): string {
+function anonFounderName(productCategories: string[] | null, location: string): string {
   const cat = productCategories?.[0] ?? 'SaaS'
   return `${cat} Company — ${location}`
 }
@@ -68,29 +51,41 @@ export default async function InvestorDashboard({ userId }: Props) {
     .eq('investor_id', userId)
     .gte('viewed_at', weekAgo)
 
-  // Active matches
-  const { count: activeMatchCount } = await admin
-    .from('matches')
-    .select('id', { count: 'exact', head: true })
+  // Incoming introductions: founders who flagged this investor, pending response
+  const { data: incomingFlags } = await admin
+    .from('flags')
+    .select('*, founder_profiles(product_categories, location, arr_range, stage, mom_growth_pct, nrr_pct, raising_amount_usd, why_now)')
     .eq('investor_id', userId)
-    .eq('status', 'active')
+    .eq('flagged_by', 'founder')
+    .eq('status', 'pending')
+    .order('created_at', { ascending: false }) as { data: any[] | null }
 
-  // Response rate
-  const { count: totalMatches } = await admin
-    .from('matches')
-    .select('id', { count: 'exact', head: true })
+  // Accepted connections where founder initiated
+  const { data: acceptedIncoming } = await admin
+    .from('flags')
+    .select('*, founder_profiles(product_categories, location, arr_range, stage), profiles!flags_founder_id_fkey(email)')
     .eq('investor_id', userId)
+    .eq('flagged_by', 'founder')
+    .eq('status', 'accepted')
+    .order('responded_at', { ascending: false }) as { data: any[] | null }
 
-  const { count: respondedMatches } = await admin
-    .from('matches')
-    .select('id', { count: 'exact', head: true })
+  // Outgoing flags: investor flagged a founder, pending
+  const { data: outgoingFlags } = await admin
+    .from('flags')
+    .select('*, founder_profiles(product_categories, location, arr_range, stage)')
     .eq('investor_id', userId)
-    .not('investor_responded_at', 'is', null)
+    .eq('flagged_by', 'investor')
+    .in('status', ['pending'])
+    .order('created_at', { ascending: false }) as { data: any[] | null }
 
-  const responseRate =
-    totalMatches && totalMatches > 0
-      ? `${Math.round(((respondedMatches ?? 0) / totalMatches) * 100)}%`
-      : '—'
+  // Accepted connections where investor initiated
+  const { data: acceptedOutgoing } = await admin
+    .from('flags')
+    .select('*, founder_profiles(product_categories, location, arr_range, stage), profiles!flags_founder_id_fkey(email)')
+    .eq('investor_id', userId)
+    .eq('flagged_by', 'investor')
+    .eq('status', 'accepted')
+    .order('responded_at', { ascending: false }) as { data: any[] | null }
 
   // Warnings
   const { count: warningCount } = await admin
@@ -99,25 +94,7 @@ export default async function InvestorDashboard({ userId }: Props) {
     .eq('investor_id', userId)
     .is('resolved_at', null)
 
-  // Matches with founder info
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: matches } = await admin
-    .from('matches')
-    .select('*, founder_profiles(company_name, arr_range, stage, product_categories, location), profiles!matches_founder_id_fkey(email)')
-    .eq('investor_id', userId)
-    .order('matched_at', { ascending: false }) as { data: any[] | null }
-
-  // Flags placed on founders
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: myFlags } = await admin
-    .from('flags')
-    .select('*, founder_profiles(product_categories, location, arr_range, stage)')
-    .eq('investor_id', userId)
-    .eq('flagged_by', 'investor')
-    .order('created_at', { ascending: false }) as { data: any[] | null }
-
   // Recently viewed founders
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: recentViews } = await admin
     .from('profile_views')
     .select('*, founder_profiles(product_categories, location, arr_range, stage)')
@@ -125,18 +102,25 @@ export default async function InvestorDashboard({ userId }: Props) {
     .order('viewed_at', { ascending: false })
     .limit(5) as { data: any[] | null }
 
+  const totalConnections = (acceptedIncoming?.length ?? 0) + (acceptedOutgoing?.length ?? 0)
+  const pendingIntroductions = incomingFlags?.length ?? 0
+
   return (
     <div className="max-w-5xl mx-auto px-6 py-12">
       <div className="mb-8">
         <h1 className="text-2xl font-semibold text-gray-900">Investor Dashboard</h1>
-        <p className="text-sm text-gray-500 mt-1">Track your matches, expressed interest, and activity.</p>
+        <p className="text-sm text-gray-500 mt-1">Track your connections, introductions, and activity.</p>
       </div>
 
       {/* Metric cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-10">
         <MetricCard label="Founders browsed this week" value={browsedThisWeek ?? 0} />
-        <MetricCard label="Active matches" value={activeMatchCount ?? 0} />
-        <MetricCard label="Response rate" value={responseRate} />
+        <MetricCard label="Connections" value={totalConnections} accent={totalConnections > 0 ? 'green' : 'gray'} />
+        <MetricCard
+          label="Pending intros"
+          value={pendingIntroductions}
+          accent={pendingIntroductions > 0 ? 'amber' : 'gray'}
+        />
         <MetricCard
           label="Warnings"
           value={warningCount ?? 0}
@@ -144,68 +128,97 @@ export default async function InvestorDashboard({ userId }: Props) {
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
-        {/* Matches */}
-        <section>
-          <h2 className="text-base font-semibold text-gray-900 mb-4">Your matches</h2>
-          {!matches || matches.length === 0 ? (
-            <p className="text-sm text-gray-400 border border-gray-200 rounded-lg p-6 text-center">
-              No matches yet.
-            </p>
-          ) : (
-            <div className="space-y-3">
-              {matches.map((m) => {
-                const fp = m.founder_profiles
-                const deadlineDays = daysUntil(m.response_deadline)
-                const canRespond = m.status === 'active' && !m.investor_responded_at
-                return (
-                  <div key={m.id} className="border border-gray-200 rounded-lg p-4">
-                    <div className="flex items-start justify-between gap-2 mb-2">
-                      <div>
-                        <p className="text-sm font-semibold text-gray-900">
-                          {fp?.company_name ?? '—'}
+      {/* Incoming founder introductions — action required */}
+      {incomingFlags && incomingFlags.length > 0 && (
+        <section className="mb-10">
+          <h2 className="text-base font-semibold text-gray-900 mb-1">
+            Founder introductions
+            <span className="ml-2 text-xs font-medium bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full">
+              {incomingFlags.length} pending
+            </span>
+          </h2>
+          <p className="text-sm text-gray-500 mb-4">
+            These founders have expressed interest in connecting with you. Accept to reveal their contact details.
+          </p>
+          <div className="space-y-3">
+            {incomingFlags.map((flag) => {
+              const fp = flag.founder_profiles
+              const name = anonFounderName(fp?.product_categories, fp?.location ?? '')
+              return (
+                <div key={flag.id} className="border border-amber-200 bg-amber-50/30 rounded-lg p-4">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold text-gray-900">{name}</p>
+                      <div className="flex items-center gap-2 mt-1">
+                        {fp?.stage && <span className="text-xs text-gray-600">{fmtStage(fp.stage)}</span>}
+                        {fp?.arr_range && <span className="text-xs text-gray-500">{fmtArrRange(fp.arr_range)}</span>}
+                        {fp?.mom_growth_pct != null && (
+                          <span className="text-xs text-gray-500">{fp.mom_growth_pct}% MoM</span>
+                        )}
+                      </div>
+                      {fp?.why_now && (
+                        <p className="text-xs text-gray-500 italic mt-1 line-clamp-2">
+                          &ldquo;{fp.why_now}&rdquo;
                         </p>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          {fp?.stage && (
-                            <span className="text-xs text-gray-500">{fmtStage(fp.stage)}</span>
-                          )}
-                          {fp?.arr_range && (
-                            <span className="text-xs text-gray-500">{fmtArrRange(fp.arr_range)}</span>
-                          )}
-                        </div>
-                      </div>
-                      <StatusBadge status={m.status} />
+                      )}
+                      <p className="text-xs text-gray-400 mt-1">Expressed interest {fmtDate(flag.created_at)}</p>
                     </div>
-                    <p className="text-xs text-gray-400">
-                      Matched {fmtDate(m.matched_at)}
-                    </p>
-                    <p className={`text-xs mt-1 ${deadlineDays < 0 ? 'text-red-500' : 'text-gray-500'}`}>
-                      {deadlineDays < 0
-                        ? 'Overdue'
-                        : `Response deadline: ${deadlineDays}d remaining`}
-                    </p>
-                    {canRespond && (
-                      <div className="mt-3">
-                        <MarkRespondedButton matchId={m.id} />
-                      </div>
-                    )}
+                    <AcceptDeclineFlag flagId={flag.id} />
                   </div>
-                )
-              })}
-            </div>
-          )}
+                </div>
+              )
+            })}
+          </div>
         </section>
+      )}
 
-        {/* Founders flagged */}
+      {/* Accepted connections */}
+      {totalConnections > 0 && (
+        <section className="mb-10">
+          <h2 className="text-base font-semibold text-gray-900 mb-4">Your connections</h2>
+          <div className="border border-gray-200 rounded-lg divide-y divide-gray-100">
+            {[...(acceptedIncoming ?? []), ...(acceptedOutgoing ?? [])].map((flag) => {
+              const fp = flag.founder_profiles
+              const name = anonFounderName(fp?.product_categories, fp?.location ?? '')
+              const founderEmail = flag['profiles!flags_founder_id_fkey']?.email
+              return (
+                <div key={flag.id} className="px-4 py-4">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900">{name}</p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        {fp?.stage && <span className="text-xs text-gray-500">{fmtStage(fp.stage)}</span>}
+                        {fp?.arr_range && <span className="text-xs text-gray-500">{fmtArrRange(fp.arr_range)}</span>}
+                      </div>
+                    </div>
+                    <span className="text-xs font-medium bg-green-50 text-green-700 px-2 py-0.5 rounded-full">
+                      Connected
+                    </span>
+                  </div>
+                  {founderEmail && (
+                    <p className="text-sm text-[#534AB7] mt-2 font-medium">{founderEmail}</p>
+                  )}
+                  <p className="text-xs text-gray-400 mt-1">
+                    Connected {fmtDate(flag.responded_at ?? flag.created_at)}
+                  </p>
+                </div>
+              )
+            })}
+          </div>
+        </section>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
+        {/* Outgoing flags to founders */}
         <section>
           <h2 className="text-base font-semibold text-gray-900 mb-4">Founders you&apos;ve flagged</h2>
-          {!myFlags || myFlags.length === 0 ? (
+          {!outgoingFlags || outgoingFlags.length === 0 ? (
             <p className="text-sm text-gray-400 border border-gray-200 rounded-lg p-6 text-center">
               You haven&apos;t expressed interest in any founders yet. Browse founders in Discover.
             </p>
           ) : (
             <div className="border border-gray-200 rounded-lg divide-y divide-gray-100">
-              {myFlags.map((flag) => {
+              {outgoingFlags.map((flag) => {
                 const fp = flag.founder_profiles
                 const name = anonFounderName(fp?.product_categories, fp?.location ?? '')
                 return (
@@ -213,14 +226,10 @@ export default async function InvestorDashboard({ userId }: Props) {
                     <div>
                       <p className="text-sm font-medium text-gray-900">{name}</p>
                       <div className="flex items-center gap-2 mt-0.5">
-                        {fp?.stage && (
-                          <span className="text-xs text-gray-500">{fmtStage(fp.stage)}</span>
-                        )}
-                        {fp?.arr_range && (
-                          <span className="text-xs text-gray-500">{fmtArrRange(fp.arr_range)}</span>
-                        )}
-                        <span className="text-xs text-gray-400">{fmtDate(flag.created_at)}</span>
+                        {fp?.stage && <span className="text-xs text-gray-500">{fmtStage(fp.stage)}</span>}
+                        {fp?.arr_range && <span className="text-xs text-gray-500">{fmtArrRange(fp.arr_range)}</span>}
                       </div>
+                      <p className="text-xs text-amber-600 mt-0.5">Awaiting response</p>
                     </div>
                     <UnflagInvestorFlag founderId={flag.founder_id} />
                   </div>
@@ -229,40 +238,36 @@ export default async function InvestorDashboard({ userId }: Props) {
             </div>
           )}
         </section>
-      </div>
 
-      {/* Recently viewed */}
-      <section>
-        <h2 className="text-base font-semibold text-gray-900 mb-4">Recently viewed</h2>
-        {!recentViews || recentViews.length === 0 ? (
-          <p className="text-sm text-gray-400 border border-gray-200 rounded-lg p-6 text-center">
-            You haven&apos;t viewed any founder profiles yet. Start browsing in Discover.
-          </p>
-        ) : (
-          <div className="border border-gray-200 rounded-lg divide-y divide-gray-100">
-            {recentViews.map((view, i) => {
-              const fp = view.founder_profiles
-              const name = anonFounderName(fp?.product_categories, fp?.location ?? '')
-              return (
-                <div key={i} className="px-4 py-3 flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">{name}</p>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      {fp?.stage && (
-                        <span className="text-xs text-gray-500">{fmtStage(fp.stage)}</span>
-                      )}
-                      {fp?.arr_range && (
-                        <span className="text-xs text-gray-500">{fmtArrRange(fp.arr_range)}</span>
-                      )}
+        {/* Recently viewed */}
+        <section>
+          <h2 className="text-base font-semibold text-gray-900 mb-4">Recently viewed</h2>
+          {!recentViews || recentViews.length === 0 ? (
+            <p className="text-sm text-gray-400 border border-gray-200 rounded-lg p-6 text-center">
+              You haven&apos;t viewed any founder profiles yet. Start browsing in Discover.
+            </p>
+          ) : (
+            <div className="border border-gray-200 rounded-lg divide-y divide-gray-100">
+              {recentViews.map((view, i) => {
+                const fp = view.founder_profiles
+                const name = anonFounderName(fp?.product_categories, fp?.location ?? '')
+                return (
+                  <div key={i} className="px-4 py-3 flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">{name}</p>
+                      <div className="flex items-center gap-2 mt-0.5">
+                        {fp?.stage && <span className="text-xs text-gray-500">{fmtStage(fp.stage)}</span>}
+                        {fp?.arr_range && <span className="text-xs text-gray-500">{fmtArrRange(fp.arr_range)}</span>}
+                      </div>
                     </div>
+                    <p className="text-xs text-gray-400">{fmtDate(view.viewed_at)}</p>
                   </div>
-                  <p className="text-xs text-gray-400">{fmtDate(view.viewed_at)}</p>
-                </div>
-              )
-            })}
-          </div>
-        )}
-      </section>
+                )
+              })}
+            </div>
+          )}
+        </section>
+      </div>
     </div>
   )
 }

@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { createAdminClient } from '@/lib/supabase/server'
-import { fmtDate, daysUntil, fmtStage } from '@/lib/format'
+import { fmtDate, fmtStage, fmtUsd, daysUntil } from '@/lib/format'
 import UnflagFounderFlag from './unflag-founder-flag'
+import AcceptDeclineFlag from './accept-decline-flag'
 
 interface Props {
   userId: string
@@ -34,36 +35,8 @@ function MetricCard({
   )
 }
 
-function StatusBadge({ status }: { status: string }) {
-  const cls =
-    status === 'active'
-      ? 'bg-amber-50 text-amber-700'
-      : status === 'responded'
-      ? 'bg-green-50 text-green-700'
-      : 'bg-gray-100 text-gray-500'
-  return (
-    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${cls}`}>
-      {status.charAt(0).toUpperCase() + status.slice(1)}
-    </span>
-  )
-}
-
 export default async function FounderDashboard({ userId }: Props) {
   const admin = createAdminClient()
-
-  // Flags used (founder flagging investors)
-  const { count: flagsUsed } = await admin
-    .from('flags')
-    .select('id', { count: 'exact', head: true })
-    .eq('founder_id', userId)
-    .eq('flagged_by', 'founder')
-
-  // Active matches
-  const { count: activeMatchCount } = await admin
-    .from('matches')
-    .select('id', { count: 'exact', head: true })
-    .eq('founder_id', userId)
-    .eq('status', 'active')
 
   // Founder profile
   const { data: founderProfile } = await admin
@@ -80,6 +53,50 @@ export default async function FounderDashboard({ userId }: Props) {
     .eq('founder_id', userId)
     .gte('viewed_at', weekAgo)
 
+  // Outgoing flags (founder flagged an investor) — pending only
+  const { data: outgoingFlags, count: flagsUsed } = await admin
+    .from('flags')
+    .select('*, investor_profiles(firm_name, partner_name)', { count: 'exact' })
+    .eq('founder_id', userId)
+    .eq('flagged_by', 'founder')
+    .in('status', ['pending'])
+    .order('created_at', { ascending: false }) as { data: any[] | null; count: number | null }
+
+  // Accepted connections where founder initiated
+  const { data: acceptedOutgoing } = await admin
+    .from('flags')
+    .select('*, investor_profiles(firm_name, partner_name), profiles!flags_investor_id_fkey(email)')
+    .eq('founder_id', userId)
+    .eq('flagged_by', 'founder')
+    .eq('status', 'accepted')
+    .order('responded_at', { ascending: false }) as { data: any[] | null }
+
+  // Incoming investor interest — investor flagged this founder, pending acceptance
+  const { data: incomingFlags } = await admin
+    .from('flags')
+    .select('*, investor_profiles(firm_name, partner_name, check_size_min_usd, check_size_max_usd, stages, thesis_statement)')
+    .eq('founder_id', userId)
+    .eq('flagged_by', 'investor')
+    .eq('status', 'pending')
+    .order('created_at', { ascending: false }) as { data: any[] | null }
+
+  // Accepted connections where investor initiated (founder accepted)
+  const { data: acceptedIncoming } = await admin
+    .from('flags')
+    .select('*, investor_profiles(firm_name, partner_name), profiles!flags_investor_id_fkey(email)')
+    .eq('founder_id', userId)
+    .eq('flagged_by', 'investor')
+    .eq('status', 'accepted')
+    .order('responded_at', { ascending: false }) as { data: any[] | null }
+
+  // Profile views for activity feed
+  const { data: recentViews } = await admin
+    .from('profile_views')
+    .select('*, investor_profiles(firm_name)')
+    .eq('founder_id', userId)
+    .order('viewed_at', { ascending: false })
+    .limit(10) as { data: any[] | null }
+
   // Profile status display
   let profileStatusValue = founderProfile?.status ?? '—'
   let profileStatusSub: string | undefined
@@ -91,46 +108,15 @@ export default async function FounderDashboard({ userId }: Props) {
     profileStatusValue = fmtStage(founderProfile.status)
   }
 
-  // Matches with investor info
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: matches } = await admin
-    .from('matches')
-    .select('*, investor_profiles(firm_name, partner_name), profiles!matches_investor_id_fkey(email)')
-    .eq('founder_id', userId)
-    .order('matched_at', { ascending: false }) as { data: any[] | null }
+  const totalConnections = (acceptedOutgoing?.length ?? 0) + (acceptedIncoming?.length ?? 0)
 
-  // Profile views for activity feed
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: recentViews } = await admin
-    .from('profile_views')
-    .select('*, investor_profiles(firm_name)')
-    .eq('founder_id', userId)
-    .order('viewed_at', { ascending: false })
-    .limit(10) as { data: any[] | null }
-
-  // Flags the founder has placed
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: myFlags } = await admin
-    .from('flags')
-    .select('*, investor_profiles(firm_name, partner_name)')
-    .eq('founder_id', userId)
-    .eq('flagged_by', 'founder')
-    .order('created_at', { ascending: false }) as { data: any[] | null }
-
-  // Build activity feed
+  // Activity feed
   type ActivityItem = { date: string; text: string }
   const activity: ActivityItem[] = []
-
   if (recentViews) {
     for (const v of recentViews) {
       const firm = v.investor_profiles?.firm_name ?? 'An investor'
       activity.push({ date: v.viewed_at, text: `${firm} viewed your profile` })
-    }
-  }
-  if (matches) {
-    for (const m of matches) {
-      const firm = m.investor_profiles?.firm_name ?? 'An investor'
-      activity.push({ date: m.matched_at, text: `New match with ${firm}` })
     }
   }
   activity.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
@@ -140,13 +126,13 @@ export default async function FounderDashboard({ userId }: Props) {
     <div className="max-w-5xl mx-auto px-6 py-12">
       <div className="mb-8">
         <h1 className="text-2xl font-semibold text-gray-900">Founder Dashboard</h1>
-        <p className="text-sm text-gray-500 mt-1">Track your matches, flags, and profile activity.</p>
+        <p className="text-sm text-gray-500 mt-1">Track your connections, flags, and profile activity.</p>
       </div>
 
       {/* Metric cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-10">
-        <MetricCard label="Flags used" value={`${flagsUsed ?? 0} / 10`} />
-        <MetricCard label="Active matches" value={activeMatchCount ?? 0} />
+        <MetricCard label="Flags sent" value={`${flagsUsed ?? 0} / 10`} />
+        <MetricCard label="Connections" value={totalConnections} accent={totalConnections > 0 ? 'green' : 'gray'} />
         <MetricCard
           label="Profile status"
           value={profileStatusValue}
@@ -156,42 +142,105 @@ export default async function FounderDashboard({ userId }: Props) {
         <MetricCard label="Profile views this week" value={viewsThisWeek ?? 0} />
       </div>
 
+      {/* Incoming investor interest — action required */}
+      {incomingFlags && incomingFlags.length > 0 && (
+        <section className="mb-10">
+          <h2 className="text-base font-semibold text-gray-900 mb-1">
+            Investor interest
+            <span className="ml-2 text-xs font-medium bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full">
+              {incomingFlags.length} pending
+            </span>
+          </h2>
+          <p className="text-sm text-gray-500 mb-4">
+            These investors have expressed interest in your company. Accept to reveal contact details.
+          </p>
+          <div className="space-y-3">
+            {incomingFlags.map((flag) => {
+              const ip = flag.investor_profiles
+              return (
+                <div key={flag.id} className="border border-amber-200 bg-amber-50/30 rounded-lg p-4">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold text-gray-900">{ip?.firm_name ?? '—'}</p>
+                      <p className="text-xs text-gray-500">{ip?.partner_name ?? ''}</p>
+                      {ip?.check_size_min_usd && (
+                        <p className="text-xs text-gray-600 mt-1">
+                          {fmtUsd(ip.check_size_min_usd)} – {fmtUsd(ip.check_size_max_usd)}
+                          {ip.stages?.length > 0 && ` · ${ip.stages.map(fmtStage).join(', ')}`}
+                        </p>
+                      )}
+                      {ip?.thesis_statement && (
+                        <p className="text-xs text-gray-500 italic mt-1 line-clamp-2">
+                          &ldquo;{ip.thesis_statement}&rdquo;
+                        </p>
+                      )}
+                      <p className="text-xs text-gray-400 mt-1">Expressed interest {fmtDate(flag.created_at)}</p>
+                    </div>
+                    <AcceptDeclineFlag flagId={flag.id} />
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </section>
+      )}
+
+      {/* Accepted connections */}
+      {totalConnections > 0 && (
+        <section className="mb-10">
+          <h2 className="text-base font-semibold text-gray-900 mb-4">Your connections</h2>
+          <div className="border border-gray-200 rounded-lg divide-y divide-gray-100">
+            {[...(acceptedOutgoing ?? []), ...(acceptedIncoming ?? [])].map((flag) => {
+              const ip = flag.investor_profiles
+              const investorEmail = flag['profiles!flags_investor_id_fkey']?.email
+              return (
+                <div key={flag.id} className="px-4 py-4">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900">{ip?.firm_name ?? '—'}</p>
+                      <p className="text-xs text-gray-500">{ip?.partner_name ?? ''}</p>
+                    </div>
+                    <span className="text-xs font-medium bg-green-50 text-green-700 px-2 py-0.5 rounded-full">
+                      Connected
+                    </span>
+                  </div>
+                  {investorEmail && (
+                    <p className="text-sm text-[#534AB7] mt-2 font-medium">{investorEmail}</p>
+                  )}
+                  <p className="text-xs text-gray-400 mt-1">
+                    Connected {fmtDate(flag.responded_at ?? flag.created_at)}
+                  </p>
+                </div>
+              )
+            })}
+          </div>
+        </section>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
-        {/* Matches */}
+        {/* Outgoing flags — pending */}
         <section>
-          <h2 className="text-base font-semibold text-gray-900 mb-4">Your matches</h2>
-          {!matches || matches.length === 0 ? (
+          <h2 className="text-base font-semibold text-gray-900 mb-4">Investors you&apos;ve flagged</h2>
+          {!outgoingFlags || outgoingFlags.length === 0 ? (
             <p className="text-sm text-gray-400 border border-gray-200 rounded-lg p-6 text-center">
-              No matches yet. Complete your profile to get matched with investors.
+              No pending flags. Browse investors in Discover to express interest.
             </p>
           ) : (
-            <div className="space-y-3">
-              {matches.map((m) => {
-                const deadlineDays = daysUntil(m.response_deadline)
-                return (
-                  <div key={m.id} className="border border-gray-200 rounded-lg p-4">
-                    <div className="flex items-start justify-between gap-2 mb-2">
-                      <div>
-                        <p className="text-sm font-semibold text-gray-900">
-                          {m.investor_profiles?.firm_name ?? '—'}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          {m.investor_profiles?.partner_name ?? ''}
-                        </p>
-                      </div>
-                      <StatusBadge status={m.status} />
-                    </div>
-                    <p className="text-xs text-gray-400">
-                      Matched {fmtDate(m.matched_at)}
+            <div className="border border-gray-200 rounded-lg divide-y divide-gray-100">
+              {outgoingFlags.map((flag) => (
+                <div key={flag.id} className="px-4 py-4 flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">
+                      {flag.investor_profiles?.firm_name ?? '—'}
                     </p>
-                    <p className={`text-xs mt-1 ${deadlineDays < 0 ? 'text-red-500' : 'text-gray-500'}`}>
-                      {deadlineDays < 0
-                        ? 'Overdue'
-                        : `Response deadline: ${deadlineDays}d remaining`}
+                    <p className="text-xs text-gray-500">
+                      {flag.investor_profiles?.partner_name ?? ''} &middot; Flagged {fmtDate(flag.created_at)}
                     </p>
+                    <p className="text-xs text-amber-600 mt-0.5">Awaiting response</p>
                   </div>
-                )
-              })}
+                  <UnflagFounderFlag investorId={flag.investor_id} />
+                </div>
+              ))}
             </div>
           )}
         </section>
@@ -215,34 +264,6 @@ export default async function FounderDashboard({ userId }: Props) {
           )}
         </section>
       </div>
-
-      {/* Your flags */}
-      <section>
-        <h2 className="text-base font-semibold text-gray-900 mb-4">
-          Investors you&apos;ve flagged
-        </h2>
-        {!myFlags || myFlags.length === 0 ? (
-          <p className="text-sm text-gray-400 border border-gray-200 rounded-lg p-6 text-center">
-            You haven&apos;t flagged any investors yet. Browse investors in Discover to express interest.
-          </p>
-        ) : (
-          <div className="border border-gray-200 rounded-lg divide-y divide-gray-100">
-            {myFlags.map((flag) => (
-              <div key={flag.id} className="px-4 py-4 flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-900">
-                    {flag.investor_profiles?.firm_name ?? '—'}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    {flag.investor_profiles?.partner_name ?? ''} &middot; Flagged {fmtDate(flag.created_at)}
-                  </p>
-                </div>
-                <UnflagFounderFlag investorId={flag.investor_id} />
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
     </div>
   )
 }

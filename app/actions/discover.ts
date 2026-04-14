@@ -2,40 +2,69 @@
 
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import {
+  sendFounderFlaggedInvestorEmail,
+  sendInvestorFlaggedFounderEmail,
+} from '@/lib/email'
 
+// ─── Founder flags an investor ────────────────────────────────────────────────
 export async function flagInvestor(investorId: string): Promise<{ error?: string; success?: boolean }> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
 
-  // Use admin client to bypass RLS for reliable inserts
   const admin = createAdminClient()
+
   const { error } = await admin.from('flags').insert({
     founder_id: user.id,
     investor_id: investorId,
     flagged_by: 'founder',
+    status: 'pending',
   })
 
   if (error) {
-    // 23505 = unique_violation: flag already exists, treat as success
     if (error.code === '23505') {
+      // Already flagged — treat as success
       revalidatePath('/discover')
       revalidatePath('/dashboard')
       return { success: true }
     }
     return { error: error.message }
   }
+
+  // Send notification email to the investor
+  try {
+    const [{ data: ip }, { data: fp }, { data: founderProfile }] = await Promise.all([
+      admin.from('investor_profiles').select('partner_name').eq('id', investorId).single(),
+      admin.from('profiles').select('email').eq('id', investorId).single(),
+      admin.from('founder_profiles')
+        .select('stage, arr_range, raising_amount_usd, product_categories, mom_growth_pct, nrr_pct, why_now, location')
+        .eq('id', user.id)
+        .single(),
+    ])
+
+    if (ip && fp?.email && founderProfile) {
+      await sendFounderFlaggedInvestorEmail({
+        investorEmail: fp.email,
+        investorName: ip.partner_name,
+        founder: founderProfile as Parameters<typeof sendFounderFlaggedInvestorEmail>[0]['founder'],
+      })
+    }
+  } catch {
+    // Email errors are non-fatal — flag is already saved
+  }
+
   revalidatePath('/discover')
   revalidatePath('/dashboard')
   return { success: true }
 }
 
+// ─── Founder unflags an investor (only while still pending) ──────────────────
 export async function unflagInvestor(investorId: string): Promise<{ error?: string; success?: boolean }> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
 
-  // Use admin client to bypass RLS (no DELETE policy exists for founders/investors)
   const admin = createAdminClient()
   const { error } = await admin
     .from('flags')
@@ -43,6 +72,7 @@ export async function unflagInvestor(investorId: string): Promise<{ error?: stri
     .eq('founder_id', user.id)
     .eq('investor_id', investorId)
     .eq('flagged_by', 'founder')
+    .eq('status', 'pending')
 
   if (error) return { error: error.message }
   revalidatePath('/discover')
@@ -50,21 +80,22 @@ export async function unflagInvestor(investorId: string): Promise<{ error?: stri
   return { success: true }
 }
 
+// ─── Investor flags a founder ─────────────────────────────────────────────────
 export async function flagFounder(founderId: string): Promise<{ error?: string; success?: boolean }> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
 
-  // Use admin client to bypass RLS for reliable inserts
   const admin = createAdminClient()
+
   const { error } = await admin.from('flags').insert({
     founder_id: founderId,
     investor_id: user.id,
     flagged_by: 'investor',
+    status: 'pending',
   })
 
   if (error) {
-    // 23505 = unique_violation: flag already exists, treat as success
     if (error.code === '23505') {
       revalidatePath('/discover')
       revalidatePath('/dashboard')
@@ -72,17 +103,38 @@ export async function flagFounder(founderId: string): Promise<{ error?: string; 
     }
     return { error: error.message }
   }
+
+  // Send notification email to the founder
+  try {
+    const [{ data: ip }, { data: founderProfileRow }] = await Promise.all([
+      admin.from('investor_profiles')
+        .select('firm_name, partner_name, check_size_min_usd, check_size_max_usd, stages, geography_focus, thesis_statement')
+        .eq('id', user.id)
+        .single(),
+      admin.from('profiles').select('email').eq('id', founderId).single(),
+    ])
+
+    if (ip && founderProfileRow?.email) {
+      await sendInvestorFlaggedFounderEmail({
+        founderEmail: founderProfileRow.email,
+        investor: ip as Parameters<typeof sendInvestorFlaggedFounderEmail>[0]['investor'],
+      })
+    }
+  } catch {
+    // Email errors are non-fatal
+  }
+
   revalidatePath('/discover')
   revalidatePath('/dashboard')
   return { success: true }
 }
 
+// ─── Investor unflags a founder (only while still pending) ───────────────────
 export async function unflagFounder(founderId: string): Promise<{ error?: string; success?: boolean }> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
 
-  // Use admin client to bypass RLS (no DELETE policy exists for founders/investors)
   const admin = createAdminClient()
   const { error } = await admin
     .from('flags')
@@ -90,6 +142,7 @@ export async function unflagFounder(founderId: string): Promise<{ error?: string
     .eq('investor_id', user.id)
     .eq('founder_id', founderId)
     .eq('flagged_by', 'investor')
+    .eq('status', 'pending')
 
   if (error) return { error: error.message }
   revalidatePath('/discover')
@@ -97,6 +150,7 @@ export async function unflagFounder(founderId: string): Promise<{ error?: string
   return { success: true }
 }
 
+// ─── Log a profile view ───────────────────────────────────────────────────────
 export async function logProfileView(founderId: string): Promise<void> {
   try {
     const supabase = await createClient()
@@ -111,7 +165,8 @@ export async function logProfileView(founderId: string): Promise<void> {
 
     if (profile?.role !== 'investor') return
 
-    await supabase.from('profile_views').insert({
+    const admin = createAdminClient()
+    await admin.from('profile_views').insert({
       investor_id: user.id,
       founder_id: founderId,
     })
