@@ -46,7 +46,6 @@ export async function flagInvestor(investorId: string): Promise<{ error?: string
     if (ip && fp?.email && founderProfile) {
       await sendFounderFlaggedInvestorEmail({
         investorEmail: fp.email,
-        investorName: ip.partner_name,
         founder: founderProfile as Parameters<typeof sendFounderFlaggedInvestorEmail>[0]['founder'],
       })
     }

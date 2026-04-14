@@ -10,11 +10,9 @@ const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://saa-s-match.vercel.a
 // Email goes to the investor with the founder's profile summary.
 export async function sendFounderFlaggedInvestorEmail({
   investorEmail,
-  investorName,
   founder,
 }: {
   investorEmail: string
-  investorName: string
   founder: {
     stage: string
     arr_range: string
