@@ -65,7 +65,7 @@ export default async function FounderDashboard({ userId }: Props) {
   // Accepted connections where founder initiated
   const { data: acceptedOutgoing } = await admin
     .from('flags')
-    .select('*, investor_profiles(firm_name, partner_name), profiles!flags_investor_id_fkey(email)')
+    .select('*, investor_profiles!flags_investor_id_fkey(firm_name, partner_name, profiles(email))')
     .eq('founder_id', userId)
     .eq('flagged_by', 'founder')
     .eq('status', 'accepted')
@@ -83,7 +83,7 @@ export default async function FounderDashboard({ userId }: Props) {
   // Accepted connections where investor initiated (founder accepted)
   const { data: acceptedIncoming } = await admin
     .from('flags')
-    .select('*, investor_profiles(firm_name, partner_name), profiles!flags_investor_id_fkey(email)')
+    .select('*, investor_profiles!flags_investor_id_fkey(firm_name, partner_name, profiles(email))')
     .eq('founder_id', userId)
     .eq('flagged_by', 'investor')
     .eq('status', 'accepted')
@@ -192,7 +192,7 @@ export default async function FounderDashboard({ userId }: Props) {
           <div className="border border-gray-200 rounded-lg divide-y divide-gray-100">
             {[...(acceptedOutgoing ?? []), ...(acceptedIncoming ?? [])].map((flag) => {
               const ip = flag.investor_profiles
-              const investorEmail = flag['profiles!flags_investor_id_fkey']?.email
+              const investorEmail = (flag.investor_profiles as any)?.profiles?.email
               return (
                 <div key={flag.id} className="px-4 py-4">
                   <div className="flex items-start justify-between gap-2">
