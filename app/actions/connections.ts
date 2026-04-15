@@ -49,12 +49,12 @@ export async function acceptFlag(flagId: string): Promise<{ error?: string; succ
     const [founderProfile, founderAuthProfile, investorProfile, investorAuthProfile] =
       await Promise.all([
         admin.from('founder_profiles')
-          .select('stage, product_categories')
+          .select('company_name, website, location, stage, arr_range, product_categories, mom_growth_pct, raising_amount_usd, why_now')
           .eq('id', flag.founder_id)
           .single(),
         admin.from('profiles').select('email').eq('id', flag.founder_id).single(),
         admin.from('investor_profiles')
-          .select('firm_name, partner_name')
+          .select('firm_name, partner_name, website, location, check_size_min_usd, check_size_max_usd, stages, geography_focus, thesis_statement')
           .eq('id', flag.investor_id)
           .single(),
         admin.from('profiles').select('email').eq('id', flag.investor_id).single(),
@@ -62,21 +62,28 @@ export async function acceptFlag(flagId: string): Promise<{ error?: string; succ
 
     const founderEmail = founderAuthProfile.data?.email ?? ''
     const investorEmail = investorAuthProfile.data?.email ?? ''
-    const firmName = investorProfile.data?.firm_name ?? ''
-    const partnerName = investorProfile.data?.partner_name ?? ''
+    const fp = founderProfile.data
+    const ip = investorProfile.data
 
     if (flag.flagged_by === 'founder') {
       // Investor accepted a founder's flag → notify the founder
       await Promise.allSettled([
         sendConnectionAcceptedFounderEmail({
           founderEmail,
-          investorFirmName: firmName,
-          investorPartnerName: partnerName,
+          investorFirmName: ip?.firm_name ?? '',
+          investorPartnerName: ip?.partner_name ?? '',
+          investorWebsite: ip?.website ?? null,
+          investorLocation: ip?.location ?? null,
+          investorCheckSizeMin: ip?.check_size_min_usd ?? null,
+          investorCheckSizeMax: ip?.check_size_max_usd ?? null,
+          investorStages: ip?.stages ?? [],
+          investorGeography: ip?.geography_focus ?? null,
+          investorThesis: ip?.thesis_statement ?? null,
           investorEmail,
         }),
         sendAdminConnectionEmail({
           founderEmail,
-          investorFirmName: firmName,
+          investorFirmName: ip?.firm_name ?? '',
           investorEmail,
           initiatedBy: 'founder',
         }),
@@ -86,14 +93,21 @@ export async function acceptFlag(flagId: string): Promise<{ error?: string; succ
       await Promise.allSettled([
         sendConnectionAcceptedInvestorEmail({
           investorEmail,
-          investorName: partnerName,
+          investorName: ip?.partner_name ?? '',
           founderEmail,
-          founderCategories: founderProfile.data?.product_categories ?? [],
-          founderStage: founderProfile.data?.stage ?? '',
+          founderCompanyName: fp?.company_name ?? null,
+          founderWebsite: fp?.website ?? null,
+          founderLocation: fp?.location ?? null,
+          founderStage: fp?.stage ?? '',
+          founderArrRange: fp?.arr_range ?? null,
+          founderCategories: fp?.product_categories ?? [],
+          founderMomGrowthPct: fp?.mom_growth_pct ?? null,
+          founderRaisingAmount: fp?.raising_amount_usd ?? null,
+          founderWhyNow: fp?.why_now ?? null,
         }),
         sendAdminConnectionEmail({
           founderEmail,
-          investorFirmName: firmName,
+          investorFirmName: ip?.firm_name ?? '',
           investorEmail,
           initiatedBy: 'investor',
         }),

@@ -104,19 +104,53 @@ export async function sendConnectionAcceptedFounderEmail({
   founderEmail,
   investorFirmName,
   investorPartnerName,
+  investorWebsite,
+  investorLocation,
+  investorCheckSizeMin,
+  investorCheckSizeMax,
+  investorStages,
+  investorGeography,
+  investorThesis,
   investorEmail,
 }: {
   founderEmail: string
   investorFirmName: string
   investorPartnerName: string
+  investorWebsite?: string | null
+  investorLocation?: string | null
+  investorCheckSizeMin?: number | null
+  investorCheckSizeMax?: number | null
+  investorStages?: string[]
+  investorGeography?: string | null
+  investorThesis?: string | null
   investorEmail: string
 }) {
+  const firmLink = investorWebsite
+    ? `<a href="${investorWebsite}" style="color:#534AB7;text-decoration:none">${investorFirmName}</a>`
+    : `<strong>${investorFirmName}</strong>`
+
+  const checkRange = investorCheckSizeMin && investorCheckSizeMax
+    ? `${formatUsd(investorCheckSizeMin)} – ${formatUsd(investorCheckSizeMax)}`
+    : null
+  const stages = investorStages && investorStages.length > 0
+    ? investorStages.map(fmtStage).join(', ')
+    : null
+
   await resend.emails.send({
     from: FROM,
     to: founderEmail,
     subject: `${investorFirmName} accepted your connection request`,
     html: `
-      <p>Great news! <strong>${investorFirmName}</strong> (${investorPartnerName}) has accepted your introduction request on UnlockedVC.</p>
+      <p>Great news! ${firmLink} (${investorPartnerName}) has accepted your introduction request on UnlockedVC.</p>
+
+      <table style="border-collapse:collapse;margin:16px 0">
+        ${investorLocation ? `<tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Location</td><td style="font-size:13px">${investorLocation}</td></tr>` : ''}
+        ${checkRange ? `<tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Check size</td><td style="font-size:13px">${checkRange}</td></tr>` : ''}
+        ${stages ? `<tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Stages</td><td style="font-size:13px">${stages}</td></tr>` : ''}
+        ${investorGeography ? `<tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Geography</td><td style="font-size:13px">${investorGeography}</td></tr>` : ''}
+      </table>
+
+      ${investorThesis ? `<p style="font-style:italic;color:#444;font-size:13px">"${investorThesis}"</p>` : ''}
 
       <p>You can now reach them directly:</p>
       <p style="font-size:16px"><strong>${investorEmail}</strong></p>
@@ -131,15 +165,35 @@ export async function sendConnectionAcceptedInvestorEmail({
   investorEmail,
   investorName,
   founderEmail,
-  founderCategories,
+  founderCompanyName,
+  founderWebsite,
+  founderLocation,
   founderStage,
+  founderArrRange,
+  founderCategories,
+  founderMomGrowthPct,
+  founderRaisingAmount,
+  founderWhyNow,
 }: {
   investorEmail: string
   investorName: string
   founderEmail: string
-  founderCategories: string[]
+  founderCompanyName?: string | null
+  founderWebsite?: string | null
+  founderLocation?: string | null
   founderStage: string
+  founderArrRange?: string | null
+  founderCategories: string[]
+  founderMomGrowthPct?: number | null
+  founderRaisingAmount?: number | null
+  founderWhyNow?: string | null
 }) {
+  const companyLink = founderWebsite
+    ? `<a href="${founderWebsite}" style="color:#534AB7;text-decoration:none">${founderCompanyName ?? 'the company'}</a>`
+    : founderCompanyName
+      ? `<strong>${founderCompanyName}</strong>`
+      : 'A founder'
+
   await resend.emails.send({
     from: FROM,
     to: investorEmail,
@@ -147,10 +201,18 @@ export async function sendConnectionAcceptedInvestorEmail({
     html: `
       <p>Hi ${investorName},</p>
 
-      <p>A founder has accepted your introduction request on UnlockedVC.</p>
+      <p>${companyLink} has accepted your introduction request on UnlockedVC.</p>
 
-      <p><strong>Stage:</strong> ${fmtStage(founderStage)}<br>
-      <strong>Categories:</strong> ${founderCategories.join(', ')}</p>
+      <table style="border-collapse:collapse;margin:16px 0">
+        ${founderLocation ? `<tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Location</td><td style="font-size:13px">${founderLocation}</td></tr>` : ''}
+        <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Stage</td><td style="font-size:13px">${fmtStage(founderStage)}</td></tr>
+        ${founderArrRange ? `<tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">ARR range</td><td style="font-size:13px">${fmtArr(founderArrRange)}</td></tr>` : ''}
+        ${founderMomGrowthPct != null ? `<tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">YOY growth</td><td style="font-size:13px">${founderMomGrowthPct}%</td></tr>` : ''}
+        ${founderRaisingAmount ? `<tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Raising</td><td style="font-size:13px">${formatUsd(founderRaisingAmount)}</td></tr>` : ''}
+        ${founderCategories.length > 0 ? `<tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Categories</td><td style="font-size:13px">${founderCategories.join(', ')}</td></tr>` : ''}
+      </table>
+
+      ${founderWhyNow ? `<p style="font-style:italic;color:#444;font-size:13px">"${founderWhyNow}"</p>` : ''}
 
       <p>You can now reach them directly:</p>
       <p style="font-size:16px"><strong>${founderEmail}</strong></p>
