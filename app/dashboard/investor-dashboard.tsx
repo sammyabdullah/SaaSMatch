@@ -74,7 +74,7 @@ export default async function InvestorDashboard({ userId }: Props) {
   // Accepted connections where founder initiated
   const { data: acceptedIncoming } = await admin
     .from('flags')
-    .select('*, founder_profiles!flags_founder_id_fkey(company_name, website, product_categories, location, arr_range, stage, profiles(email))')
+    .select('*, founder_profiles!flags_founder_id_fkey(company_name, website, product_categories, location, arr_range, stage, mom_growth_pct, profiles(email))')
     .eq('investor_id', userId)
     .eq('flagged_by', 'founder')
     .eq('status', 'accepted')
@@ -83,7 +83,7 @@ export default async function InvestorDashboard({ userId }: Props) {
   // Outgoing flags: investor flagged a founder, pending
   const { data: outgoingFlags } = await admin
     .from('flags')
-    .select('*, founder_profiles(company_name, website, product_categories, location, arr_range, stage)')
+    .select('*, founder_profiles(company_name, website, product_categories, location, arr_range, stage, mom_growth_pct)')
     .eq('investor_id', userId)
     .eq('flagged_by', 'investor')
     .in('status', ['pending'])
@@ -92,7 +92,7 @@ export default async function InvestorDashboard({ userId }: Props) {
   // Accepted connections where investor initiated
   const { data: acceptedOutgoing } = await admin
     .from('flags')
-    .select('*, founder_profiles!flags_founder_id_fkey(company_name, website, product_categories, location, arr_range, stage, profiles(email))')
+    .select('*, founder_profiles!flags_founder_id_fkey(company_name, website, product_categories, location, arr_range, stage, mom_growth_pct, profiles(email))')
     .eq('investor_id', userId)
     .eq('flagged_by', 'investor')
     .eq('status', 'accepted')
@@ -101,7 +101,7 @@ export default async function InvestorDashboard({ userId }: Props) {
   // Recently viewed founders
   const { data: recentViews } = await admin
     .from('profile_views')
-    .select('*, founder_profiles(company_name, website, product_categories, location, arr_range, stage)')
+    .select('*, founder_profiles(company_name, website, product_categories, location, arr_range, stage, mom_growth_pct)')
     .eq('investor_id', userId)
     .order('viewed_at', { ascending: false })
     .limit(5) as { data: any[] | null }
@@ -147,13 +147,19 @@ export default async function InvestorDashboard({ userId }: Props) {
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
                       <FounderNameLink name={fp?.company_name ?? 'Unknown company'} website={fp?.website} />
-                      <div className="flex items-center gap-2 mt-1">
+                      {fp?.location && (
+                        <p className="text-xs text-gray-500 mt-0.5">{fp.location}</p>
+                      )}
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1">
                         {fp?.stage && <span className="text-xs text-gray-600">{fmtStage(fp.stage)}</span>}
                         {fp?.arr_range && <span className="text-xs text-gray-500">{fmtArrRange(fp.arr_range)}</span>}
                         {fp?.mom_growth_pct != null && (
                           <span className="text-xs text-gray-500">{fp.mom_growth_pct}% YOY</span>
                         )}
                       </div>
+                      {fp?.product_categories?.length > 0 && (
+                        <p className="text-xs text-gray-400 mt-1">{fp.product_categories.join(' · ')}</p>
+                      )}
                       {fp?.why_now && (
                         <p className="text-xs text-gray-500 italic mt-1 line-clamp-2">
                           &ldquo;{fp.why_now}&rdquo;
@@ -183,10 +189,17 @@ export default async function InvestorDashboard({ userId }: Props) {
                   <div className="flex items-start justify-between gap-2">
                     <div>
                       <FounderNameLink name={fp?.company_name ?? 'Unknown company'} website={fp?.website} />
-                      <div className="flex items-center gap-2 mt-0.5">
+                      {fp?.location && <p className="text-xs text-gray-500 mt-0.5">{fp.location}</p>}
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1">
                         {fp?.stage && <span className="text-xs text-gray-500">{fmtStage(fp.stage)}</span>}
                         {fp?.arr_range && <span className="text-xs text-gray-500">{fmtArrRange(fp.arr_range)}</span>}
+                        {fp?.mom_growth_pct != null && (
+                          <span className="text-xs text-gray-500">{fp.mom_growth_pct}% YOY</span>
+                        )}
                       </div>
+                      {fp?.product_categories?.length > 0 && (
+                        <p className="text-xs text-gray-400 mt-0.5">{fp.product_categories.join(' · ')}</p>
+                      )}
                     </div>
                     <span className="text-xs font-medium bg-green-50 text-green-700 px-2 py-0.5 rounded-full">
                       Connected
@@ -218,14 +231,21 @@ export default async function InvestorDashboard({ userId }: Props) {
               {outgoingFlags.map((flag) => {
                 const fp = flag.founder_profiles
                 return (
-                  <div key={flag.id} className="px-4 py-4 flex items-center justify-between">
-                    <div>
+                  <div key={flag.id} className="px-4 py-4 flex items-start justify-between gap-3">
+                    <div className="flex-1">
                       <FounderNameLink name={fp?.company_name ?? 'Unknown company'} website={fp?.website} />
-                      <div className="flex items-center gap-2 mt-0.5">
+                      {fp?.location && <p className="text-xs text-gray-500 mt-0.5">{fp.location}</p>}
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1">
                         {fp?.stage && <span className="text-xs text-gray-500">{fmtStage(fp.stage)}</span>}
                         {fp?.arr_range && <span className="text-xs text-gray-500">{fmtArrRange(fp.arr_range)}</span>}
+                        {fp?.mom_growth_pct != null && (
+                          <span className="text-xs text-gray-500">{fp.mom_growth_pct}% YOY</span>
+                        )}
                       </div>
-                      <p className="text-xs text-amber-600 mt-0.5">Awaiting response</p>
+                      {fp?.product_categories?.length > 0 && (
+                        <p className="text-xs text-gray-400 mt-0.5">{fp.product_categories.join(' · ')}</p>
+                      )}
+                      <p className="text-xs text-amber-600 mt-1">Awaiting response</p>
                     </div>
                     <UnflagInvestorFlag founderId={flag.founder_id} />
                   </div>
@@ -247,15 +267,22 @@ export default async function InvestorDashboard({ userId }: Props) {
               {recentViews.map((view, i) => {
                 const fp = view.founder_profiles
                 return (
-                  <div key={i} className="px-4 py-3 flex items-center justify-between">
-                    <div>
+                  <div key={i} className="px-4 py-3 flex items-start justify-between gap-3">
+                    <div className="flex-1">
                       <FounderNameLink name={fp?.company_name ?? 'Unknown company'} website={fp?.website} />
-                      <div className="flex items-center gap-2 mt-0.5">
+                      {fp?.location && <p className="text-xs text-gray-500 mt-0.5">{fp.location}</p>}
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1">
                         {fp?.stage && <span className="text-xs text-gray-500">{fmtStage(fp.stage)}</span>}
                         {fp?.arr_range && <span className="text-xs text-gray-500">{fmtArrRange(fp.arr_range)}</span>}
+                        {fp?.mom_growth_pct != null && (
+                          <span className="text-xs text-gray-500">{fp.mom_growth_pct}% YOY</span>
+                        )}
                       </div>
+                      {fp?.product_categories?.length > 0 && (
+                        <p className="text-xs text-gray-400 mt-0.5">{fp.product_categories.join(' · ')}</p>
+                      )}
                     </div>
-                    <p className="text-xs text-gray-400">{fmtDate(view.viewed_at)}</p>
+                    <p className="text-xs text-gray-400 shrink-0">{fmtDate(view.viewed_at)}</p>
                   </div>
                 )
               })}
