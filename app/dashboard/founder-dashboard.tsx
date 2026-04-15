@@ -39,6 +39,22 @@ function MetricCard({
   )
 }
 
+function InvestorNameLink({ name, website }: { name: string; website?: string | null }) {
+  if (website) {
+    return (
+      <a
+        href={website}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-sm font-semibold text-[#534AB7] hover:underline"
+      >
+        {name}
+      </a>
+    )
+  }
+  return <p className="text-sm font-semibold text-gray-900">{name}</p>
+}
+
 export default async function FounderDashboard({ userId }: Props) {
   const admin = createAdminClient()
 
@@ -60,7 +76,7 @@ export default async function FounderDashboard({ userId }: Props) {
   // Outgoing flags (founder flagged an investor) — pending only
   const { data: outgoingFlags, count: flagsUsed } = await admin
     .from('flags')
-    .select('*, investor_profiles(firm_name, partner_name)', { count: 'exact' })
+    .select('*, investor_profiles(firm_name, partner_name, website, location)', { count: 'exact' })
     .eq('founder_id', userId)
     .eq('flagged_by', 'founder')
     .in('status', ['pending'])
@@ -69,7 +85,7 @@ export default async function FounderDashboard({ userId }: Props) {
   // Accepted connections where founder initiated
   const { data: acceptedOutgoing } = await admin
     .from('flags')
-    .select('*, investor_profiles!flags_investor_id_fkey(firm_name, partner_name, profiles(email))')
+    .select('*, investor_profiles!flags_investor_id_fkey(firm_name, partner_name, website, location, profiles(email))')
     .eq('founder_id', userId)
     .eq('flagged_by', 'founder')
     .eq('status', 'accepted')
@@ -78,7 +94,7 @@ export default async function FounderDashboard({ userId }: Props) {
   // Incoming investor interest — investor flagged this founder, pending acceptance
   const { data: incomingFlags } = await admin
     .from('flags')
-    .select('*, investor_profiles(firm_name, partner_name, website, check_size_min_usd, check_size_max_usd, stages, thesis_statement)')
+    .select('*, investor_profiles(firm_name, partner_name, website, location, check_size_min_usd, check_size_max_usd, stages, thesis_statement)')
     .eq('founder_id', userId)
     .eq('flagged_by', 'investor')
     .eq('status', 'pending')
@@ -87,7 +103,7 @@ export default async function FounderDashboard({ userId }: Props) {
   // Accepted connections where investor initiated (founder accepted)
   const { data: acceptedIncoming } = await admin
     .from('flags')
-    .select('*, investor_profiles!flags_investor_id_fkey(firm_name, partner_name, profiles(email))')
+    .select('*, investor_profiles!flags_investor_id_fkey(firm_name, partner_name, website, location, profiles(email))')
     .eq('founder_id', userId)
     .eq('flagged_by', 'investor')
     .eq('status', 'accepted')
@@ -169,19 +185,9 @@ export default async function FounderDashboard({ userId }: Props) {
                 <div key={flag.id} className="border border-amber-200 bg-amber-50/30 rounded-lg p-4">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
-                      {ip?.website ? (
-                        <a
-                          href={ip.website}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-sm font-semibold text-[#534AB7] hover:underline"
-                        >
-                          {ip.firm_name}
-                        </a>
-                      ) : (
-                        <p className="text-sm font-semibold text-gray-900">{ip?.firm_name ?? '—'}</p>
-                      )}
+                      <InvestorNameLink name={ip?.firm_name ?? '—'} website={ip?.website} />
                       <p className="text-xs text-gray-500">{ip?.partner_name ?? ''}</p>
+                      {ip?.location && <p className="text-xs text-gray-400">{ip.location}</p>}
                       {ip?.check_size_min_usd && (
                         <p className="text-xs text-gray-600 mt-1">
                           {fmtUsd(ip.check_size_min_usd)} – {fmtUsd(ip.check_size_max_usd)}
@@ -216,8 +222,9 @@ export default async function FounderDashboard({ userId }: Props) {
                 <div key={flag.id} className="px-4 py-4">
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <p className="text-sm font-semibold text-gray-900">{ip?.firm_name ?? '—'}</p>
+                      <InvestorNameLink name={ip?.firm_name ?? '—'} website={ip?.website} />
                       <p className="text-xs text-gray-500">{ip?.partner_name ?? ''}</p>
+                      {ip?.location && <p className="text-xs text-gray-400">{ip.location}</p>}
                     </div>
                     <span className="text-xs font-medium bg-green-50 text-green-700 px-2 py-0.5 rounded-full">
                       Connected
@@ -246,20 +253,21 @@ export default async function FounderDashboard({ userId }: Props) {
             </p>
           ) : (
             <div className="border border-gray-200 rounded-lg divide-y divide-gray-100">
-              {outgoingFlags.map((flag) => (
-                <div key={flag.id} className="px-4 py-4 flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">
-                      {flag.investor_profiles?.firm_name ?? '—'}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {flag.investor_profiles?.partner_name ?? ''} &middot; Flagged {fmtDate(flag.created_at)}
-                    </p>
-                    <p className="text-xs text-amber-600 mt-0.5">Awaiting response</p>
+              {outgoingFlags.map((flag) => {
+                const ip = flag.investor_profiles
+                return (
+                  <div key={flag.id} className="px-4 py-4 flex items-start justify-between gap-3">
+                    <div className="flex-1">
+                      <InvestorNameLink name={ip?.firm_name ?? '—'} website={ip?.website} />
+                      <p className="text-xs text-gray-500">{ip?.partner_name ?? ''}</p>
+                      {ip?.location && <p className="text-xs text-gray-400">{ip.location}</p>}
+                      <p className="text-xs text-gray-400 mt-0.5">Flagged {fmtDate(flag.created_at)}</p>
+                      <p className="text-xs text-amber-600 mt-0.5">Awaiting response</p>
+                    </div>
+                    <UnflagFounderFlag investorId={flag.investor_id} />
                   </div>
-                  <UnflagFounderFlag investorId={flag.investor_id} />
-                </div>
-              ))}
+                )
+              })}
             </div>
           )}
         </section>
