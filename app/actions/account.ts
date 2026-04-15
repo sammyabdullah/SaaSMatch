@@ -54,6 +54,7 @@ export async function updateInvestorProfile(
     .update({
       firm_name: data.firm_name,
       partner_name: data.partner_name,
+      website: data.website ?? null,
       location: data.location,
       check_size_min_usd: data.check_size_min_usd,
       check_size_max_usd: data.check_size_max_usd,

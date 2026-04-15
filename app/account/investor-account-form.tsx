@@ -27,9 +27,17 @@ interface Props {
   initialData: InvestorProfileRow
 }
 
+function normalizeUrl(url: string): string {
+  const trimmed = url.trim()
+  if (!trimmed) return ''
+  if (/^https?:\/\//i.test(trimmed)) return trimmed
+  return `https://${trimmed}`
+}
+
 export default function InvestorAccountForm({ initialData }: Props) {
   const [firm_name, setFirmName] = useState(initialData.firm_name)
   const [partner_name, setPartnerName] = useState(initialData.partner_name)
+  const [website, setWebsite] = useState(initialData.website ?? '')
   const [location, setLocation] = useState(initialData.location)
   const [check_size_min_usd, setCheckMin] = useState(String(initialData.check_size_min_usd))
   const [check_size_max_usd, setCheckMax] = useState(String(initialData.check_size_max_usd))
@@ -57,6 +65,7 @@ export default function InvestorAccountForm({ initialData }: Props) {
     const result = await updateInvestorProfile({
       firm_name,
       partner_name,
+      website: website ? normalizeUrl(website) : null,
       location,
       check_size_min_usd: Number(check_size_min_usd),
       check_size_max_usd: Number(check_size_max_usd),
@@ -99,6 +108,19 @@ export default function InvestorAccountForm({ initialData }: Props) {
             className={inputCls}
           />
         </div>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">
+          Firm website <span className="text-gray-400 font-normal">(optional)</span>
+        </label>
+        <input
+          type="text"
+          value={website}
+          onChange={(e) => setWebsite(e.target.value)}
+          className={inputCls}
+          placeholder="blossomstreetventures.com"
+        />
       </div>
 
       <div>
