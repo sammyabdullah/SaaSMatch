@@ -5,6 +5,12 @@ import MultiSelect from '@/components/ui/multi-select'
 import { submitFounderProfile } from '@/app/actions/onboarding'
 import type { FounderStage, ArrRange, GtmMotion, RevenueModel } from '@/lib/supabase/types'
 
+function normalizeUrl(url: string): string {
+  if (!url) return url
+  if (url.startsWith('http://') || url.startsWith('https://')) return url
+  return 'https://' + url
+}
+
 const PRODUCT_CATEGORIES = [
   'iPaaS', 'Vertical SaaS', 'DevTools', 'Security',
   'Data & Analytics', 'HR Tech', 'FinTech', 'MarTech', 'RevOps', 'Other',
@@ -105,7 +111,7 @@ export default function FounderForm() {
 
     const result = await submitFounderProfile({
       company_name: form.company_name,
-      website: form.website,
+      website: normalizeUrl(form.website),
       location: form.location,
       founded_year: Number(form.founded_year),
       stage: form.stage as FounderStage,
@@ -168,11 +174,11 @@ export default function FounderForm() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Website</label>
             <input
-              type="url"
+              type="text"
               value={form.website}
               onChange={(e) => set('website', e.target.value)}
               className={inputCls}
-              placeholder="https://acme.com"
+              placeholder="acme.com"
             />
           </div>
         </div>

@@ -7,6 +7,12 @@ import type { FounderStage, ArrRange, GtmMotion, RevenueModel, Database } from '
 
 type FounderProfileRow = Database['public']['Tables']['founder_profiles']['Row']
 
+function normalizeUrl(url: string): string {
+  if (!url) return url
+  if (url.startsWith('http://') || url.startsWith('https://')) return url
+  return 'https://' + url
+}
+
 const PRODUCT_CATEGORIES = [
   'iPaaS', 'Vertical SaaS', 'DevTools', 'Security',
   'Data & Analytics', 'HR Tech', 'FinTech', 'MarTech', 'RevOps', 'Other',
@@ -77,7 +83,7 @@ export default function FounderAccountForm({ initialData }: Props) {
 
     const result = await updateFounderProfile({
       company_name,
-      website,
+      website: normalizeUrl(website),
       location,
       founded_year: Number(founded_year),
       stage: stage as FounderStage,
@@ -115,10 +121,11 @@ export default function FounderAccountForm({ initialData }: Props) {
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Website</label>
           <input
-            type="url"
+            type="text"
             value={website}
             onChange={(e) => setWebsite(e.target.value)}
             className={inputCls}
+            placeholder="acme.com"
           />
         </div>
       </div>
