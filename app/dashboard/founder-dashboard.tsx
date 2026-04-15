@@ -85,7 +85,7 @@ export default async function FounderDashboard({ userId }: Props) {
   // Accepted connections where founder initiated
   const { data: acceptedOutgoing } = await admin
     .from('flags')
-    .select('*, investor_profiles!flags_investor_id_fkey(firm_name, partner_name, website, location, profiles(email))')
+    .select('*, investor_profiles!flags_investor_id_fkey(firm_name, partner_name, website, location, check_size_min_usd, check_size_max_usd, stages, geography_focus, thesis_statement, profiles(email))')
     .eq('founder_id', userId)
     .eq('flagged_by', 'founder')
     .eq('status', 'accepted')
@@ -103,7 +103,7 @@ export default async function FounderDashboard({ userId }: Props) {
   // Accepted connections where investor initiated (founder accepted)
   const { data: acceptedIncoming } = await admin
     .from('flags')
-    .select('*, investor_profiles!flags_investor_id_fkey(firm_name, partner_name, website, location, profiles(email))')
+    .select('*, investor_profiles!flags_investor_id_fkey(firm_name, partner_name, website, location, check_size_min_usd, check_size_max_usd, stages, geography_focus, thesis_statement, profiles(email))')
     .eq('founder_id', userId)
     .eq('flagged_by', 'investor')
     .eq('status', 'accepted')
@@ -221,12 +221,30 @@ export default async function FounderDashboard({ userId }: Props) {
               return (
                 <div key={flag.id} className="px-4 py-4">
                   <div className="flex items-start justify-between gap-2">
-                    <div>
+                    <div className="flex-1">
                       <InvestorNameLink name={ip?.firm_name ?? '—'} website={ip?.website} />
                       <p className="text-xs text-gray-500">{ip?.partner_name ?? ''}</p>
                       {ip?.location && <p className="text-xs text-gray-400">{ip.location}</p>}
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1">
+                        {ip?.check_size_min_usd && ip?.check_size_max_usd && (
+                          <span className="text-xs text-gray-600">
+                            {fmtUsd(ip.check_size_min_usd)} – {fmtUsd(ip.check_size_max_usd)}
+                          </span>
+                        )}
+                        {ip?.stages?.length > 0 && (
+                          <span className="text-xs text-gray-500">{ip.stages.map(fmtStage).join(', ')}</span>
+                        )}
+                      </div>
+                      {ip?.geography_focus && (
+                        <p className="text-xs text-gray-400 mt-0.5">{ip.geography_focus}</p>
+                      )}
+                      {ip?.thesis_statement && (
+                        <p className="text-xs text-gray-500 italic mt-1 line-clamp-2">
+                          &ldquo;{ip.thesis_statement}&rdquo;
+                        </p>
+                      )}
                     </div>
-                    <span className="text-xs font-medium bg-green-50 text-green-700 px-2 py-0.5 rounded-full">
+                    <span className="text-xs font-medium bg-green-50 text-green-700 px-2 py-0.5 rounded-full shrink-0">
                       Connected
                     </span>
                   </div>
