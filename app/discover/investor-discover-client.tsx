@@ -36,10 +36,6 @@ const PRODUCT_CATEGORIES = [
 
 type FlagState = 'idle' | 'pending_undo' | 'flagged'
 
-function anonName(productCategories: string[] | null, location: string): string {
-  const cat = productCategories?.[0] ?? 'SaaS'
-  return `${cat} Company — ${location}`
-}
 
 function computeMatchScore(
   founder: FounderProfileRow,
@@ -312,7 +308,6 @@ export default function InvestorDiscoverClient({
             const score = computeMatchScore(f, myProfile)
             const flagState = flagStates[f.id] ?? (flaggedIds.has(f.id) ? 'flagged' : 'idle')
             const isExpanded = expandedWhyNow[f.id] ?? false
-            const displayName = anonName(f.product_categories, f.location)
 
             return (
               <div
@@ -320,8 +315,25 @@ export default function InvestorDiscoverClient({
                 onClick={() => router.push(`/discover/${f.id}`)}
                 className="border border-gray-200 rounded-lg p-5 cursor-pointer hover:border-[#534AB7] transition-colors"
               >
-                <div className="flex items-start justify-between gap-2 mb-2">
-                  <p className="text-sm font-semibold text-gray-900">{displayName}</p>
+                <div className="flex items-start justify-between gap-2 mb-1">
+                  <div>
+                    {f.website ? (
+                      <a
+                        href={f.website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                        className="text-sm font-semibold text-[#534AB7] hover:underline"
+                      >
+                        {f.company_name}
+                      </a>
+                    ) : (
+                      <p className="text-sm font-semibold text-gray-900">{f.company_name}</p>
+                    )}
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      {f.product_categories?.[0] ?? 'SaaS'} — {f.location}
+                    </p>
+                  </div>
                   <MatchBadge score={score} />
                 </div>
 
