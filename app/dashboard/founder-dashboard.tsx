@@ -78,7 +78,7 @@ export default async function FounderDashboard({ userId }: Props) {
   // Incoming investor interest — investor flagged this founder, pending acceptance
   const { data: incomingFlags } = await admin
     .from('flags')
-    .select('*, investor_profiles(firm_name, partner_name, check_size_min_usd, check_size_max_usd, stages, thesis_statement)')
+    .select('*, investor_profiles(firm_name, partner_name, website, check_size_min_usd, check_size_max_usd, stages, thesis_statement)')
     .eq('founder_id', userId)
     .eq('flagged_by', 'investor')
     .eq('status', 'pending')
@@ -169,7 +169,18 @@ export default async function FounderDashboard({ userId }: Props) {
                 <div key={flag.id} className="border border-amber-200 bg-amber-50/30 rounded-lg p-4">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
-                      <p className="text-sm font-semibold text-gray-900">{ip?.firm_name ?? '—'}</p>
+                      {ip?.website ? (
+                        <a
+                          href={ip.website}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm font-semibold text-[#534AB7] hover:underline"
+                        >
+                          {ip.firm_name}
+                        </a>
+                      ) : (
+                        <p className="text-sm font-semibold text-gray-900">{ip?.firm_name ?? '—'}</p>
+                      )}
                       <p className="text-xs text-gray-500">{ip?.partner_name ?? ''}</p>
                       {ip?.check_size_min_usd && (
                         <p className="text-xs text-gray-600 mt-1">

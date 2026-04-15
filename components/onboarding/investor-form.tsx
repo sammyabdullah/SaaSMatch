@@ -18,9 +18,17 @@ const STAGE_OPTIONS: { value: FounderStage; label: string }[] = [
   { value: 'series-b', label: 'Series B' },
 ]
 
+function normalizeUrl(url: string): string {
+  const trimmed = url.trim()
+  if (!trimmed) return ''
+  if (/^https?:\/\//i.test(trimmed)) return trimmed
+  return `https://${trimmed}`
+}
+
 interface FormState {
   firm_name: string
   partner_name: string
+  website: string
   location: string
   check_size_min_usd: string
   check_size_max_usd: string
@@ -35,7 +43,7 @@ interface FormState {
 }
 
 const empty: FormState = {
-  firm_name: '', partner_name: '', location: '',
+  firm_name: '', partner_name: '', website: '', location: '',
   check_size_min_usd: '', check_size_max_usd: '',
   stages: [], leads_rounds: false, takes_board_seat: false,
   geography_focus: '', saas_subcategories: [],
@@ -86,6 +94,7 @@ export default function InvestorForm() {
     const result = await submitInvestorProfile({
       firm_name: form.firm_name,
       partner_name: form.partner_name,
+      website: form.website ? normalizeUrl(form.website) : null,
       location: form.location,
       check_size_min_usd: Number(form.check_size_min_usd),
       check_size_max_usd: Number(form.check_size_max_usd),
@@ -159,6 +168,19 @@ export default function InvestorForm() {
               placeholder="Jane Smith"
             />
           </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Firm website <span className="text-gray-400 font-normal">(optional)</span>
+          </label>
+          <input
+            type="text"
+            value={form.website}
+            onChange={(e) => set('website', e.target.value)}
+            className={inputCls}
+            placeholder="blossomstreetventures.com"
+          />
         </div>
 
         <div>

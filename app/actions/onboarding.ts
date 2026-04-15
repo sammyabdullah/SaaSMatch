@@ -28,6 +28,7 @@ export interface FounderProfileInput {
 export interface InvestorProfileInput {
   firm_name: string
   partner_name: string
+  website?: string | null
   location: string
   check_size_min_usd: number
   check_size_max_usd: number
