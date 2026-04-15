@@ -22,7 +22,7 @@ export async function updateFounderProfile(
   const extraFields: Record<string, string> = {}
   if (existing?.status === 'expired' && existing?.is_approved === true) {
     const expiresAt = new Date()
-    expiresAt.setDate(expiresAt.getDate() + 90)
+    expiresAt.setDate(expiresAt.getDate() + 180)
     extraFields.status = 'active'
     extraFields.profile_expires_at = expiresAt.toISOString()
   }
@@ -71,6 +71,26 @@ export async function updateInvestorProfile(
 
   if (error) return { error: error.message }
   revalidatePath('/account')
+  revalidatePath('/dashboard')
+  return { success: true }
+}
+
+export async function restartFounderClock(): Promise<{ error?: string; success?: boolean }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+
+  const admin = createAdminClient()
+  const expiresAt = new Date()
+  expiresAt.setDate(expiresAt.getDate() + 180)
+
+  const { error } = await admin
+    .from('founder_profiles')
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    .update({ profile_expires_at: expiresAt.toISOString(), status: 'active', updated_at: new Date().toISOString() } as any)
+    .eq('id', user.id)
+
+  if (error) return { error: error.message }
   revalidatePath('/dashboard')
   return { success: true }
 }

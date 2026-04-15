@@ -3,6 +3,7 @@ import { createAdminClient } from '@/lib/supabase/server'
 import { fmtDate, fmtStage, fmtUsd, daysUntil } from '@/lib/format'
 import UnflagFounderFlag from './unflag-founder-flag'
 import AcceptDeclineFlag from './accept-decline-flag'
+import RestartClockButton from './restart-clock-button'
 
 interface Props {
   userId: string
@@ -13,11 +14,13 @@ function MetricCard({
   value,
   sub,
   accent,
+  children,
 }: {
   label: string
   value: string | number
   sub?: string
   accent?: 'amber' | 'green' | 'gray'
+  children?: React.ReactNode
 }) {
   const accentCls =
     accent === 'amber'
@@ -31,6 +34,7 @@ function MetricCard({
       <p className="text-xs text-gray-400 mb-1">{label}</p>
       <p className={`text-2xl font-semibold ${accentCls}`}>{value}</p>
       {sub && <p className="text-xs text-gray-400 mt-1">{sub}</p>}
+      {children}
     </div>
   )
 }
@@ -138,7 +142,11 @@ export default async function FounderDashboard({ userId }: Props) {
           value={profileStatusValue}
           sub={profileStatusSub}
           accent={founderProfile?.status === 'active' ? 'green' : 'gray'}
-        />
+        >
+          {(founderProfile?.status === 'active' || founderProfile?.status === 'expired') && (
+            <RestartClockButton />
+          )}
+        </MetricCard>
         <MetricCard label="Profile views this week" value={viewsThisWeek ?? 0} />
       </div>
 
