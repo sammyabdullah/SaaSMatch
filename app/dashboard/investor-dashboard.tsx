@@ -35,9 +35,20 @@ function MetricCard({
   )
 }
 
-function anonFounderName(productCategories: string[] | null, location: string): string {
-  const cat = productCategories?.[0] ?? 'SaaS'
-  return `${cat} Company — ${location}`
+function FounderNameLink({ name, website }: { name: string; website?: string | null }) {
+  if (website) {
+    return (
+      <a
+        href={website}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-sm font-semibold text-[#534AB7] hover:underline"
+      >
+        {name}
+      </a>
+    )
+  }
+  return <p className="text-sm font-semibold text-gray-900">{name}</p>
 }
 
 export default async function InvestorDashboard({ userId }: Props) {
@@ -54,7 +65,7 @@ export default async function InvestorDashboard({ userId }: Props) {
   // Incoming introductions: founders who flagged this investor, pending response
   const { data: incomingFlags } = await admin
     .from('flags')
-    .select('*, founder_profiles(product_categories, location, arr_range, stage, mom_growth_pct, raising_amount_usd, why_now)')
+    .select('*, founder_profiles(company_name, website, product_categories, location, arr_range, stage, mom_growth_pct, raising_amount_usd, why_now)')
     .eq('investor_id', userId)
     .eq('flagged_by', 'founder')
     .eq('status', 'pending')
@@ -63,7 +74,7 @@ export default async function InvestorDashboard({ userId }: Props) {
   // Accepted connections where founder initiated
   const { data: acceptedIncoming } = await admin
     .from('flags')
-    .select('*, founder_profiles!flags_founder_id_fkey(product_categories, location, arr_range, stage, profiles(email))')
+    .select('*, founder_profiles!flags_founder_id_fkey(company_name, website, product_categories, location, arr_range, stage, profiles(email))')
     .eq('investor_id', userId)
     .eq('flagged_by', 'founder')
     .eq('status', 'accepted')
@@ -72,7 +83,7 @@ export default async function InvestorDashboard({ userId }: Props) {
   // Outgoing flags: investor flagged a founder, pending
   const { data: outgoingFlags } = await admin
     .from('flags')
-    .select('*, founder_profiles(product_categories, location, arr_range, stage)')
+    .select('*, founder_profiles(company_name, website, product_categories, location, arr_range, stage)')
     .eq('investor_id', userId)
     .eq('flagged_by', 'investor')
     .in('status', ['pending'])
@@ -81,7 +92,7 @@ export default async function InvestorDashboard({ userId }: Props) {
   // Accepted connections where investor initiated
   const { data: acceptedOutgoing } = await admin
     .from('flags')
-    .select('*, founder_profiles!flags_founder_id_fkey(product_categories, location, arr_range, stage, profiles(email))')
+    .select('*, founder_profiles!flags_founder_id_fkey(company_name, website, product_categories, location, arr_range, stage, profiles(email))')
     .eq('investor_id', userId)
     .eq('flagged_by', 'investor')
     .eq('status', 'accepted')
@@ -90,7 +101,7 @@ export default async function InvestorDashboard({ userId }: Props) {
   // Recently viewed founders
   const { data: recentViews } = await admin
     .from('profile_views')
-    .select('*, founder_profiles(product_categories, location, arr_range, stage)')
+    .select('*, founder_profiles(company_name, website, product_categories, location, arr_range, stage)')
     .eq('investor_id', userId)
     .order('viewed_at', { ascending: false })
     .limit(5) as { data: any[] | null }
@@ -131,12 +142,11 @@ export default async function InvestorDashboard({ userId }: Props) {
           <div className="space-y-3">
             {incomingFlags.map((flag) => {
               const fp = flag.founder_profiles
-              const name = anonFounderName(fp?.product_categories, fp?.location ?? '')
               return (
                 <div key={flag.id} className="border border-amber-200 bg-amber-50/30 rounded-lg p-4">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
-                      <p className="text-sm font-semibold text-gray-900">{name}</p>
+                      <FounderNameLink name={fp?.company_name ?? 'Unknown company'} website={fp?.website} />
                       <div className="flex items-center gap-2 mt-1">
                         {fp?.stage && <span className="text-xs text-gray-600">{fmtStage(fp.stage)}</span>}
                         {fp?.arr_range && <span className="text-xs text-gray-500">{fmtArrRange(fp.arr_range)}</span>}
@@ -167,13 +177,12 @@ export default async function InvestorDashboard({ userId }: Props) {
           <div className="border border-gray-200 rounded-lg divide-y divide-gray-100">
             {[...(acceptedIncoming ?? []), ...(acceptedOutgoing ?? [])].map((flag) => {
               const fp = flag.founder_profiles
-              const name = anonFounderName(fp?.product_categories, fp?.location ?? '')
               const founderEmail = (flag.founder_profiles as any)?.profiles?.email
               return (
                 <div key={flag.id} className="px-4 py-4">
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <p className="text-sm font-semibold text-gray-900">{name}</p>
+                      <FounderNameLink name={fp?.company_name ?? 'Unknown company'} website={fp?.website} />
                       <div className="flex items-center gap-2 mt-0.5">
                         {fp?.stage && <span className="text-xs text-gray-500">{fmtStage(fp.stage)}</span>}
                         {fp?.arr_range && <span className="text-xs text-gray-500">{fmtArrRange(fp.arr_range)}</span>}
@@ -208,11 +217,10 @@ export default async function InvestorDashboard({ userId }: Props) {
             <div className="border border-gray-200 rounded-lg divide-y divide-gray-100">
               {outgoingFlags.map((flag) => {
                 const fp = flag.founder_profiles
-                const name = anonFounderName(fp?.product_categories, fp?.location ?? '')
                 return (
                   <div key={flag.id} className="px-4 py-4 flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-gray-900">{name}</p>
+                      <FounderNameLink name={fp?.company_name ?? 'Unknown company'} website={fp?.website} />
                       <div className="flex items-center gap-2 mt-0.5">
                         {fp?.stage && <span className="text-xs text-gray-500">{fmtStage(fp.stage)}</span>}
                         {fp?.arr_range && <span className="text-xs text-gray-500">{fmtArrRange(fp.arr_range)}</span>}
@@ -238,11 +246,10 @@ export default async function InvestorDashboard({ userId }: Props) {
             <div className="border border-gray-200 rounded-lg divide-y divide-gray-100">
               {recentViews.map((view, i) => {
                 const fp = view.founder_profiles
-                const name = anonFounderName(fp?.product_categories, fp?.location ?? '')
                 return (
                   <div key={i} className="px-4 py-3 flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-gray-900">{name}</p>
+                      <FounderNameLink name={fp?.company_name ?? 'Unknown company'} website={fp?.website} />
                       <div className="flex items-center gap-2 mt-0.5">
                         {fp?.stage && <span className="text-xs text-gray-500">{fmtStage(fp.stage)}</span>}
                         {fp?.arr_range && <span className="text-xs text-gray-500">{fmtArrRange(fp.arr_range)}</span>}
