@@ -150,8 +150,7 @@ export default function InvestorDiscoverClient({
       .filter((f) => {
         if (arrRange && f.arr_range !== arrRange) return false
         if (selectedStages.length > 0 && !selectedStages.includes(f.stage)) return false
-        if (momGrowthMin && f.mom_growth_pct < Number(momGrowthMin)) return false
-        if (nrrMin && f.nrr_pct < Number(nrrMin)) return false
+        if (momGrowthMin && (f.mom_growth_pct == null || f.mom_growth_pct < Number(momGrowthMin))) return false
         if (selectedGtm.length > 0 && !selectedGtm.includes(f.gtm_motion)) return false
         if (selectedRevModel.length > 0 && !selectedRevModel.includes(f.revenue_model)) return false
         if (selectedCategories.length > 0) {
@@ -346,24 +345,17 @@ export default function InvestorDiscoverClient({
                   <span className="text-xs text-gray-500">Founded {f.founded_year}</span>
                 </div>
 
-                <div className="grid grid-cols-3 gap-2 mb-3 text-xs">
+                <div className="grid grid-cols-2 gap-2 mb-3 text-xs">
                   <div>
                     <p className="text-gray-400">ARR</p>
                     <p className="text-gray-700 font-medium">{fmtArrRange(f.arr_range)}</p>
                   </div>
-                  <div>
-                    <p className="text-gray-400">MoM growth</p>
-                    <p className="text-gray-700 font-medium">{f.mom_growth_pct}%</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-400">NRR</p>
-                    <p className="text-gray-700 font-medium">{f.nrr_pct}%</p>
-                  </div>
-                </div>
-
-                <div className="mb-2">
-                  <p className="text-xs text-gray-400">ACV</p>
-                  <p className="text-xs text-gray-700 font-medium">{fmtUsd(f.acv_usd)}</p>
+                  {f.mom_growth_pct != null && (
+                    <div>
+                      <p className="text-gray-400">YOY growth</p>
+                      <p className="text-gray-700 font-medium">{f.mom_growth_pct}%</p>
+                    </div>
+                  )}
                 </div>
 
                 <div className="mb-2">

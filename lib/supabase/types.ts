@@ -54,9 +54,9 @@ export type Database = {
           stage: FounderStage
           arr_range: ArrRange
           arr_exact: number | null
-          mom_growth_pct: number
-          nrr_pct: number
-          acv_usd: number
+          mom_growth_pct: number | null
+          nrr_pct: number | null
+          acv_usd: number | null
           gtm_motion: GtmMotion
           revenue_model: RevenueModel
           raising_amount_usd: number
@@ -81,9 +81,9 @@ export type Database = {
           stage: FounderStage
           arr_range: ArrRange
           arr_exact?: number | null
-          mom_growth_pct: number
-          nrr_pct: number
-          acv_usd: number
+          mom_growth_pct?: number | null
+          nrr_pct?: number | null
+          acv_usd?: number | null
           gtm_motion: GtmMotion
           revenue_model: RevenueModel
           raising_amount_usd: number
@@ -108,9 +108,9 @@ export type Database = {
           stage?: FounderStage
           arr_range?: ArrRange
           arr_exact?: number | null
-          mom_growth_pct?: number
-          nrr_pct?: number
-          acv_usd?: number
+          mom_growth_pct?: number | null
+          nrr_pct?: number | null
+          acv_usd?: number | null
           gtm_motion?: GtmMotion
           revenue_model?: RevenueModel
           raising_amount_usd?: number

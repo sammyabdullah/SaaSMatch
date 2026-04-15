@@ -189,9 +189,7 @@ function FounderCard({
         <Field label="Founded" value={String(fp.founded_year)} />
         <Field label="Stage" value={fmt(fp.stage)} />
         <Field label="ARR" value={fmtArr(fp.arr_range)} />
-        <Field label="MoM growth" value={`${fp.mom_growth_pct}%`} />
-        <Field label="NRR" value={`${fp.nrr_pct}%`} />
-        <Field label="ACV" value={fmtUsd(fp.acv_usd)} />
+        {fp.mom_growth_pct != null && <Field label="YOY growth" value={`${fp.mom_growth_pct}%`} />}
         <Field label="GTM motion" value={fmt(fp.gtm_motion)} />
         <Field label="Revenue model" value={fmt(fp.revenue_model)} />
         <Field label="Total raise" value={fmtUsd(fp.raising_amount_usd)} />

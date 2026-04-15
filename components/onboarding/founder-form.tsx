@@ -52,8 +52,6 @@ interface FormState {
   product_categories: string[]
   arr_range: string
   mom_growth_pct: string
-  nrr_pct: string
-  acv_usd: string
   gtm_motion: string
   revenue_model: string
   raising_amount_usd: string
@@ -63,7 +61,7 @@ interface FormState {
 const empty: FormState = {
   company_name: '', website: '', location: '', founded_year: '',
   stage: '', product_categories: [], arr_range: '',
-  mom_growth_pct: '', nrr_pct: '', acv_usd: '',
+  mom_growth_pct: '',
   gtm_motion: '', revenue_model: '',
   raising_amount_usd: '', why_now: '',
 }
@@ -92,9 +90,6 @@ export default function FounderForm() {
     if (form.product_categories.length === 0)
       return 'Select at least one product category.'
     if (!form.arr_range) return 'ARR range is required.'
-    if (!form.mom_growth_pct) return 'MoM growth % is required.'
-    if (!form.nrr_pct) return 'NRR % is required.'
-    if (!form.acv_usd) return 'ACV is required.'
     if (!form.gtm_motion) return 'GTM motion is required.'
     if (!form.revenue_model) return 'Revenue model is required.'
     if (!form.raising_amount_usd) return 'Total raise amount is required.'
@@ -117,9 +112,7 @@ export default function FounderForm() {
       stage: form.stage as FounderStage,
       product_categories: form.product_categories,
       arr_range: form.arr_range as ArrRange,
-      mom_growth_pct: Number(form.mom_growth_pct),
-      nrr_pct: Number(form.nrr_pct),
-      acv_usd: Number(form.acv_usd),
+      mom_growth_pct: form.mom_growth_pct ? Number(form.mom_growth_pct) : null,
       gtm_motion: form.gtm_motion as GtmMotion,
       revenue_model: form.revenue_model as RevenueModel,
       raising_amount_usd: Number(form.raising_amount_usd),
@@ -252,40 +245,16 @@ export default function FounderForm() {
           </select>
         </div>
 
-        <div className="grid grid-cols-3 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">MoM growth %</label>
-            <input
-              type="number"
-              value={form.mom_growth_pct}
-              onChange={(e) => set('mom_growth_pct', e.target.value)}
-              className={inputCls}
-              placeholder="15"
-              min={0}
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">NRR %</label>
-            <input
-              type="number"
-              value={form.nrr_pct}
-              onChange={(e) => set('nrr_pct', e.target.value)}
-              className={inputCls}
-              placeholder="110"
-              min={0}
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">ACV (USD)</label>
-            <input
-              type="number"
-              value={form.acv_usd}
-              onChange={(e) => set('acv_usd', e.target.value)}
-              className={inputCls}
-              placeholder="25000"
-              min={0}
-            />
-          </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">YOY Growth % <span className="text-gray-400 font-normal">(optional)</span></label>
+          <input
+            type="number"
+            value={form.mom_growth_pct}
+            onChange={(e) => set('mom_growth_pct', e.target.value)}
+            className={inputCls}
+            placeholder="80"
+            min={0}
+          />
         </div>
       </section>
 

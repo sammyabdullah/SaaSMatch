@@ -63,9 +63,7 @@ export default function FounderAccountForm({ initialData }: Props) {
     initialData.product_categories ?? []
   )
   const [arr_range, setArrRange] = useState<string>(initialData.arr_range)
-  const [mom_growth_pct, setMomGrowth] = useState(String(initialData.mom_growth_pct))
-  const [nrr_pct, setNrr] = useState(String(initialData.nrr_pct))
-  const [acv_usd, setAcv] = useState(String(initialData.acv_usd))
+  const [mom_growth_pct, setMomGrowth] = useState(initialData.mom_growth_pct != null ? String(initialData.mom_growth_pct) : '')
   const [gtm_motion, setGtmMotion] = useState<string>(initialData.gtm_motion)
   const [revenue_model, setRevenueModel] = useState<string>(initialData.revenue_model)
   const [raising_amount_usd, setRaising] = useState(String(initialData.raising_amount_usd))
@@ -89,9 +87,7 @@ export default function FounderAccountForm({ initialData }: Props) {
       stage: stage as FounderStage,
       product_categories,
       arr_range: arr_range as ArrRange,
-      mom_growth_pct: Number(mom_growth_pct),
-      nrr_pct: Number(nrr_pct),
-      acv_usd: Number(acv_usd),
+      mom_growth_pct: mom_growth_pct ? Number(mom_growth_pct) : null,
       gtm_motion: gtm_motion as GtmMotion,
       revenue_model: revenue_model as RevenueModel,
       raising_amount_usd: Number(raising_amount_usd),
@@ -180,37 +176,16 @@ export default function FounderAccountForm({ initialData }: Props) {
         </select>
       </div>
 
-      <div className="grid grid-cols-3 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">MoM growth %</label>
-          <input
-            type="number"
-            value={mom_growth_pct}
-            onChange={(e) => setMomGrowth(e.target.value)}
-            className={inputCls}
-            min={0}
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">NRR %</label>
-          <input
-            type="number"
-            value={nrr_pct}
-            onChange={(e) => setNrr(e.target.value)}
-            className={inputCls}
-            min={0}
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">ACV (USD)</label>
-          <input
-            type="number"
-            value={acv_usd}
-            onChange={(e) => setAcv(e.target.value)}
-            className={inputCls}
-            min={0}
-          />
-        </div>
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">YOY Growth % <span className="text-gray-400 font-normal">(optional)</span></label>
+        <input
+          type="number"
+          value={mom_growth_pct}
+          onChange={(e) => setMomGrowth(e.target.value)}
+          className={inputCls}
+          min={0}
+          placeholder="80"
+        />
       </div>
 
       <div className="grid grid-cols-2 gap-4">

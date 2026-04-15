@@ -93,9 +93,7 @@ export default async function ProfileDetailPage({ params }: Props) {
             <Field label="Founded" value={String(fp.founded_year)} />
             <Field label="Stage" value={fmtStage(fp.stage)} />
             <Field label="ARR range" value={fmtArrRange(fp.arr_range)} />
-            <Field label="MoM growth" value={`${fp.mom_growth_pct}%`} />
-            <Field label="NRR" value={`${fp.nrr_pct}%`} />
-            <Field label="ACV" value={fmtUsd(fp.acv_usd)} />
+            {fp.mom_growth_pct != null && <Field label="YOY growth" value={`${fp.mom_growth_pct}%`} />}
             <Field
               label="GTM motion"
               value={fp.gtm_motion.replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())}

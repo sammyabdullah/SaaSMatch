@@ -18,9 +18,7 @@ export interface FounderProfileInput {
   stage: FounderStage
   product_categories: string[]
   arr_range: ArrRange
-  mom_growth_pct: number
-  nrr_pct: number
-  acv_usd: number
+  mom_growth_pct?: number | null
   gtm_motion: GtmMotion
   revenue_model: RevenueModel
   raising_amount_usd: number
@@ -56,6 +54,9 @@ export async function submitFounderProfile(data: FounderProfileInput) {
     id: user.id,
     ...data,
     // Fields removed from form — set safe defaults
+    mom_growth_pct: data.mom_growth_pct ?? null,
+    nrr_pct: null,
+    acv_usd: null,
     wants_lead: false,
     wants_board_seat: false,
     check_size_min_usd: 0,

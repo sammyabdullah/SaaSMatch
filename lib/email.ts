@@ -18,8 +18,7 @@ export async function sendFounderFlaggedInvestorEmail({
     arr_range: string
     raising_amount_usd: number
     product_categories: string[]
-    mom_growth_pct: number
-    nrr_pct: number
+    mom_growth_pct: number | null
     why_now: string
     location: string
   }
@@ -38,8 +37,7 @@ export async function sendFounderFlaggedInvestorEmail({
         <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Stage</td><td style="font-size:13px">${fmtStage(founder.stage)}</td></tr>
         <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">ARR range</td><td style="font-size:13px">${fmtArr(founder.arr_range)}</td></tr>
         <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Raising</td><td style="font-size:13px">${raise}</td></tr>
-        <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">MoM growth</td><td style="font-size:13px">${founder.mom_growth_pct}%</td></tr>
-        <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">NRR</td><td style="font-size:13px">${founder.nrr_pct}%</td></tr>
+        ${founder.mom_growth_pct != null ? `<tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">YOY growth</td><td style="font-size:13px">${founder.mom_growth_pct}%</td></tr>` : ''}
         <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Categories</td><td style="font-size:13px">${categoryList}</td></tr>
         <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Location</td><td style="font-size:13px">${founder.location}</td></tr>
       </table>

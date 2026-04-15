@@ -54,7 +54,7 @@ export default async function InvestorDashboard({ userId }: Props) {
   // Incoming introductions: founders who flagged this investor, pending response
   const { data: incomingFlags } = await admin
     .from('flags')
-    .select('*, founder_profiles(product_categories, location, arr_range, stage, mom_growth_pct, nrr_pct, raising_amount_usd, why_now)')
+    .select('*, founder_profiles(product_categories, location, arr_range, stage, mom_growth_pct, raising_amount_usd, why_now)')
     .eq('investor_id', userId)
     .eq('flagged_by', 'founder')
     .eq('status', 'pending')
@@ -141,7 +141,7 @@ export default async function InvestorDashboard({ userId }: Props) {
                         {fp?.stage && <span className="text-xs text-gray-600">{fmtStage(fp.stage)}</span>}
                         {fp?.arr_range && <span className="text-xs text-gray-500">{fmtArrRange(fp.arr_range)}</span>}
                         {fp?.mom_growth_pct != null && (
-                          <span className="text-xs text-gray-500">{fp.mom_growth_pct}% MoM</span>
+                          <span className="text-xs text-gray-500">{fp.mom_growth_pct}% YOY</span>
                         )}
                       </div>
                       {fp?.why_now && (

@@ -38,7 +38,7 @@ export async function flagInvestor(investorId: string): Promise<{ error?: string
       admin.from('investor_profiles').select('partner_name').eq('id', investorId).single(),
       admin.from('profiles').select('email').eq('id', investorId).single(),
       admin.from('founder_profiles')
-        .select('stage, arr_range, raising_amount_usd, product_categories, mom_growth_pct, nrr_pct, why_now, location')
+        .select('stage, arr_range, raising_amount_usd, product_categories, mom_growth_pct, why_now, location')
         .eq('id', user.id)
         .single(),
     ])
