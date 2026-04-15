@@ -3,6 +3,7 @@
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
+import { sendWelcomeFounderEmail, sendWelcomeInvestorEmail } from '@/lib/email'
 
 async function requireAdmin() {
   const supabase = await createClient()
@@ -29,6 +30,13 @@ export async function approveFounder(founderId: string) {
 
   if (error) throw new Error(error.message)
 
+  try {
+    const { data: profile } = await admin.from('profiles').select('email').eq('id', founderId).single()
+    if (profile?.email) await sendWelcomeFounderEmail({ email: profile.email })
+  } catch {
+    // Email errors are non-fatal
+  }
+
   revalidatePath('/admin')
 }
 
@@ -42,6 +50,13 @@ export async function approveInvestor(investorId: string) {
     .eq('id', investorId)
 
   if (error) throw new Error(error.message)
+
+  try {
+    const { data: profile } = await admin.from('profiles').select('email').eq('id', investorId).single()
+    if (profile?.email) await sendWelcomeInvestorEmail({ email: profile.email })
+  } catch {
+    // Email errors are non-fatal
+  }
 
   revalidatePath('/admin')
 }

@@ -256,6 +256,42 @@ export async function sendAdminNewInvestorEmail({
   })
 }
 
+// ─── Welcome: founder approved ───────────────────────────────────────────────
+export async function sendWelcomeFounderEmail({ email }: { email: string }) {
+  await resend.emails.send({
+    from: FROM,
+    to: email,
+    subject: 'You\'re approved — welcome to UnlockedVC',
+    html: `
+      <p>Your founder profile has been reviewed and approved. You're now live on UnlockedVC.</p>
+
+      <p>Investors can now discover your profile. You'll be notified here when one expresses interest — at that point you can accept or decline the introduction from your dashboard.</p>
+
+      <p><a href="${APP_URL}/dashboard" style="background:#534AB7;color:white;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block">Go to your dashboard</a></p>
+
+      <p style="color:#999;font-size:12px">Questions? Reply to this email or reach us at <a href="mailto:${ADMIN_EMAIL}" style="color:#999">${ADMIN_EMAIL}</a>.</p>
+    `,
+  })
+}
+
+// ─── Welcome: investor approved ──────────────────────────────────────────────
+export async function sendWelcomeInvestorEmail({ email }: { email: string }) {
+  await resend.emails.send({
+    from: FROM,
+    to: email,
+    subject: 'You\'re approved — welcome to UnlockedVC',
+    html: `
+      <p>Your investor profile has been reviewed and approved. You now have full access to UnlockedVC.</p>
+
+      <p>Browse active founder profiles in Discover and flag any that fit your thesis. You'll also be notified here when a founder expresses interest in connecting with you.</p>
+
+      <p><a href="${APP_URL}/discover" style="background:#534AB7;color:white;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block">Browse founders</a></p>
+
+      <p style="color:#999;font-size:12px">Questions? Reply to this email or reach us at <a href="mailto:${ADMIN_EMAIL}" style="color:#999">${ADMIN_EMAIL}</a>.</p>
+    `,
+  })
+}
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function formatUsd(n: number): string {
   if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(n % 1_000_000 === 0 ? 0 : 1)}M`
