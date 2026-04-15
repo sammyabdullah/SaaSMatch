@@ -7,7 +7,7 @@ export default function Home() {
         A free platform connecting SaaS founders with SaaS investors.
       </p>
       <p className="text-gray-500 text-base mb-12">
-        Both sides apply and introductions happen only when there&apos;s mutual interest.
+        Welcome.
       </p>
       <div className="flex flex-col sm:flex-row gap-4 justify-center">
         <Link
