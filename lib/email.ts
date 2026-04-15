@@ -277,13 +277,11 @@ export async function sendWelcomeInvestorEmail({ email }: { email: string }) {
     to: email,
     subject: 'You\'re approved — welcome to UnlockedVC',
     html: `
-      <p>Your investor profile has been reviewed and approved. You now have full access to UnlockedVC.</p>
+      <p>Your investor profile is approved. You now have full access to UnlockedVC.</p>
 
-      <p>Browse active founder profiles in Discover and flag any that fit your thesis. You'll also be notified here when a founder expresses interest in connecting with you.</p>
+      <p>Browse active founder profiles in Discover and flag any that fit your thesis. You'll be notified here when a founder reciprocates interest in connecting with you or expresses the initial interest.</p>
 
       <p><a href="${APP_URL}/discover" style="background:#534AB7;color:white;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block">Browse founders</a></p>
-
-      <p style="color:#999;font-size:12px">Questions? Reply to this email or reach us at <a href="mailto:${ADMIN_EMAIL}" style="color:#999">${ADMIN_EMAIL}</a>.</p>
     `,
   })
 }
