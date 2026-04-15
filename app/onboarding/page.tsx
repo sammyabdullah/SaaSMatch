@@ -31,12 +31,6 @@ export default async function OnboardingPage() {
     if (fp) redirect('/dashboard')
     return (
       <div className="max-w-xl mx-auto px-6 py-12">
-        <div className="mb-8">
-          <p className="text-sm text-gray-500">
-            Your profile is reviewed before going live. Investors will only see
-            what you share here.
-          </p>
-        </div>
         <FounderForm />
       </div>
     )
