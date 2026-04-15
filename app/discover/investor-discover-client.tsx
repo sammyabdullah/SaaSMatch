@@ -3,7 +3,7 @@
 import { useState, useMemo, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { flagFounder, unflagFounder } from '@/app/actions/discover'
-import { fmtUsd, fmtArrRange, fmtStage } from '@/lib/format'
+import { fmtArrRange, fmtStage } from '@/lib/format'
 import type { Database } from '@/lib/supabase/types'
 
 type FounderProfileRow = Database['public']['Tables']['founder_profiles']['Row']
@@ -96,7 +96,6 @@ export default function InvestorDiscoverClient({
   const [arrRange, setArrRange] = useState('')
   const [selectedStages, setSelectedStages] = useState<string[]>([])
   const [momGrowthMin, setMomGrowthMin] = useState('')
-  const [nrrMin, setNrrMin] = useState('')
   const [selectedGtm, setSelectedGtm] = useState<string[]>([])
   const [selectedRevModel, setSelectedRevModel] = useState<string[]>([])
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
@@ -114,7 +113,6 @@ export default function InvestorDiscoverClient({
     setArrRange('')
     setSelectedStages([])
     setMomGrowthMin('')
-    setNrrMin('')
     setSelectedGtm([])
     setSelectedRevModel([])
     setSelectedCategories([])
@@ -161,7 +159,7 @@ export default function InvestorDiscoverClient({
         }
         return true
       })
-  }, [founders, passedIds, arrRange, selectedStages, momGrowthMin, nrrMin, selectedGtm, selectedRevModel, selectedCategories])
+  }, [founders, passedIds, arrRange, selectedStages, momGrowthMin, selectedGtm, selectedRevModel, selectedCategories])
 
   async function handleFlag(founderId: string) {
     setFlaggedIds((prev) => new Set(Array.from(prev).concat(founderId)))
@@ -237,17 +235,6 @@ export default function InvestorDiscoverClient({
               onChange={(e) => setMomGrowthMin(e.target.value)}
               className={inputCls}
               placeholder="10"
-              min={0}
-            />
-          </div>
-          <div>
-            <label className="block text-xs text-gray-500 mb-1">NRR min %</label>
-            <input
-              type="number"
-              value={nrrMin}
-              onChange={(e) => setNrrMin(e.target.value)}
-              className={inputCls}
-              placeholder="100"
               min={0}
             />
           </div>
