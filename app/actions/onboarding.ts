@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import { sendAdminNewFounderEmail, sendAdminNewInvestorEmail } from '@/lib/email'
 import type {
   FounderStage,
   ArrRange,
@@ -68,6 +69,19 @@ export async function submitFounderProfile(data: FounderProfileInput) {
     return { error: error.message }
   }
 
+  try {
+    await sendAdminNewFounderEmail({
+      email: user.email ?? '',
+      company_name: data.company_name,
+      location: data.location,
+      stage: data.stage,
+      arr_range: data.arr_range,
+      raising_amount_usd: data.raising_amount_usd,
+    })
+  } catch {
+    // Email errors are non-fatal
+  }
+
   return { success: true }
 }
 
@@ -89,6 +103,19 @@ export async function submitInvestorProfile(data: InvestorProfileInput) {
 
   if (error) {
     return { error: error.message }
+  }
+
+  try {
+    await sendAdminNewInvestorEmail({
+      email: user.email ?? '',
+      firm_name: data.firm_name,
+      partner_name: data.partner_name,
+      location: data.location,
+      check_size_min_usd: data.check_size_min_usd,
+      check_size_max_usd: data.check_size_max_usd,
+    })
+  } catch {
+    // Email errors are non-fatal
   }
 
   return { success: true }

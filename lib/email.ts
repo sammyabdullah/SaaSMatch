@@ -187,6 +187,75 @@ export async function sendAdminConnectionEmail({
   })
 }
 
+// ─── Admin: new founder signup ────────────────────────────────────────────────
+export async function sendAdminNewFounderEmail({
+  email,
+  company_name,
+  location,
+  stage,
+  arr_range,
+  raising_amount_usd,
+}: {
+  email: string
+  company_name: string
+  location: string
+  stage: string
+  arr_range: string
+  raising_amount_usd: number
+}) {
+  await resend.emails.send({
+    from: FROM,
+    to: ADMIN_EMAIL,
+    subject: `New founder signup: ${company_name}`,
+    html: `
+      <p>A new founder has submitted a profile on UnlockedVC and is awaiting approval.</p>
+      <table style="border-collapse:collapse;margin:16px 0">
+        <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Email</td><td style="font-size:13px">${email}</td></tr>
+        <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Company</td><td style="font-size:13px">${company_name}</td></tr>
+        <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Location</td><td style="font-size:13px">${location}</td></tr>
+        <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Stage</td><td style="font-size:13px">${fmtStage(stage)}</td></tr>
+        <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">ARR range</td><td style="font-size:13px">${fmtArr(arr_range)}</td></tr>
+        <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Raising</td><td style="font-size:13px">${formatUsd(raising_amount_usd)}</td></tr>
+      </table>
+      <p><a href="${APP_URL}/admin" style="background:#534AB7;color:white;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block">Review in Admin</a></p>
+    `,
+  })
+}
+
+// ─── Admin: new investor signup ───────────────────────────────────────────────
+export async function sendAdminNewInvestorEmail({
+  email,
+  firm_name,
+  partner_name,
+  location,
+  check_size_min_usd,
+  check_size_max_usd,
+}: {
+  email: string
+  firm_name: string
+  partner_name: string
+  location: string
+  check_size_min_usd: number
+  check_size_max_usd: number
+}) {
+  await resend.emails.send({
+    from: FROM,
+    to: ADMIN_EMAIL,
+    subject: `New investor signup: ${firm_name}`,
+    html: `
+      <p>A new investor has submitted a profile on UnlockedVC and is awaiting approval.</p>
+      <table style="border-collapse:collapse;margin:16px 0">
+        <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Email</td><td style="font-size:13px">${email}</td></tr>
+        <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Firm</td><td style="font-size:13px">${firm_name}</td></tr>
+        <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Partner</td><td style="font-size:13px">${partner_name}</td></tr>
+        <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Location</td><td style="font-size:13px">${location}</td></tr>
+        <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Check size</td><td style="font-size:13px">${formatUsd(check_size_min_usd)} – ${formatUsd(check_size_max_usd)}</td></tr>
+      </table>
+      <p><a href="${APP_URL}/admin" style="background:#534AB7;color:white;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block">Review in Admin</a></p>
+    `,
+  })
+}
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function formatUsd(n: number): string {
   if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(n % 1_000_000 === 0 ? 0 : 1)}M`
