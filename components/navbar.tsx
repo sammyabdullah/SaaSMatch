@@ -28,8 +28,17 @@ export default async function Navbar() {
       <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
         <Link
           href="/"
-          className="font-black text-2xl tracking-widest uppercase"
+          className="font-black text-2xl tracking-widest uppercase flex items-center gap-2"
         >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/flower.png"
+            alt=""
+            aria-hidden="true"
+            width={32}
+            height={32}
+            style={{ flexShrink: 0, objectFit: 'contain' }}
+          />
           <span style={{ color: '#000000' }}>Unlocked</span><span style={{ color: '#29ABE2' }}>VC</span>
         </Link>
 
