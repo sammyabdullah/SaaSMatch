@@ -20,6 +20,7 @@ export type RevenueModel = 'seat-based' | 'usage-based' | 'platform-fee' | 'othe
 export type FounderStatus = 'pending' | 'active' | 'expired' | 'closed'
 export type MatchStatus = 'active' | 'responded' | 'expired' | 'closed'
 export type FlagSide = 'founder' | 'investor'
+export type FlagStatus = 'pending' | 'accepted' | 'declined'
 
 export type Database = {
   public: {
@@ -60,11 +61,6 @@ export type Database = {
           gtm_motion: GtmMotion
           revenue_model: RevenueModel
           raising_amount_usd: number
-          wants_lead: boolean
-          wants_board_seat: boolean
-          check_size_min_usd: number
-          check_size_max_usd: number
-          geography_preference: string
           why_now: string
           product_categories: string[]
           status: FounderStatus
@@ -87,11 +83,6 @@ export type Database = {
           gtm_motion: GtmMotion
           revenue_model: RevenueModel
           raising_amount_usd: number
-          wants_lead?: boolean
-          wants_board_seat?: boolean
-          check_size_min_usd: number
-          check_size_max_usd: number
-          geography_preference: string
           why_now: string
           website?: string | null
           product_categories?: string[]
@@ -114,11 +105,6 @@ export type Database = {
           gtm_motion?: GtmMotion
           revenue_model?: RevenueModel
           raising_amount_usd?: number
-          wants_lead?: boolean
-          wants_board_seat?: boolean
-          check_size_min_usd?: number
-          check_size_max_usd?: number
-          geography_preference?: string
           why_now?: string
           product_categories?: string[]
           status?: FounderStatus
@@ -148,14 +134,11 @@ export type Database = {
           check_size_max_usd: number
           stages: FounderStage[]
           leads_rounds: boolean
-          takes_board_seat: boolean
           geography_focus: string
           saas_subcategories: string[]
           arr_sweet_spot_min: number
           arr_sweet_spot_max: number
           thesis_statement: string
-          value_beyond_capital: string
-          portfolio_count: number
           is_approved: boolean
           last_active_at: string | null
           created_at: string
@@ -171,14 +154,11 @@ export type Database = {
           check_size_max_usd: number
           stages?: FounderStage[]
           leads_rounds?: boolean
-          takes_board_seat?: boolean
           geography_focus: string
           saas_subcategories?: string[]
           arr_sweet_spot_min: number
           arr_sweet_spot_max: number
           thesis_statement: string
-          value_beyond_capital: string
-          portfolio_count?: number
           is_approved?: boolean
           last_active_at?: string | null
           created_at?: string
@@ -193,14 +173,11 @@ export type Database = {
           check_size_max_usd?: number
           stages?: FounderStage[]
           leads_rounds?: boolean
-          takes_board_seat?: boolean
           geography_focus?: string
           saas_subcategories?: string[]
           arr_sweet_spot_min?: number
           arr_sweet_spot_max?: number
           thesis_statement?: string
-          value_beyond_capital?: string
-          portfolio_count?: number
           is_approved?: boolean
           last_active_at?: string | null
           updated_at?: string
@@ -222,6 +199,8 @@ export type Database = {
           founder_id: string
           investor_id: string
           flagged_by: FlagSide
+          status: FlagStatus
+          responded_at: string | null
           created_at: string
         }
         Insert: {
@@ -229,9 +208,13 @@ export type Database = {
           founder_id: string
           investor_id: string
           flagged_by: FlagSide
+          status?: FlagStatus
           created_at?: string
         }
-        Update: Record<string, never>
+        Update: {
+          status?: FlagStatus
+          responded_at?: string | null
+        }
         Relationships: []
       }
 

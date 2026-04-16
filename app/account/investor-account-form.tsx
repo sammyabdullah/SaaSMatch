@@ -50,7 +50,6 @@ export default function InvestorAccountForm({ initialData }: Props) {
   const [arr_sweet_spot_min, setArrMin] = useState(String(initialData.arr_sweet_spot_min))
   const [arr_sweet_spot_max, setArrMax] = useState(String(initialData.arr_sweet_spot_max))
   const [thesis_statement, setThesis] = useState(initialData.thesis_statement)
-  const [portfolio_count, setPortfolioCount] = useState(String(initialData.portfolio_count ?? 0))
 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -71,7 +70,6 @@ export default function InvestorAccountForm({ initialData }: Props) {
       check_size_max_usd: Number(check_size_max_usd),
       stages,
       leads_rounds,
-      takes_board_seat: initialData.takes_board_seat,
       geography_focus,
       saas_subcategories,
       arr_sweet_spot_min: Number(arr_sweet_spot_min),
@@ -225,17 +223,6 @@ export default function InvestorAccountForm({ initialData }: Props) {
             min={0}
           />
         </div>
-      </div>
-
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Portfolio companies</label>
-        <input
-          type="number"
-          value={portfolio_count}
-          onChange={(e) => setPortfolioCount(e.target.value)}
-          className={inputCls}
-          min={0}
-        />
       </div>
 
       <div>

@@ -250,6 +250,12 @@ function InvestorCard({
           <h3 className="text-lg font-semibold text-gray-900">{ip.firm_name}</h3>
           <p className="text-sm text-gray-700 mt-0.5">{ip.partner_name}</p>
           <p className="text-sm text-gray-500 mt-0.5">{email}</p>
+          {ip.website && (
+            <a href={ip.website} target="_blank" rel="noopener noreferrer"
+               className="text-sm text-[#534AB7] mt-0.5 hover:underline block">
+              {ip.website}
+            </a>
+          )}
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
@@ -264,9 +270,9 @@ function InvestorCard({
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-3 mb-5 text-sm">
         <Field label="Location" value={ip.location} />
         <Field label="Check size" value={`${fmtUsd(ip.check_size_min_usd)} – ${fmtUsd(ip.check_size_max_usd)}`} />
+        <Field label="ARR sweet spot" value={`${fmtUsd(ip.arr_sweet_spot_min)} – ${fmtUsd(ip.arr_sweet_spot_max)}`} />
         <Field label="Leads rounds" value={ip.leads_rounds ? 'Yes' : 'No'} />
         <Field label="Geography" value={ip.geography_focus} />
-        <Field label="ARR sweet spot" value={`${fmtUsd(ip.arr_sweet_spot_min)} – ${fmtUsd(ip.arr_sweet_spot_max)}`} />
         <Field label="Stages" value={ip.stages?.map(fmt).join(', ') ?? '—'} />
       </div>
 

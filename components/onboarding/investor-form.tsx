@@ -34,7 +34,6 @@ interface FormState {
   check_size_max_usd: string
   stages: FounderStage[]
   leads_rounds: boolean
-  takes_board_seat: boolean
   geography_focus: string
   saas_subcategories: string[]
   arr_sweet_spot_min: string
@@ -45,7 +44,7 @@ interface FormState {
 const empty: FormState = {
   firm_name: '', partner_name: '', website: '', location: '',
   check_size_min_usd: '', check_size_max_usd: '',
-  stages: [], leads_rounds: false, takes_board_seat: false,
+  stages: [], leads_rounds: false,
   geography_focus: '', saas_subcategories: [],
   arr_sweet_spot_min: '', arr_sweet_spot_max: '',
   thesis_statement: '',
@@ -100,7 +99,6 @@ export default function InvestorForm() {
       check_size_max_usd: Number(form.check_size_max_usd),
       stages: form.stages,
       leads_rounds: form.leads_rounds,
-      takes_board_seat: form.takes_board_seat,
       geography_focus: form.geography_focus,
       saas_subcategories: form.saas_subcategories,
       arr_sweet_spot_min: Number(form.arr_sweet_spot_min),

@@ -34,7 +34,6 @@ export interface InvestorProfileInput {
   check_size_max_usd: number
   stages: FounderStage[]
   leads_rounds: boolean
-  takes_board_seat: boolean
   geography_focus: string
   saas_subcategories: string[]
   arr_sweet_spot_min: number
@@ -58,11 +57,6 @@ export async function submitFounderProfile(data: FounderProfileInput) {
     mom_growth_pct: data.mom_growth_pct ?? null,
     nrr_pct: null,
     acv_usd: null,
-    wants_lead: false,
-    wants_board_seat: false,
-    check_size_min_usd: 0,
-    check_size_max_usd: 0,
-    geography_preference: '',
     status: 'pending',
     is_approved: false,
   })
@@ -99,7 +93,6 @@ export async function submitInvestorProfile(data: InvestorProfileInput) {
   const { error } = await supabase.from('investor_profiles').insert({
     id: user.id,
     ...data,
-    value_beyond_capital: '',
     is_approved: false,
   })
 

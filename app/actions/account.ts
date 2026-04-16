@@ -65,7 +65,6 @@ export async function updateInvestorProfile(
       arr_sweet_spot_min: data.arr_sweet_spot_min,
       arr_sweet_spot_max: data.arr_sweet_spot_max,
       thesis_statement: data.thesis_statement,
-      value_beyond_capital: '',
       updated_at: new Date().toISOString(),
     })
     .eq('id', user.id)

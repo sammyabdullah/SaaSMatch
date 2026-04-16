@@ -203,11 +203,7 @@ export default async function ProfileDetailPage({ params }: Props) {
               value={`${fmtUsd(ip.arr_sweet_spot_min)} – ${fmtUsd(ip.arr_sweet_spot_max)}`}
             />
             <Field label="Leads rounds" value={ip.leads_rounds ? 'Yes' : 'No'} />
-            <Field label="Takes board seat" value={ip.takes_board_seat ? 'Yes' : 'No'} />
             <Field label="Geography focus" value={ip.geography_focus} />
-            {ip.portfolio_count > 0 && (
-              <Field label="Portfolio companies" value={String(ip.portfolio_count)} />
-            )}
           </div>
         </div>
 

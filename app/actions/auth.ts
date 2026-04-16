@@ -33,6 +33,10 @@ export async function signIn(email: string, password: string) {
   })
 
   if (error) {
+    const msg = error.message.toLowerCase()
+    if (msg.includes('invalid login') || msg.includes('invalid credentials') || msg.includes('user not found')) {
+      return { error: 'Email not registered or incorrect password.' }
+    }
     return { error: error.message }
   }
 
