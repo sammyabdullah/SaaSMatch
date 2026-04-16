@@ -65,6 +65,8 @@ export type Database = {
           status: FounderStatus
           profile_expires_at: string | null
           is_approved: boolean
+          approved_at: string | null
+          clock_restarted_at: string | null
           created_at: string
           updated_at: string
         }
@@ -88,6 +90,8 @@ export type Database = {
           status?: FounderStatus
           profile_expires_at?: string | null
           is_approved?: boolean
+          approved_at?: string | null
+          clock_restarted_at?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -109,6 +113,8 @@ export type Database = {
           status?: FounderStatus
           profile_expires_at?: string | null
           is_approved?: boolean
+          approved_at?: string | null
+          clock_restarted_at?: string | null
           updated_at?: string
         }
         Relationships: [

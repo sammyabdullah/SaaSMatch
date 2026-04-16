@@ -185,11 +185,11 @@ export default async function FounderDashboard({ userId }: Props) {
   }
 
   // Profile lifecycle events
-  if ((founderProfile as any)?.approved_at) {
-    activity.push({ date: (founderProfile as any).approved_at, text: 'Your profile was approved' })
+  if (founderProfile?.approved_at) {
+    activity.push({ date: founderProfile.approved_at, text: 'Your profile was approved' })
   }
-  if ((founderProfile as any)?.clock_restarted_at) {
-    activity.push({ date: (founderProfile as any).clock_restarted_at, text: 'You restarted your 30-day active window' })
+  if (founderProfile?.clock_restarted_at) {
+    activity.push({ date: founderProfile.clock_restarted_at, text: 'You restarted your 30-day active window' })
   }
   if (founderProfile?.status === 'expired' && founderProfile.profile_expires_at) {
     activity.push({ date: founderProfile.profile_expires_at, text: 'Your profile expired — restart the clock to stay visible' })
