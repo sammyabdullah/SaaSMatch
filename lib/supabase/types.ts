@@ -18,7 +18,6 @@ export type ArrRange = '0-500k' | '500k-2m' | '2m-5m' | '5m-plus'
 export type GtmMotion = 'sales-led' | 'product-led' | 'hybrid'
 export type RevenueModel = 'seat-based' | 'usage-based' | 'platform-fee' | 'other'
 export type FounderStatus = 'pending' | 'active' | 'expired' | 'closed'
-export type MatchStatus = 'active' | 'responded' | 'expired' | 'closed'
 export type FlagSide = 'founder' | 'investor'
 export type FlagStatus = 'pending' | 'accepted' | 'declined'
 
@@ -140,7 +139,6 @@ export type Database = {
           arr_sweet_spot_max: number
           thesis_statement: string
           is_approved: boolean
-          last_active_at: string | null
           created_at: string
           updated_at: string
         }
@@ -160,7 +158,6 @@ export type Database = {
           arr_sweet_spot_max: number
           thesis_statement: string
           is_approved?: boolean
-          last_active_at?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -179,7 +176,6 @@ export type Database = {
           arr_sweet_spot_max?: number
           thesis_statement?: string
           is_approved?: boolean
-          last_active_at?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -218,34 +214,6 @@ export type Database = {
         Relationships: []
       }
 
-      matches: {
-        Row: {
-          id: string
-          founder_id: string
-          investor_id: string
-          matched_at: string
-          investor_responded_at: string | null
-          response_deadline: string
-          status: MatchStatus
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          founder_id: string
-          investor_id: string
-          matched_at?: string
-          investor_responded_at?: string | null
-          response_deadline: string
-          status?: MatchStatus
-          created_at?: string
-        }
-        Update: {
-          investor_responded_at?: string | null
-          status?: MatchStatus
-        }
-        Relationships: []
-      }
-
       profile_views: {
         Row: {
           id: string
@@ -273,10 +241,6 @@ export type Database = {
         Args: Record<string, never>
         Returns: number
       }
-      fn_expire_matches_and_warn: {
-        Args: Record<string, never>
-        Returns: number
-      }
       auth_user_role: {
         Args: Record<string, never>
         Returns: UserRole
@@ -290,7 +254,6 @@ export type Database = {
       gtm_motion: GtmMotion
       revenue_model: RevenueModel
       founder_status: FounderStatus
-      match_status: MatchStatus
       flag_side: FlagSide
     }
 
