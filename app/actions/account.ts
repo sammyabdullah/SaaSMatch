@@ -87,7 +87,7 @@ export async function restartFounderClock(): Promise<{ error?: string; success?:
   const { error } = await admin
     .from('founder_profiles')
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .update({ profile_expires_at: expiresAt.toISOString(), status: 'active', updated_at: new Date().toISOString() } as any)
+    .update({ profile_expires_at: expiresAt.toISOString(), status: 'active', updated_at: new Date().toISOString(), clock_restarted_at: new Date().toISOString() } as any)
     .eq('id', user.id)
 
   if (error) return { error: error.message }

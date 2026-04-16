@@ -61,7 +61,7 @@ export default async function FounderDashboard({ userId }: Props) {
   // Founder profile
   const { data: founderProfile } = await admin
     .from('founder_profiles')
-    .select('status, profile_expires_at')
+    .select('status, profile_expires_at, is_approved, approved_at, clock_restarted_at')
     .eq('id', userId)
     .single()
 
@@ -115,7 +115,25 @@ export default async function FounderDashboard({ userId }: Props) {
     .select('*, investor_profiles(firm_name)')
     .eq('founder_id', userId)
     .order('viewed_at', { ascending: false })
-    .limit(10) as { data: any[] | null }
+    .limit(20) as { data: any[] | null }
+
+  // All outgoing flags for activity feed (all statuses)
+  const { data: allOutgoingForActivity } = await admin
+    .from('flags')
+    .select('*, investor_profiles(firm_name)')
+    .eq('founder_id', userId)
+    .eq('flagged_by', 'founder')
+    .order('created_at', { ascending: false })
+    .limit(20) as { data: any[] | null }
+
+  // All incoming flags for activity feed (all statuses)
+  const { data: allIncomingForActivity } = await admin
+    .from('flags')
+    .select('*, investor_profiles(firm_name)')
+    .eq('founder_id', userId)
+    .eq('flagged_by', 'investor')
+    .order('created_at', { ascending: false })
+    .limit(20) as { data: any[] | null }
 
   // Profile status display
   let profileStatusValue = founderProfile?.status ?? '—'
@@ -133,12 +151,50 @@ export default async function FounderDashboard({ userId }: Props) {
   // Activity feed
   type ActivityItem = { date: string; text: string }
   const activity: ActivityItem[] = []
+
+  // Profile views
   if (recentViews) {
     for (const v of recentViews) {
       const firm = v.investor_profiles?.firm_name ?? 'An investor'
       activity.push({ date: v.viewed_at, text: `${firm} viewed your profile` })
     }
   }
+
+  // Outgoing flag events (founder initiated)
+  if (allOutgoingForActivity) {
+    for (const f of allOutgoingForActivity) {
+      const firm = f.investor_profiles?.firm_name ?? 'An investor'
+      activity.push({ date: f.created_at, text: `You flagged ${firm}` })
+      if (f.status === 'accepted' && f.responded_at) {
+        activity.push({ date: f.responded_at, text: `You connected with ${firm}` })
+      } else if (f.status === 'declined' && f.responded_at) {
+        activity.push({ date: f.responded_at, text: `${firm} declined your connection request` })
+      }
+    }
+  }
+
+  // Incoming flag events (investor initiated)
+  if (allIncomingForActivity) {
+    for (const f of allIncomingForActivity) {
+      const firm = f.investor_profiles?.firm_name ?? 'An investor'
+      activity.push({ date: f.created_at, text: `${firm} expressed interest in your company` })
+      if (f.status === 'accepted' && f.responded_at) {
+        activity.push({ date: f.responded_at, text: `You connected with ${firm}` })
+      }
+    }
+  }
+
+  // Profile lifecycle events
+  if ((founderProfile as any)?.approved_at) {
+    activity.push({ date: (founderProfile as any).approved_at, text: 'Your profile was approved' })
+  }
+  if ((founderProfile as any)?.clock_restarted_at) {
+    activity.push({ date: (founderProfile as any).clock_restarted_at, text: 'You restarted your 30-day active window' })
+  }
+  if (founderProfile?.status === 'expired' && founderProfile.profile_expires_at) {
+    activity.push({ date: founderProfile.profile_expires_at, text: 'Your profile expired — restart the clock to stay visible' })
+  }
+
   activity.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
   const recentActivity = activity.slice(0, 10)
 
