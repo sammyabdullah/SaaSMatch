@@ -118,6 +118,7 @@ export async function acceptFlag(flagId: string): Promise<{ error?: string; succ
   }
 
   revalidatePath('/dashboard')
+  revalidatePath('/discover')
   return { success: true }
 }
 

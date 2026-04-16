@@ -43,12 +43,13 @@ export default async function DiscoverPage() {
       .eq('id', user.id)
       .single()
 
-    // Fetch existing flags by this founder
+    // Fetch pending flags by this founder (for flagsUsed count and "Flagged ✓" state)
     const { data: myFlags } = await admin
       .from('flags')
       .select('investor_id')
       .eq('founder_id', user.id)
       .eq('flagged_by', 'founder')
+      .eq('status', 'pending')
 
     // Fetch connected investor IDs (accepted flags, either direction)
     const { data: connectedInvestorFlags } = await admin
@@ -97,12 +98,13 @@ export default async function DiscoverPage() {
       .eq('id', user.id)
       .single()
 
-    // Fetch existing flags by this investor
+    // Fetch pending flags by this investor (for "Flagged ✓" state)
     const { data: myFlags } = await admin
       .from('flags')
       .select('founder_id')
       .eq('investor_id', user.id)
       .eq('flagged_by', 'investor')
+      .eq('status', 'pending')
 
     // Fetch connected founder IDs (accepted flags, either direction)
     const { data: connectedFounderFlags } = await admin
