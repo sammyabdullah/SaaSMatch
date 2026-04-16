@@ -50,6 +50,13 @@ export default async function DiscoverPage() {
       .eq('founder_id', user.id)
       .eq('flagged_by', 'founder')
 
+    // Fetch connected investor IDs (accepted flags, either direction)
+    const { data: connectedInvestorFlags } = await admin
+      .from('flags')
+      .select('investor_id')
+      .eq('founder_id', user.id)
+      .eq('status', 'accepted')
+
     if (!myProfile) {
       return (
         <div className="max-w-5xl mx-auto px-6 py-12">
@@ -61,11 +68,13 @@ export default async function DiscoverPage() {
     }
 
     const myFlaggedInvestorIds = (myFlags ?? []).map((f) => f.investor_id)
+    const connectedInvestorIds = new Set((connectedInvestorFlags ?? []).map((f) => f.investor_id))
+    const visibleInvestors = (investors ?? []).filter((i) => !connectedInvestorIds.has(i.id))
 
     return (
       <FounderDiscoverClient
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        investors={(investors ?? []) as any}
+        investors={visibleInvestors as any}
         myProfile={myProfile as FounderProfileRow}
         myFlaggedInvestorIds={myFlaggedInvestorIds}
       />
@@ -95,6 +104,13 @@ export default async function DiscoverPage() {
       .eq('investor_id', user.id)
       .eq('flagged_by', 'investor')
 
+    // Fetch connected founder IDs (accepted flags, either direction)
+    const { data: connectedFounderFlags } = await admin
+      .from('flags')
+      .select('founder_id')
+      .eq('investor_id', user.id)
+      .eq('status', 'accepted')
+
     if (!myProfile) {
       return (
         <div className="max-w-5xl mx-auto px-6 py-12">
@@ -106,11 +122,13 @@ export default async function DiscoverPage() {
     }
 
     const myFlaggedFounderIds = (myFlags ?? []).map((f) => f.founder_id)
+    const connectedFounderIds = new Set((connectedFounderFlags ?? []).map((f) => f.founder_id))
+    const visibleFounders = (founders ?? []).filter((f) => !connectedFounderIds.has(f.id))
 
     return (
       <InvestorDiscoverClient
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        founders={(founders ?? []) as any}
+        founders={visibleFounders as any}
         myProfile={myProfile as InvestorProfileRow}
         myFlaggedFounderIds={myFlaggedFounderIds}
       />
