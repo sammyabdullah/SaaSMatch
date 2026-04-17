@@ -98,16 +98,70 @@ export default async function InvestorDashboard({ userId }: Props) {
     .eq('status', 'accepted')
     .order('responded_at', { ascending: false }) as { data: any[] | null }
 
-  // Recently viewed founders
+  // Recently viewed founders (for activity feed)
   const { data: recentViews } = await admin
     .from('profile_views')
-    .select('*, founder_profiles(company_name, website, product_categories, location, arr_range, stage, mom_growth_pct)')
+    .select('*, founder_profiles(company_name)')
     .eq('investor_id', userId)
     .order('viewed_at', { ascending: false })
-    .limit(5) as { data: any[] | null }
+    .limit(20) as { data: any[] | null }
+
+  // All outgoing flags for activity feed (all statuses)
+  const { data: allOutgoingForActivity } = await admin
+    .from('flags')
+    .select('*, founder_profiles(company_name)')
+    .eq('investor_id', userId)
+    .eq('flagged_by', 'investor')
+    .order('created_at', { ascending: false })
+    .limit(20) as { data: any[] | null }
+
+  // All incoming flags for activity feed (all statuses)
+  const { data: allIncomingForActivity } = await admin
+    .from('flags')
+    .select('*, founder_profiles(company_name)')
+    .eq('investor_id', userId)
+    .eq('flagged_by', 'founder')
+    .order('created_at', { ascending: false })
+    .limit(20) as { data: any[] | null }
 
   const totalConnections = (acceptedIncoming?.length ?? 0) + (acceptedOutgoing?.length ?? 0)
   const pendingIntroductions = incomingFlags?.length ?? 0
+
+  // Activity feed
+  type ActivityItem = { date: string; text: string }
+  const activity: ActivityItem[] = []
+
+  if (recentViews) {
+    for (const v of recentViews) {
+      const company = v.founder_profiles?.company_name ?? 'A founder'
+      activity.push({ date: v.viewed_at, text: `You viewed ${company}` })
+    }
+  }
+
+  if (allOutgoingForActivity) {
+    for (const f of allOutgoingForActivity) {
+      const company = f.founder_profiles?.company_name ?? 'A founder'
+      activity.push({ date: f.created_at, text: `You flagged ${company}` })
+      if (f.status === 'accepted' && f.responded_at) {
+        activity.push({ date: f.responded_at, text: `You connected with ${company}` })
+      } else if (f.status === 'declined' && f.responded_at) {
+        activity.push({ date: f.responded_at, text: `${company} declined your connection request` })
+      }
+    }
+  }
+
+  if (allIncomingForActivity) {
+    for (const f of allIncomingForActivity) {
+      const company = f.founder_profiles?.company_name ?? 'A founder'
+      activity.push({ date: f.created_at, text: `${company} expressed interest in connecting` })
+      if (f.status === 'accepted' && f.responded_at) {
+        activity.push({ date: f.responded_at, text: `You connected with ${company}` })
+      }
+    }
+  }
+
+  activity.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+  const recentActivity = activity.slice(0, 10)
 
   return (
     <div className="max-w-5xl mx-auto px-6 py-12">
@@ -255,37 +309,21 @@ export default async function InvestorDashboard({ userId }: Props) {
           )}
         </section>
 
-        {/* Recently viewed */}
+        {/* Recent activity */}
         <section>
-          <h2 className="text-base font-semibold text-gray-900 mb-4">Recently viewed</h2>
-          {!recentViews || recentViews.length === 0 ? (
+          <h2 className="text-base font-semibold text-gray-900 mb-4">Recent activity</h2>
+          {recentActivity.length === 0 ? (
             <p className="text-sm text-gray-400 border border-gray-200 rounded-lg p-6 text-center">
-              You haven&apos;t viewed any founder profiles yet. Start browsing in Discover.
+              No activity yet.
             </p>
           ) : (
             <div className="border border-gray-200 rounded-lg divide-y divide-gray-100">
-              {recentViews.map((view, i) => {
-                const fp = view.founder_profiles
-                return (
-                  <div key={i} className="px-4 py-3 flex items-start justify-between gap-3">
-                    <div className="flex-1">
-                      <FounderNameLink name={fp?.company_name ?? 'Unknown company'} website={fp?.website} />
-                      {fp?.location && <p className="text-xs text-gray-500 mt-0.5">{fp.location}</p>}
-                      <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1">
-                        {fp?.stage && <span className="text-xs text-gray-500">{fmtStage(fp.stage)}</span>}
-                        {fp?.arr_range && <span className="text-xs text-gray-500">{fmtArrRange(fp.arr_range)}</span>}
-                        {fp?.mom_growth_pct != null && (
-                          <span className="text-xs text-gray-500">{fp.mom_growth_pct}% YOY</span>
-                        )}
-                      </div>
-                      {fp?.product_categories?.length > 0 && (
-                        <p className="text-xs text-gray-400 mt-0.5">{fp.product_categories.join(' · ')}</p>
-                      )}
-                    </div>
-                    <p className="text-xs text-gray-400 shrink-0">{fmtDate(view.viewed_at)}</p>
-                  </div>
-                )
-              })}
+              {recentActivity.map((item, i) => (
+                <div key={i} className="px-4 py-3 flex items-center justify-between">
+                  <p className="text-sm text-gray-700">{item.text}</p>
+                  <p className="text-xs text-gray-400 shrink-0 ml-3">{fmtDate(item.date)}</p>
+                </div>
+              ))}
             </div>
           )}
         </section>
