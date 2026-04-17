@@ -89,3 +89,22 @@ export async function rejectFounder(founderId: string) {
 
   revalidatePath('/admin')
 }
+
+export async function deleteFounderProfile(founderId: string) {
+  await requireAdmin()
+
+  const admin = createAdminClient()
+
+  // Delete related flags first to avoid FK constraint errors
+  await admin.from('flags').delete().eq('founder_id', founderId)
+
+  const { error } = await admin
+    .from('founder_profiles')
+    .delete()
+    .eq('id', founderId)
+
+  if (error) throw new Error(error.message)
+
+  revalidatePath('/admin')
+  revalidatePath('/discover')
+}

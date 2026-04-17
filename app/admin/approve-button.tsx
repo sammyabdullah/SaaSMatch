@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { approveFounder, rejectFounder, approveInvestor, rejectInvestor } from '@/app/actions/admin'
+import { approveFounder, rejectFounder, approveInvestor, rejectInvestor, deleteFounderProfile } from '@/app/actions/admin'
 
 export function ApproveButton({ founderId }: { founderId: string }) {
   const [loading, setLoading] = useState(false)
@@ -60,6 +60,27 @@ export function ApproveInvestorButton({ investorId }: { investorId: string }) {
       className="px-4 py-2 bg-[#534AB7] text-white text-sm font-medium rounded-md hover:bg-[#4339A0] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
     >
       {loading ? 'Approving…' : 'Approve'}
+    </button>
+  )
+}
+
+export function DeleteFounderButton({ founderId }: { founderId: string }) {
+  const [loading, setLoading] = useState(false)
+
+  async function handleDelete() {
+    if (!confirm('Permanently delete this founder profile? The auth account will remain intact. This cannot be undone.')) return
+    setLoading(true)
+    await deleteFounderProfile(founderId)
+    setLoading(false)
+  }
+
+  return (
+    <button
+      onClick={handleDelete}
+      disabled={loading}
+      className="px-4 py-2 border border-red-200 text-red-600 text-sm font-medium rounded-md hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+    >
+      {loading ? 'Deleting…' : 'Delete profile'}
     </button>
   )
 }

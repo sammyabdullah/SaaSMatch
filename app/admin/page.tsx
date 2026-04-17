@@ -1,6 +1,6 @@
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { ApproveButton, RejectButton, ApproveInvestorButton, RejectInvestorButton } from './approve-button'
+import { ApproveButton, RejectButton, ApproveInvestorButton, RejectInvestorButton, DeleteFounderButton } from './approve-button'
 
 function fmt(value: string) {
   return value.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
@@ -223,12 +223,15 @@ function FounderCard({
       )}
 
       {/* Actions */}
-      {showActions && (
-        <div className="flex gap-3 pt-2">
-          <ApproveButton founderId={fp.id} />
-          <RejectButton founderId={fp.id} />
-        </div>
-      )}
+      <div className="flex gap-3 pt-2">
+        {showActions && (
+          <>
+            <ApproveButton founderId={fp.id} />
+            <RejectButton founderId={fp.id} />
+          </>
+        )}
+        <DeleteFounderButton founderId={fp.id} />
+      </div>
     </div>
   )
 }
