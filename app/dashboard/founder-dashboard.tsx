@@ -202,12 +202,12 @@ export default async function FounderDashboard({ userId }: Props) {
     <div className="max-w-5xl mx-auto px-6 py-12">
       <div className="mb-8">
         <h1 className="text-2xl font-semibold text-gray-900">Founder Dashboard</h1>
-        <p className="text-sm text-gray-500 mt-1">Track your connections, flags, and profile activity.</p>
+        <p className="text-sm text-gray-500 mt-1">Track your connections, requests, and profile activity.</p>
       </div>
 
       {/* Metric cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-10">
-        <MetricCard label="Flags sent" value={`${flagsUsed ?? 0} / 10`} />
+        <MetricCard label="Requests sent" value={`${flagsUsed ?? 0} / 25`} />
         <MetricCard label="Connections" value={totalConnections} accent={totalConnections > 0 ? 'green' : 'gray'} />
         <MetricCard
           label="Profile status"

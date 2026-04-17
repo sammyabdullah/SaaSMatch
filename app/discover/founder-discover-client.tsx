@@ -74,8 +74,8 @@ function MatchBadge({ score }: { score: number }) {
 function FlagDots({ used }: { used: number }) {
   return (
     <div className="flex items-center gap-1.5">
-      <span className="text-xs text-gray-500 mr-1">{used} / 10 flags used</span>
-      {Array.from({ length: 10 }).map((_, i) => (
+      <span className="text-xs text-gray-500 mr-1">{used} / 25 requests sent</span>
+      {Array.from({ length: 25 }).map((_, i) => (
         <span
           key={i}
           className={`w-2 h-2 rounded-full ${i < used ? 'bg-[#534AB7]' : 'bg-gray-200'}`}
@@ -150,7 +150,7 @@ export default function FounderDiscoverClient({
   }, [investors, checkMin, checkMax, selectedStages, leadsOnly, selectedCategories])
 
   async function handleFlag(investorId: string) {
-    if (flagsUsed >= 10) return
+    if (flagsUsed >= 25) return
     setFlaggedIds((prev) => new Set(Array.from(prev).concat(investorId)))
     setFlagStates((prev) => ({ ...prev, [investorId]: 'pending_undo' }))
     setFlagErrors((prev) => ({ ...prev, [investorId]: '' }))
@@ -383,14 +383,14 @@ export default function FounderDiscoverClient({
                   {flagState === 'idle' && (
                     <button
                       onClick={() => handleFlag(inv.id)}
-                      disabled={flagsUsed >= 10}
+                      disabled={flagsUsed >= 25}
                       className={`w-full text-sm py-2 rounded-md border transition-colors ${
-                        flagsUsed >= 10
+                        flagsUsed >= 25
                           ? 'border-gray-200 text-gray-400 cursor-not-allowed'
                           : 'border-[#534AB7] text-[#534AB7] hover:bg-[#534AB7] hover:text-white'
                       }`}
                     >
-                      {flagsUsed >= 10 ? 'Flag limit reached' : 'Flag interest'}
+                      {flagsUsed >= 25 ? 'Limit reached' : 'Send connection request'}
                     </button>
                   )}
                   {flagState === 'pending_undo' && (

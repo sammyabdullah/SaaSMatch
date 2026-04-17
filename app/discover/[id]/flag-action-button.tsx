@@ -17,7 +17,7 @@ export default function FlagActionButton({ targetId, mode, isAlreadyFlagged, fla
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  const atLimit = mode === 'founder-flagging-investor' && flagCount >= 10 && !flagged
+  const atLimit = mode === 'founder-flagging-investor' && flagCount >= 25 && !flagged
 
   async function handleFlag() {
     setLoading(true)
@@ -60,7 +60,7 @@ export default function FlagActionButton({ targetId, mode, isAlreadyFlagged, fla
       {flagged ? (
         <div className="flex items-center gap-3">
           <span className="text-sm text-green-600 font-medium">
-            {mode === 'founder-flagging-investor' ? 'Interest flagged ✓' : 'Interest expressed ✓'}
+            {mode === 'founder-flagging-investor' ? 'Connection request sent ✓' : 'Interest expressed ✓'}
           </span>
           <button
             onClick={handleUnflag}
@@ -83,9 +83,9 @@ export default function FlagActionButton({ targetId, mode, isAlreadyFlagged, fla
           {loading
             ? 'Processing…'
             : atLimit
-            ? 'Flag limit reached (10 max)'
+            ? 'Limit reached (25 max)'
             : mode === 'founder-flagging-investor'
-            ? 'Flag interest'
+            ? 'Send connection request'
             : 'Express interest'}
         </button>
       )}
