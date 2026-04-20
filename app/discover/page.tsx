@@ -68,6 +68,16 @@ export default async function DiscoverPage() {
       )
     }
 
+    if (!myProfile.is_approved || myProfile.status !== 'active') {
+      return (
+        <div className="max-w-5xl mx-auto px-6 py-12">
+          <p className="text-sm text-gray-500">
+            Your profile must be approved and active before you can browse investors.
+          </p>
+        </div>
+      )
+    }
+
     const myFlaggedInvestorIds = (myFlags ?? []).map((f) => f.investor_id)
     const connectedInvestorIds = new Set((connectedInvestorFlags ?? []).map((f) => f.investor_id))
     const visibleInvestors = (investors ?? []).filter((i) => !connectedInvestorIds.has(i.id))
@@ -118,6 +128,16 @@ export default async function DiscoverPage() {
         <div className="max-w-5xl mx-auto px-6 py-12">
           <p className="text-sm text-gray-500">
             Complete your profile before browsing founders.
+          </p>
+        </div>
+      )
+    }
+
+    if (!myProfile.is_approved) {
+      return (
+        <div className="max-w-5xl mx-auto px-6 py-12">
+          <p className="text-sm text-gray-500">
+            Your profile must be approved before you can browse founders.
           </p>
         </div>
       )
