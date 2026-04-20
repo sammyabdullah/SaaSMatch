@@ -70,11 +70,33 @@ export default async function AdminPage() {
     .order('created_at', { ascending: false })
     .limit(20)
 
+  const { count: approvedFounderCount } = await admin
+    .from('founder_profiles')
+    .select('id', { count: 'exact', head: true })
+    .eq('is_approved', true)
+
+  const { count: approvedInvestorCount } = await admin
+    .from('investor_profiles')
+    .select('id', { count: 'exact', head: true })
+    .eq('is_approved', true)
+
   return (
     <div className="max-w-4xl mx-auto px-6 py-12">
       <div className="mb-10">
         <h1 className="text-2xl font-semibold text-gray-900">Admin</h1>
         <p className="text-sm text-gray-500 mt-1">Review and approve founder profiles.</p>
+      </div>
+
+      {/* Platform stats */}
+      <div className="grid grid-cols-2 gap-4 mb-12">
+        <div className="border border-gray-200 rounded-lg p-5">
+          <p className="text-xs text-gray-400 mb-1">Approved founders</p>
+          <p className="text-3xl font-semibold text-gray-900">{approvedFounderCount ?? 0}</p>
+        </div>
+        <div className="border border-gray-200 rounded-lg p-5">
+          <p className="text-xs text-gray-400 mb-1">Approved investors</p>
+          <p className="text-3xl font-semibold text-gray-900">{approvedInvestorCount ?? 0}</p>
+        </div>
       </div>
 
       {/* Pending Founders */}
