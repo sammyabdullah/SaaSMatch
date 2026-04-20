@@ -284,14 +284,14 @@ export default function InvestorForm() {
           <label className="block text-sm font-medium text-gray-700 mb-2">
             SaaS subcategories{' '}
             <span className="text-gray-400 font-normal">
-              (minimum 3 required)
+              (select at least 1)
             </span>
           </label>
           <MultiSelect
             options={SAAS_SUBCATEGORIES}
             selected={form.saas_subcategories}
             onChange={(v) => set('saas_subcategories', v)}
-            minRequired={3}
+            minRequired={1}
           />
         </div>
 
