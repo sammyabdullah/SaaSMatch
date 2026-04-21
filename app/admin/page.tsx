@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { ApproveButton, RejectButton, ApproveInvestorButton, RejectInvestorButton, DeleteFounderButton, ApproveLenderButton, RejectLenderButton, DeleteLenderButton } from './approve-button'

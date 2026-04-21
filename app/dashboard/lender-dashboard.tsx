@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { createAdminClient } from '@/lib/supabase/server'
-import { fmtDate, fmtArrRange, fmtStage, fmtUsd } from '@/lib/format'
+import { fmtDate, fmtArrRange, fmtStage } from '@/lib/format'
 import UnflagLenderFlag from './unflag-lender-flag'
 import AcceptDeclineLenderFlag from './accept-decline-lender-flag'
 
