@@ -77,20 +77,12 @@ export default async function Navbar() {
               <SignOutButton />
             </>
           ) : (
-            <>
-              <Link
-                href="/login"
-                className="text-sm text-gray-600 hover:text-gray-900 transition-colors"
-              >
-                Log in
-              </Link>
-              <Link
-                href="/signup"
-                className="text-sm px-4 py-1.5 bg-[#534AB7] text-white rounded-md hover:bg-[#4339A0] transition-colors"
-              >
-                Sign up
-              </Link>
-            </>
+            <Link
+              href="/login"
+              className="text-sm px-4 py-1.5 bg-[#534AB7] text-white rounded-md hover:bg-[#4339A0] transition-colors"
+            >
+              Log in
+            </Link>
           )}
         </div>
       </div>
