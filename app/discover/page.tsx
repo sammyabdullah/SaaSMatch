@@ -31,34 +31,24 @@ export default async function DiscoverPage() {
   const admin = createAdminClient()
 
   if (profile.role === 'founder') {
-    // Fetch approved investors
-    const { data: investors } = await admin
-      .from('investor_profiles')
-      .select('*, profiles(email)')
-      .eq('is_approved', true)
-      .order('created_at', { ascending: false })
-
-    // Fetch founder's own profile
-    const { data: myProfile } = await admin
-      .from('founder_profiles')
-      .select('*')
-      .eq('id', user.id)
-      .single()
-
-    // Fetch pending flags by this founder (for flagsUsed count and "Flagged ✓" state)
-    const { data: myFlags } = await admin
-      .from('flags')
-      .select('investor_id')
-      .eq('founder_id', user.id)
-      .eq('flagged_by', 'founder')
-      .eq('status', 'pending')
-
-    // Fetch connected investor IDs (accepted flags, either direction)
-    const { data: connectedInvestorFlags } = await admin
-      .from('flags')
-      .select('investor_id')
-      .eq('founder_id', user.id)
-      .eq('status', 'accepted')
+    // Fetch investors, lenders, founder profile, and all flag states in parallel
+    const [
+      { data: investors },
+      { data: lenders },
+      { data: myProfile },
+      { data: myInvestorFlags },
+      { data: connectedInvestorFlags },
+      { data: myLenderFlags },
+      { data: connectedLenderFlags },
+    ] = await Promise.all([
+      admin.from('investor_profiles').select('*, profiles(email)').eq('is_approved', true).order('created_at', { ascending: false }),
+      admin.from('lender_profiles').select('*, profiles(email)').eq('is_approved', true).order('created_at', { ascending: false }),
+      admin.from('founder_profiles').select('*').eq('id', user.id).single(),
+      admin.from('flags').select('investor_id').eq('founder_id', user.id).eq('flagged_by', 'founder').eq('status', 'pending'),
+      admin.from('flags').select('investor_id').eq('founder_id', user.id).eq('status', 'accepted'),
+      admin.from('lender_flags').select('lender_id').eq('founder_id', user.id).eq('flagged_by', 'founder').eq('status', 'pending'),
+      admin.from('lender_flags').select('lender_id').eq('founder_id', user.id).eq('status', 'accepted'),
+    ])
 
     if (!myProfile) {
       return (
@@ -80,16 +70,23 @@ export default async function DiscoverPage() {
       )
     }
 
-    const myFlaggedInvestorIds = (myFlags ?? []).map((f) => f.investor_id)
+    const myFlaggedInvestorIds = (myInvestorFlags ?? []).map((f) => f.investor_id)
     const connectedInvestorIds = new Set((connectedInvestorFlags ?? []).map((f) => f.investor_id))
     const visibleInvestors = (investors ?? []).filter((i) => !connectedInvestorIds.has(i.id))
+
+    const myFlaggedLenderIds = (myLenderFlags ?? []).map((f) => f.lender_id)
+    const connectedLenderIds = new Set((connectedLenderFlags ?? []).map((f) => f.lender_id))
+    const visibleLenders = (lenders ?? []).filter((l) => !connectedLenderIds.has(l.id))
 
     return (
       <FounderDiscoverClient
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         investors={visibleInvestors as any}
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        lenders={visibleLenders as any}
         myProfile={myProfile as FounderProfileRow}
         myFlaggedInvestorIds={myFlaggedInvestorIds}
+        myFlaggedLenderIds={myFlaggedLenderIds}
       />
     )
   }
