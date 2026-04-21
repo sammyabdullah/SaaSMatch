@@ -2,11 +2,11 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { flagInvestor, unflagInvestor, flagFounder, unflagFounder } from '@/app/actions/discover'
+import { flagInvestor, unflagInvestor, flagFounder, unflagFounder, flagFounderAsLender, unflagFounderAsLender } from '@/app/actions/discover'
 
 interface Props {
   targetId: string
-  mode: 'founder-flagging-investor' | 'investor-flagging-founder'
+  mode: 'founder-flagging-investor' | 'investor-flagging-founder' | 'lender-flagging-founder'
   isAlreadyFlagged: boolean
   flagCount: number
 }
@@ -25,6 +25,8 @@ export default function FlagActionButton({ targetId, mode, isAlreadyFlagged, fla
     let result
     if (mode === 'founder-flagging-investor') {
       result = await flagInvestor(targetId)
+    } else if (mode === 'lender-flagging-founder') {
+      result = await flagFounderAsLender(targetId)
     } else {
       result = await flagFounder(targetId)
     }
@@ -43,6 +45,8 @@ export default function FlagActionButton({ targetId, mode, isAlreadyFlagged, fla
     let result
     if (mode === 'founder-flagging-investor') {
       result = await unflagInvestor(targetId)
+    } else if (mode === 'lender-flagging-founder') {
+      result = await unflagFounderAsLender(targetId)
     } else {
       result = await unflagFounder(targetId)
     }

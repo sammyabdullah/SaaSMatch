@@ -69,6 +69,14 @@ export async function signIn(email: string, password: string) {
       .maybeSingle()
 
     if (!ip) redirect('/onboarding')
+  } else if (profile.role === 'lender') {
+    const { data: lp } = await supabase
+      .from('lender_profiles')
+      .select('id')
+      .eq('id', userId)
+      .maybeSingle()
+
+    if (!lp) redirect('/onboarding')
   }
 
   redirect('/dashboard')

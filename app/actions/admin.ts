@@ -23,10 +23,12 @@ export async function approveFounder(founderId: string) {
   await requireAdmin()
 
   const admin = createAdminClient()
+  const expiresAt = new Date()
+  expiresAt.setDate(expiresAt.getDate() + 180)
   const { error } = await admin
     .from('founder_profiles')
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .update({ is_approved: true, status: 'active', approved_at: new Date().toISOString() } as any)
+    .update({ is_approved: true, status: 'active', approved_at: new Date().toISOString(), profile_expires_at: expiresAt.toISOString() } as any)
     .eq('id', founderId)
 
   if (error) throw new Error(error.message)
@@ -74,6 +76,23 @@ export async function rejectInvestor(investorId: string) {
   if (error) throw new Error(error.message)
 
   revalidatePath('/admin')
+}
+
+export async function deleteInvestorProfile(investorId: string) {
+  await requireAdmin()
+
+  const admin = createAdminClient()
+  await admin.from('flags').delete().eq('investor_id', investorId)
+
+  const { error } = await admin
+    .from('investor_profiles')
+    .delete()
+    .eq('id', investorId)
+
+  if (error) throw new Error(error.message)
+
+  revalidatePath('/admin')
+  revalidatePath('/discover')
 }
 
 export async function rejectFounder(founderId: string) {
@@ -150,6 +169,7 @@ export async function deleteFounderProfile(founderId: string) {
 
   // Delete related flags first to avoid FK constraint errors
   await admin.from('flags').delete().eq('founder_id', founderId)
+  await admin.from('lender_flags').delete().eq('founder_id', founderId)
 
   const { error } = await admin
     .from('founder_profiles')

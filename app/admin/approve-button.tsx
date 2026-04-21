@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { approveFounder, rejectFounder, approveInvestor, rejectInvestor, deleteFounderProfile, approveLender, rejectLender, deleteLenderProfile } from '@/app/actions/admin'
+import { approveFounder, rejectFounder, approveInvestor, rejectInvestor, deleteFounderProfile, deleteInvestorProfile, approveLender, rejectLender, deleteLenderProfile } from '@/app/actions/admin'
 
 export function ApproveButton({ founderId }: { founderId: string }) {
   const [loading, setLoading] = useState(false)
@@ -133,6 +133,27 @@ export function DeleteLenderButton({ lenderId }: { lenderId: string }) {
     if (!confirm('Permanently delete this lender profile? The auth account will remain intact. This cannot be undone.')) return
     setLoading(true)
     await deleteLenderProfile(lenderId)
+    setLoading(false)
+  }
+
+  return (
+    <button
+      onClick={handleDelete}
+      disabled={loading}
+      className="px-4 py-2 border border-red-200 text-red-600 text-sm font-medium rounded-md hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+    >
+      {loading ? 'Deleting…' : 'Delete profile'}
+    </button>
+  )
+}
+
+export function DeleteInvestorButton({ investorId }: { investorId: string }) {
+  const [loading, setLoading] = useState(false)
+
+  async function handleDelete() {
+    if (!confirm('Permanently delete this investor profile? The auth account will remain intact. This cannot be undone.')) return
+    setLoading(true)
+    await deleteInvestorProfile(investorId)
     setLoading(false)
   }
 

@@ -260,6 +260,89 @@ export default async function ProfileDetailPage({ params }: Props) {
     )
   }
 
+  if (profile.role === 'lender') {
+    // Lender viewing a founder profile
+    const { data: fp } = await admin
+      .from('founder_profiles')
+      .select('*, profiles(email)')
+      .eq('id', id)
+      .single() as { data: any }
+
+    if (!fp) {
+      return (
+        <div className="max-w-3xl mx-auto px-6 py-12">
+          <p className="text-sm text-gray-500">Profile not found.</p>
+        </div>
+      )
+    }
+
+    const { data: existingFlag } = await admin
+      .from('lender_flags')
+      .select('id')
+      .eq('lender_id', user.id)
+      .eq('founder_id', id)
+      .eq('flagged_by', 'lender')
+      .maybeSingle()
+
+    const isAlreadyFlagged = !!existingFlag
+    const displayName = `${fp.product_categories?.[0] ?? 'SaaS'} Company — ${fp.location}`
+
+    return (
+      <div className="max-w-3xl mx-auto px-6 py-12">
+        <BackButton />
+
+        <div className="mb-8">
+          <h1 className="text-2xl font-semibold text-gray-900">{displayName}</h1>
+          <p className="text-sm text-gray-400 mt-1">Profile ID: {id}</p>
+        </div>
+
+        <div className="border border-gray-200 rounded-lg p-6 mb-6">
+          <h2 className="text-sm font-semibold text-gray-900 border-b border-gray-100 pb-2 mb-4">Company details</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-4">
+            <Field label="Location" value={fp.location} />
+            <Field label="Founded" value={String(fp.founded_year)} />
+            <Field label="Stage" value={fmtStage(fp.stage)} />
+            <Field label="ARR range" value={fmtArrRange(fp.arr_range)} />
+            {fp.mom_growth_pct != null && <Field label="YOY growth" value={`${fp.mom_growth_pct}%`} />}
+            <Field label="GTM motion" value={fp.gtm_motion.replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())} />
+            <Field label="Revenue model" value={fp.revenue_model.replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())} />
+            <Field label="Total raise" value={fmtUsd(fp.raising_amount_usd)} />
+            {fp.website && <Field label="Website" value={fp.website} />}
+          </div>
+        </div>
+
+        {fp.product_categories?.length > 0 && (
+          <div className="border border-gray-200 rounded-lg p-6 mb-6">
+            <h2 className="text-sm font-semibold text-gray-900 border-b border-gray-100 pb-2 mb-4">Product categories</h2>
+            <div className="flex flex-wrap gap-2">
+              {fp.product_categories.map((c: string) => (
+                <span key={c} className="text-xs bg-gray-100 text-gray-600 px-2.5 py-1 rounded-full">{c}</span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {fp.why_now && (
+          <div className="border border-gray-200 rounded-lg p-6 mb-6">
+            <h2 className="text-sm font-semibold text-gray-900 border-b border-gray-100 pb-2 mb-4">In their own words</h2>
+            <p className="text-sm text-gray-700 italic">&ldquo;{fp.why_now}&rdquo;</p>
+          </div>
+        )}
+
+        <div className="flex items-center justify-between text-xs text-gray-400 mb-8">
+          <span>Listed {fmtDate(fp.created_at)}</span>
+        </div>
+
+        <FlagActionButton
+          targetId={id}
+          mode="lender-flagging-founder"
+          isAlreadyFlagged={isAlreadyFlagged}
+          flagCount={0}
+        />
+      </div>
+    )
+  }
+
   redirect('/dashboard')
 }
 

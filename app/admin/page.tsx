@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { ApproveButton, RejectButton, ApproveInvestorButton, RejectInvestorButton, DeleteFounderButton, ApproveLenderButton, RejectLenderButton, DeleteLenderButton } from './approve-button'
+import { ApproveButton, RejectButton, ApproveInvestorButton, RejectInvestorButton, DeleteFounderButton, DeleteInvestorButton, ApproveLenderButton, RejectLenderButton, DeleteLenderButton } from './approve-button'
 
 function fmt(value: string) {
   return value.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
@@ -381,12 +381,15 @@ function InvestorCard({
         </div>
       )}
 
-      {showActions && (
-        <div className="flex gap-3 pt-2">
-          <ApproveInvestorButton investorId={ip.id} />
-          <RejectInvestorButton investorId={ip.id} />
-        </div>
-      )}
+      <div className="flex gap-3 pt-2">
+        {showActions && (
+          <>
+            <ApproveInvestorButton investorId={ip.id} />
+            <RejectInvestorButton investorId={ip.id} />
+          </>
+        )}
+        <DeleteInvestorButton investorId={ip.id} />
+      </div>
     </div>
   )
 }
