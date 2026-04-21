@@ -164,6 +164,27 @@ export default async function AdminPage() {
         )}
       </section>
 
+      {/* Pending Lenders */}
+      <section className="mb-14">
+        <div className="flex items-center gap-3 mb-6">
+          <h2 className="text-base font-semibold text-gray-900">Lenders — pending approval</h2>
+          {pendingLenders && pendingLenders.length > 0 && (
+            <span className="text-xs font-medium bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
+              {pendingLenders.length}
+            </span>
+          )}
+        </div>
+        {!pendingLenders || pendingLenders.length === 0 ? (
+          <p className="text-sm text-gray-400">No lenders pending approval.</p>
+        ) : (
+          <div className="space-y-6">
+            {pendingLenders.map((lp: any) => (
+              <LenderCard key={lp.id} lp={lp} showActions />
+            ))}
+          </div>
+        )}
+      </section>
+
       {/* Approved Founders */}
       <section className="mb-14">
         <h2 className="text-base font-semibold text-gray-900 mb-6">Founders — recently approved</h2>
@@ -187,27 +208,6 @@ export default async function AdminPage() {
           <div className="space-y-6">
             {approvedInvestors.map((ip: any) => (
               <InvestorCard key={ip.id} ip={ip} showActions={false} />
-            ))}
-          </div>
-        )}
-      </section>
-
-      {/* Pending Lenders */}
-      <section className="mb-14">
-        <div className="flex items-center gap-3 mb-6">
-          <h2 className="text-base font-semibold text-gray-900">Lenders — pending approval</h2>
-          {pendingLenders && pendingLenders.length > 0 && (
-            <span className="text-xs font-medium bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
-              {pendingLenders.length}
-            </span>
-          )}
-        </div>
-        {!pendingLenders || pendingLenders.length === 0 ? (
-          <p className="text-sm text-gray-400">No lenders pending approval.</p>
-        ) : (
-          <div className="space-y-6">
-            {pendingLenders.map((lp: any) => (
-              <LenderCard key={lp.id} lp={lp} showActions />
             ))}
           </div>
         )}
