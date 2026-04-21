@@ -22,6 +22,12 @@ export default function Home() {
         >
           I&apos;m an investor
         </Link>
+        <Link
+          href="/signup?role=lender"
+          className="px-8 py-3 border border-gray-200 text-gray-700 rounded-md text-sm font-medium hover:border-gray-400 transition-colors"
+        >
+          I&apos;m a lender
+        </Link>
       </div>
     </div>
   )

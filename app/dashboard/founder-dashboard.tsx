@@ -3,6 +3,7 @@ import { createAdminClient } from '@/lib/supabase/server'
 import { fmtDate, fmtStage, fmtUsd, daysUntil } from '@/lib/format'
 import UnflagFounderFlag from './unflag-founder-flag'
 import AcceptDeclineFlag from './accept-decline-flag'
+import AcceptDeclineLenderFlag from './accept-decline-lender-flag'
 import RestartClockButton from './restart-clock-button'
 
 interface Props {
@@ -109,6 +110,32 @@ export default async function FounderDashboard({ userId }: Props) {
     .eq('status', 'accepted')
     .order('responded_at', { ascending: false }) as { data: any[] | null }
 
+  // Incoming lender interest — lender flagged this founder, pending acceptance
+  const { data: incomingLenderFlags } = await admin
+    .from('lender_flags')
+    .select('*, lender_profiles(institution_name, contact_name, website, location, loan_size_min_usd, loan_size_max_usd, stages, thesis_statement)')
+    .eq('founder_id', userId)
+    .eq('flagged_by', 'lender')
+    .eq('status', 'pending')
+    .order('created_at', { ascending: false }) as { data: any[] | null }
+
+  // Accepted lender connections where lender initiated
+  const { data: acceptedLenderIncoming } = await admin
+    .from('lender_flags')
+    .select('*, lender_profiles!lender_flags_lender_id_fkey(institution_name, contact_name, website, location, loan_size_min_usd, loan_size_max_usd, stages, geography_focus, thesis_statement, profiles(email))')
+    .eq('founder_id', userId)
+    .eq('flagged_by', 'lender')
+    .eq('status', 'accepted')
+    .order('responded_at', { ascending: false }) as { data: any[] | null }
+
+  // All lender flags for activity feed (all statuses)
+  const { data: allLenderFlagsForActivity } = await admin
+    .from('lender_flags')
+    .select('*, lender_profiles(institution_name)')
+    .eq('founder_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(20) as { data: any[] | null }
+
   // Profile views for activity feed
   const { data: recentViews } = await admin
     .from('profile_views')
@@ -146,7 +173,7 @@ export default async function FounderDashboard({ userId }: Props) {
     profileStatusValue = fmtStage(founderProfile.status)
   }
 
-  const totalConnections = (acceptedOutgoing?.length ?? 0) + (acceptedIncoming?.length ?? 0)
+  const totalConnections = (acceptedOutgoing?.length ?? 0) + (acceptedIncoming?.length ?? 0) + (acceptedLenderIncoming?.length ?? 0)
 
   // Activity feed
   type ActivityItem = { date: string; text: string }
@@ -180,6 +207,19 @@ export default async function FounderDashboard({ userId }: Props) {
       activity.push({ date: f.created_at, text: `${firm} expressed interest in your company` })
       if (f.status === 'accepted' && f.responded_at) {
         activity.push({ date: f.responded_at, text: `You connected with ${firm}` })
+      }
+    }
+  }
+
+  // Lender flag events
+  if (allLenderFlagsForActivity) {
+    for (const f of allLenderFlagsForActivity) {
+      const institution = f.lender_profiles?.institution_name ?? 'A lender'
+      if (f.flagged_by === 'lender') {
+        activity.push({ date: f.created_at, text: `${institution} expressed interest in lending to your company` })
+        if (f.status === 'accepted' && f.responded_at) {
+          activity.push({ date: f.responded_at, text: `You connected with ${institution}` })
+        }
       }
     }
   }
@@ -266,6 +306,50 @@ export default async function FounderDashboard({ userId }: Props) {
         </section>
       )}
 
+      {/* Incoming lender interest — action required */}
+      {incomingLenderFlags && incomingLenderFlags.length > 0 && (
+        <section className="mb-10">
+          <h2 className="text-base font-semibold text-gray-900 mb-1">
+            Lender interest
+            <span className="ml-2 text-xs font-medium bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full">
+              {incomingLenderFlags.length} pending
+            </span>
+          </h2>
+          <p className="text-sm text-gray-500 mb-4">
+            These lenders have expressed interest in your company. Accept to reveal contact details.
+          </p>
+          <div className="space-y-3">
+            {incomingLenderFlags.map((flag) => {
+              const lp = flag.lender_profiles
+              return (
+                <div key={flag.id} className="border border-amber-200 bg-amber-50/30 rounded-lg p-4">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1">
+                      <InvestorNameLink name={lp?.institution_name ?? '—'} website={lp?.website} />
+                      <p className="text-xs text-gray-500">{lp?.contact_name ?? ''}</p>
+                      {lp?.location && <p className="text-xs text-gray-400">{lp.location}</p>}
+                      {lp?.loan_size_min_usd && (
+                        <p className="text-xs text-gray-600 mt-1">
+                          {fmtUsd(lp.loan_size_min_usd)} – {fmtUsd(lp.loan_size_max_usd)}
+                          {lp.stages?.length > 0 && ` · ${lp.stages.map(fmtStage).join(', ')}`}
+                        </p>
+                      )}
+                      {lp?.thesis_statement && (
+                        <p className="text-xs text-gray-500 italic mt-1 line-clamp-2">
+                          &ldquo;{lp.thesis_statement}&rdquo;
+                        </p>
+                      )}
+                      <p className="text-xs text-gray-400 mt-1">Expressed interest {fmtDate(flag.created_at)}</p>
+                    </div>
+                    <AcceptDeclineLenderFlag flagId={flag.id} />
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </section>
+      )}
+
       {/* Accepted connections */}
       {totalConnections > 0 && (
         <section className="mb-10">
@@ -306,6 +390,48 @@ export default async function FounderDashboard({ userId }: Props) {
                   </div>
                   {investorEmail && (
                     <p className="text-sm text-[#534AB7] mt-2 font-medium">{investorEmail}</p>
+                  )}
+                  <p className="text-xs text-gray-400 mt-1">
+                    Connected {fmtDate(flag.responded_at ?? flag.created_at)}
+                  </p>
+                </div>
+              )
+            })}
+            {(acceptedLenderIncoming ?? []).map((flag) => {
+              const lp = flag.lender_profiles
+              const lenderEmail = (flag.lender_profiles as any)?.profiles?.email
+              return (
+                <div key={flag.id} className="px-4 py-4">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1">
+                      <InvestorNameLink name={lp?.institution_name ?? '—'} website={lp?.website} />
+                      <p className="text-xs text-gray-500">{lp?.contact_name ?? ''}</p>
+                      {lp?.location && <p className="text-xs text-gray-400">{lp.location}</p>}
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1">
+                        {lp?.loan_size_min_usd && lp?.loan_size_max_usd && (
+                          <span className="text-xs text-gray-600">
+                            {fmtUsd(lp.loan_size_min_usd)} – {fmtUsd(lp.loan_size_max_usd)}
+                          </span>
+                        )}
+                        {lp?.stages?.length > 0 && (
+                          <span className="text-xs text-gray-500">{lp.stages.map(fmtStage).join(', ')}</span>
+                        )}
+                      </div>
+                      {lp?.geography_focus && (
+                        <p className="text-xs text-gray-400 mt-0.5">{lp.geography_focus}</p>
+                      )}
+                      {lp?.thesis_statement && (
+                        <p className="text-xs text-gray-500 italic mt-1 line-clamp-2">
+                          &ldquo;{lp.thesis_statement}&rdquo;
+                        </p>
+                      )}
+                    </div>
+                    <span className="text-xs font-medium bg-green-50 text-green-700 px-2 py-0.5 rounded-full shrink-0">
+                      Connected
+                    </span>
+                  </div>
+                  {lenderEmail && (
+                    <p className="text-sm text-[#534AB7] mt-2 font-medium">{lenderEmail}</p>
                   )}
                   <p className="text-xs text-gray-400 mt-1">
                     Connected {fmtDate(flag.responded_at ?? flag.created_at)}

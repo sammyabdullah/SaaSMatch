@@ -2,6 +2,7 @@ import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import FounderDiscoverClient from './founder-discover-client'
 import InvestorDiscoverClient from './investor-discover-client'
+import LenderDiscoverClient from './lender-discover-client'
 import type {
   Database,
 } from '@/lib/supabase/types'
@@ -10,6 +11,7 @@ export const dynamic = 'force-dynamic'
 
 type FounderProfileRow = Database['public']['Tables']['founder_profiles']['Row']
 type InvestorProfileRow = Database['public']['Tables']['investor_profiles']['Row']
+type LenderProfileRow = Database['public']['Tables']['lender_profiles']['Row']
 
 export default async function DiscoverPage() {
   const supabase = await createClient()
@@ -152,6 +154,71 @@ export default async function DiscoverPage() {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         founders={visibleFounders as any}
         myProfile={myProfile as InvestorProfileRow}
+        myFlaggedFounderIds={myFlaggedFounderIds}
+      />
+    )
+  }
+
+  if (profile.role === 'lender') {
+    // Fetch approved active founders
+    const { data: founders } = await admin
+      .from('founder_profiles')
+      .select('*, profiles(email)')
+      .eq('is_approved', true)
+      .eq('status', 'active')
+      .order('created_at', { ascending: false })
+
+    // Fetch lender's own profile
+    const { data: myProfile } = await admin
+      .from('lender_profiles')
+      .select('*')
+      .eq('id', user.id)
+      .single()
+
+    // Fetch pending flags by this lender
+    const { data: myFlags } = await admin
+      .from('lender_flags')
+      .select('founder_id')
+      .eq('lender_id', user.id)
+      .eq('flagged_by', 'lender')
+      .eq('status', 'pending')
+
+    // Fetch connected founder IDs (accepted flags)
+    const { data: connectedFounderFlags } = await admin
+      .from('lender_flags')
+      .select('founder_id')
+      .eq('lender_id', user.id)
+      .eq('status', 'accepted')
+
+    if (!myProfile) {
+      return (
+        <div className="max-w-5xl mx-auto px-6 py-12">
+          <p className="text-sm text-gray-500">
+            Complete your profile before browsing founders.
+          </p>
+        </div>
+      )
+    }
+
+    if (!myProfile.is_approved) {
+      return (
+        <div className="max-w-5xl mx-auto px-6 py-12">
+          <p className="text-sm text-gray-500">
+            Your profile must be approved before you can browse founders.
+          </p>
+        </div>
+      )
+    }
+
+    const myFlaggedFounderIds = (myFlags ?? []).map((f) => f.founder_id)
+    const connectedFounderIds = new Set((connectedFounderFlags ?? []).map((f) => f.founder_id))
+    const visibleFounders = (founders ?? []).filter((f) => !connectedFounderIds.has(f.id))
+
+    return (
+      <LenderDiscoverClient
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        founders={visibleFounders as any}
+        myProfile={myProfile as LenderProfileRow}
         myFlaggedFounderIds={myFlaggedFounderIds}
       />
     )

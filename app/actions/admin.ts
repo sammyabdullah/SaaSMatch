@@ -3,7 +3,7 @@
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
-import { sendWelcomeFounderEmail, sendWelcomeInvestorEmail } from '@/lib/email'
+import { sendWelcomeFounderEmail, sendWelcomeInvestorEmail, sendWelcomeLenderEmail } from '@/lib/email'
 
 async function requireAdmin() {
   const supabase = await createClient()
@@ -88,6 +88,59 @@ export async function rejectFounder(founderId: string) {
   if (error) throw new Error(error.message)
 
   revalidatePath('/admin')
+}
+
+export async function approveLender(lenderId: string) {
+  await requireAdmin()
+
+  const admin = createAdminClient()
+  const { error } = await admin
+    .from('lender_profiles')
+    .update({ is_approved: true })
+    .eq('id', lenderId)
+
+  if (error) throw new Error(error.message)
+
+  try {
+    const { data: profile } = await admin.from('profiles').select('email').eq('id', lenderId).single()
+    if (profile?.email) await sendWelcomeLenderEmail({ email: profile.email })
+  } catch {
+    // Email errors are non-fatal
+  }
+
+  revalidatePath('/admin')
+}
+
+export async function rejectLender(lenderId: string) {
+  await requireAdmin()
+
+  const admin = createAdminClient()
+  const { error } = await admin
+    .from('lender_profiles')
+    .delete()
+    .eq('id', lenderId)
+
+  if (error) throw new Error(error.message)
+
+  revalidatePath('/admin')
+}
+
+export async function deleteLenderProfile(lenderId: string) {
+  await requireAdmin()
+
+  const admin = createAdminClient()
+
+  await admin.from('lender_flags').delete().eq('lender_id', lenderId)
+
+  const { error } = await admin
+    .from('lender_profiles')
+    .delete()
+    .eq('id', lenderId)
+
+  if (error) throw new Error(error.message)
+
+  revalidatePath('/admin')
+  revalidatePath('/discover')
 }
 
 export async function deleteFounderProfile(founderId: string) {
