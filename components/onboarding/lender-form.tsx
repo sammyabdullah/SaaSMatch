@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import MultiSelect from '@/components/ui/multi-select'
-import Toggle from '@/components/ui/toggle'
 import { submitLenderProfile } from '@/app/actions/onboarding'
 import type { FounderStage } from '@/lib/supabase/types'
 

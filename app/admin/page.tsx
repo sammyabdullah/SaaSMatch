@@ -135,7 +135,7 @@ export default async function AdminPage() {
           <p className="text-sm text-gray-400">No founders pending approval.</p>
         ) : (
           <div className="space-y-6">
-            {pending.map((fp) => (
+            {pending.map((fp: any) => (
               <FounderCard key={fp.id} fp={fp} showActions />
             ))}
           </div>
@@ -156,7 +156,7 @@ export default async function AdminPage() {
           <p className="text-sm text-gray-400">No investors pending approval.</p>
         ) : (
           <div className="space-y-6">
-            {pendingInvestors.map((ip) => (
+            {pendingInvestors.map((ip: any) => (
               <InvestorCard key={ip.id} ip={ip} showActions />
             ))}
           </div>
@@ -170,7 +170,7 @@ export default async function AdminPage() {
           <p className="text-sm text-gray-400">No approved founders yet.</p>
         ) : (
           <div className="space-y-6">
-            {approvedFounders.map((fp) => (
+            {approvedFounders.map((fp: any) => (
               <FounderCard key={fp.id} fp={fp} showActions={false} />
             ))}
           </div>
@@ -184,7 +184,7 @@ export default async function AdminPage() {
           <p className="text-sm text-gray-400">No approved investors yet.</p>
         ) : (
           <div className="space-y-6">
-            {approvedInvestors.map((ip) => (
+            {approvedInvestors.map((ip: any) => (
               <InvestorCard key={ip.id} ip={ip} showActions={false} />
             ))}
           </div>
@@ -205,7 +205,7 @@ export default async function AdminPage() {
           <p className="text-sm text-gray-400">No lenders pending approval.</p>
         ) : (
           <div className="space-y-6">
-            {pendingLenders.map((lp) => (
+            {pendingLenders.map((lp: any) => (
               <LenderCard key={lp.id} lp={lp} showActions />
             ))}
           </div>
@@ -219,7 +219,7 @@ export default async function AdminPage() {
           <p className="text-sm text-gray-400">No approved lenders yet.</p>
         ) : (
           <div className="space-y-6">
-            {approvedLenders.map((lp) => (
+            {approvedLenders.map((lp: any) => (
               <LenderCard key={lp.id} lp={lp} showActions={false} />
             ))}
           </div>
