@@ -68,6 +68,8 @@ export async function rejectInvestor(investorId: string) {
   await requireAdmin()
 
   const admin = createAdminClient()
+  await admin.from('flags').delete().eq('investor_id', investorId)
+
   const { error } = await admin
     .from('investor_profiles')
     .delete()
@@ -76,6 +78,7 @@ export async function rejectInvestor(investorId: string) {
   if (error) throw new Error(error.message)
 
   revalidatePath('/admin')
+  revalidatePath('/discover')
 }
 
 export async function deleteInvestorProfile(investorId: string) {
@@ -134,6 +137,8 @@ export async function rejectLender(lenderId: string) {
   await requireAdmin()
 
   const admin = createAdminClient()
+  await admin.from('lender_flags').delete().eq('lender_id', lenderId)
+
   const { error } = await admin
     .from('lender_profiles')
     .delete()
@@ -142,6 +147,7 @@ export async function rejectLender(lenderId: string) {
   if (error) throw new Error(error.message)
 
   revalidatePath('/admin')
+  revalidatePath('/discover')
 }
 
 export async function deleteLenderProfile(lenderId: string) {

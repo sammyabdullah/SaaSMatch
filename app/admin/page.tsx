@@ -1,4 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+export const dynamic = 'force-dynamic'
+
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { ApproveButton, RejectButton, ApproveInvestorButton, RejectInvestorButton, DeleteFounderButton, DeleteInvestorButton, ApproveLenderButton, RejectLenderButton, DeleteLenderButton } from './approve-button'
