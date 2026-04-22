@@ -54,13 +54,12 @@ function FounderNameLink({ name, website }: { name: string; website?: string | n
 export default async function LenderDashboard({ userId }: Props) {
   const admin = createAdminClient()
 
-  // Founders browsed this week
-  const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
-  const { count: browsedThisWeek } = await admin
-    .from('profile_views')
+  // Founders this lender has expressed interest in (all outgoing flags)
+  const { count: expressedInterestCount } = await admin
+    .from('lender_flags')
     .select('id', { count: 'exact', head: true })
-    .eq('investor_id', userId)
-    .gte('viewed_at', weekAgo)
+    .eq('lender_id', userId)
+    .eq('flagged_by', 'lender')
 
   // Incoming flags: founders who flagged this lender, pending response
   const { data: incomingFlags } = await admin
@@ -157,7 +156,7 @@ export default async function LenderDashboard({ userId }: Props) {
 
       {/* Metric cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-10">
-        <MetricCard label="Founders browsed this week" value={browsedThisWeek ?? 0} />
+        <MetricCard label="Founders expressed interest in" value={expressedInterestCount ?? 0} />
         <MetricCard label="Connections" value={totalConnections} accent={totalConnections > 0 ? 'green' : 'gray'} />
         <MetricCard
           label="Pending intros"

@@ -222,16 +222,16 @@ export default function FounderAccountForm({ initialData }: Props) {
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
           In your own words{' '}
-          <span className="text-gray-400 font-normal">(max 100 characters)</span>
+          <span className="text-gray-400 font-normal">(max 500 characters)</span>
         </label>
         <textarea
           value={why_now}
           onChange={(e) => setWhyNow(e.target.value)}
-          maxLength={100}
+          maxLength={500}
           rows={3}
           className={inputCls + ' resize-none'}
         />
-        <p className="text-xs text-gray-400 text-right mt-1">{why_now.length}/100</p>
+        <p className="text-xs text-gray-400 text-right mt-1">{why_now.length}/500</p>
       </div>
 
       {error && <p className="text-sm text-red-600">{error}</p>}

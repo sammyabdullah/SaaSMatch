@@ -102,6 +102,10 @@ export async function rejectFounder(founderId: string) {
   await requireAdmin()
 
   const admin = createAdminClient()
+
+  await admin.from('flags').delete().eq('founder_id', founderId)
+  await admin.from('lender_flags').delete().eq('founder_id', founderId)
+
   const { error } = await admin
     .from('founder_profiles')
     .update({ status: 'closed' })
@@ -110,6 +114,8 @@ export async function rejectFounder(founderId: string) {
   if (error) throw new Error(error.message)
 
   revalidatePath('/admin')
+  revalidatePath('/discover')
+  revalidatePath('/dashboard')
 }
 
 export async function approveLender(lenderId: string) {
