@@ -74,8 +74,8 @@ export default function InvestorForm() {
       return 'Min check size must be ≤ max.'
     if (form.stages.length === 0) return 'Select at least one stage.'
     if (!form.geography_focus.trim()) return 'Geography focus is required.'
-    if (form.saas_subcategories.length < 3)
-      return 'Select at least 3 SaaS subcategories.'
+    if (form.saas_subcategories.length === 0)
+      return 'Select at least 1 SaaS subcategory.'
     if (!form.arr_sweet_spot_min) return 'ARR sweet spot min is required.'
     if (!form.arr_sweet_spot_max) return 'ARR sweet spot max is required.'
     if (Number(form.arr_sweet_spot_min) > Number(form.arr_sweet_spot_max))
@@ -285,7 +285,7 @@ export default function InvestorForm() {
           <label className="block text-sm font-medium text-gray-700 mb-2">
             SaaS subcategories{' '}
             <span className="text-gray-400 font-normal">
-              (select at least 3)
+              (select at least 1)
             </span>
           </label>
           <MultiSelect

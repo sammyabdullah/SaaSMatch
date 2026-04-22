@@ -199,7 +199,7 @@ export default function InvestorAccountForm({ initialData }: Props) {
           options={SAAS_SUBCATEGORIES}
           selected={saas_subcategories}
           onChange={setSaasSubcategories}
-          minRequired={3}
+          minRequired={1}
         />
       </div>
 
