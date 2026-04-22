@@ -16,6 +16,7 @@ const STAGE_OPTIONS: { value: FounderStage; label: string }[] = [
   { value: 'seed', label: 'Seed' },
   { value: 'series-a', label: 'Series A' },
   { value: 'series-b', label: 'Series B' },
+  { value: 'series-c', label: 'Series C' },
 ]
 
 function normalizeUrl(url: string): string {

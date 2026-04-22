@@ -19,7 +19,7 @@ interface Props {
   myFlaggedFounderIds: string[]
 }
 
-const STAGE_OPTIONS = ['pre-seed', 'seed', 'series-a', 'series-b'] as const
+const STAGE_OPTIONS = ['pre-seed', 'seed', 'series-a', 'series-b', 'series-c'] as const
 const ARR_RANGE_OPTIONS = [
   { value: '', label: 'All' },
   { value: '0-500k', label: '$0 – $500K' },

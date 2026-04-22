@@ -23,6 +23,7 @@ const STAGES: { value: FounderStage; label: string }[] = [
   { value: 'seed', label: 'Seed' },
   { value: 'series-a', label: 'Series A' },
   { value: 'series-b', label: 'Series B' },
+  { value: 'series-c', label: 'Series C' },
 ]
 
 const ARR_RANGES: { value: ArrRange; label: string }[] = [

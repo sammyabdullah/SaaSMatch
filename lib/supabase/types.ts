@@ -13,7 +13,7 @@ export type Json =
   | Json[]
 
 export type UserRole = 'founder' | 'investor' | 'lender' | 'admin'
-export type FounderStage = 'pre-seed' | 'seed' | 'series-a' | 'series-b'
+export type FounderStage = 'pre-seed' | 'seed' | 'series-a' | 'series-b' | 'series-c'
 export type ArrRange = '0-500k' | '500k-2m' | '2m-5m' | '5m-plus'
 export type GtmMotion = 'sales-led' | 'product-led' | 'hybrid'
 export type RevenueModel = 'seat-based' | 'usage-based' | 'platform-fee' | 'other'

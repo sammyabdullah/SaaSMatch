@@ -604,6 +604,7 @@ function fmtStage(s: string): string {
     seed: 'Seed',
     'series-a': 'Series A',
     'series-b': 'Series B',
+    'series-c': 'Series C',
   }
   return map[s] ?? s
 }
