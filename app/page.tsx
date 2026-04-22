@@ -60,7 +60,7 @@ export default async function Home() {
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        <div className="border border-gray-100 rounded-xl p-5 bg-white shadow-sm text-left">
+        <div className="border border-gray-100 rounded-xl p-5 bg-white shadow-sm text-center">
           <p className="text-xs text-gray-400 mb-1.5 uppercase tracking-wide">Last Investor to Join</p>
           {lastInvestor ? (
             <>
@@ -71,7 +71,7 @@ export default async function Home() {
             <p className="text-sm text-gray-400">—</p>
           )}
         </div>
-        <div className="border border-gray-100 rounded-xl p-5 bg-white shadow-sm text-left">
+        <div className="border border-gray-100 rounded-xl p-5 bg-white shadow-sm text-center">
           <p className="text-xs text-gray-400 mb-1.5 uppercase tracking-wide">Last Lender to Join</p>
           {lastLender ? (
             <>
