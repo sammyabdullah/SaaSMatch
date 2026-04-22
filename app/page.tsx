@@ -9,13 +9,13 @@ export default async function Home() {
   const [
     { count: investorCount },
     { count: lenderCount },
-    { data: lastInvestor },
-    { data: lastLender },
+    { data: lastInvestors },
+    { data: lastLenders },
   ] = await Promise.all([
     admin.from('investor_profiles').select('id', { count: 'exact', head: true }).eq('is_approved', true),
     admin.from('lender_profiles').select('id', { count: 'exact', head: true }).eq('is_approved', true),
-    admin.from('investor_profiles').select('firm_name, partner_name').eq('is_approved', true).order('created_at', { ascending: false }).limit(1).maybeSingle(),
-    admin.from('lender_profiles').select('institution_name, contact_name').eq('is_approved', true).order('created_at', { ascending: false }).limit(1).maybeSingle(),
+    admin.from('investor_profiles').select('firm_name, partner_name').eq('is_approved', true).order('created_at', { ascending: false }).limit(3),
+    admin.from('lender_profiles').select('institution_name, contact_name').eq('is_approved', true).order('created_at', { ascending: false }).limit(3),
   ])
 
   return (
@@ -61,23 +61,31 @@ export default async function Home() {
 
       <div className="grid grid-cols-2 gap-3">
         <div className="border border-gray-100 rounded-xl p-5 bg-white shadow-sm text-left">
-          <p className="text-xs text-gray-400 mb-1.5 uppercase tracking-wide">Last Investor to Join</p>
-          {lastInvestor ? (
-            <>
-              <p className="text-sm font-semibold text-gray-900 leading-tight">{lastInvestor.firm_name}</p>
-              <p className="text-xs text-gray-500 mt-0.5">{lastInvestor.partner_name}</p>
-            </>
+          <p className="text-xs text-gray-400 mb-3 uppercase tracking-wide">Last Investors to Join</p>
+          {lastInvestors && lastInvestors.length > 0 ? (
+            <div className="space-y-3">
+              {lastInvestors.map((inv, i) => (
+                <div key={i} className={i > 0 ? 'pt-3 border-t border-gray-100' : ''}>
+                  <p className="text-sm font-semibold text-gray-900 leading-tight">{inv.firm_name}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">{inv.partner_name}</p>
+                </div>
+              ))}
+            </div>
           ) : (
             <p className="text-sm text-gray-400">—</p>
           )}
         </div>
         <div className="border border-gray-100 rounded-xl p-5 bg-white shadow-sm text-left">
-          <p className="text-xs text-gray-400 mb-1.5 uppercase tracking-wide">Last Lender to Join</p>
-          {lastLender ? (
-            <>
-              <p className="text-sm font-semibold text-gray-900 leading-tight">{lastLender.institution_name}</p>
-              <p className="text-xs text-gray-500 mt-0.5">{lastLender.contact_name}</p>
-            </>
+          <p className="text-xs text-gray-400 mb-3 uppercase tracking-wide">Last Lenders to Join</p>
+          {lastLenders && lastLenders.length > 0 ? (
+            <div className="space-y-3">
+              {lastLenders.map((lender, i) => (
+                <div key={i} className={i > 0 ? 'pt-3 border-t border-gray-100' : ''}>
+                  <p className="text-sm font-semibold text-gray-900 leading-tight">{lender.institution_name}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">{lender.contact_name}</p>
+                </div>
+              ))}
+            </div>
           ) : (
             <p className="text-sm text-gray-400">—</p>
           )}
