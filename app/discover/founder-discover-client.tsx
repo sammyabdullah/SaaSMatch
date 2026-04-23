@@ -57,7 +57,7 @@ function MatchBadge({ score }: { score: number }) {
   )
 }
 
-const FOUNDER_LIMIT = 12
+const FOUNDER_LIMIT = 15
 
 function FlagDots({ used }: { used: number }) {
   return (
@@ -352,7 +352,7 @@ export default function FounderDiscoverClient({
                     {flagState === 'idle' && (
                       <button onClick={() => handleInvestorFlag(id)} disabled={totalFlagsUsed >= FOUNDER_LIMIT}
                         className={`w-full text-sm py-2 rounded-md border transition-colors ${totalFlagsUsed >= FOUNDER_LIMIT ? 'border-gray-200 text-gray-400 cursor-not-allowed' : 'border-[#534AB7] text-[#534AB7] hover:bg-[#534AB7] hover:text-white'}`}>
-                        {totalFlagsUsed >= FOUNDER_LIMIT ? 'Limit reached (12 max)' : 'Send connection request'}
+                        {totalFlagsUsed >= FOUNDER_LIMIT ? 'Limit reached (15 max)' : 'Send connection request'}
                       </button>
                     )}
                     {flagState === 'pending_undo' && (
@@ -421,7 +421,7 @@ export default function FounderDiscoverClient({
                   {flagState === 'idle' && (
                     <button onClick={() => handleLenderFlag(id)} disabled={totalFlagsUsed >= FOUNDER_LIMIT}
                       className={`w-full text-sm py-2 rounded-md border transition-colors ${totalFlagsUsed >= FOUNDER_LIMIT ? 'border-gray-200 text-gray-400 cursor-not-allowed' : 'border-sky-500 text-sky-600 hover:bg-sky-500 hover:text-white'}`}>
-                      {totalFlagsUsed >= FOUNDER_LIMIT ? 'Limit reached (12 max)' : 'Express interest'}
+                      {totalFlagsUsed >= FOUNDER_LIMIT ? 'Limit reached (15 max)' : 'Express interest'}
                     </button>
                   )}
                   {flagState === 'pending_undo' && (
