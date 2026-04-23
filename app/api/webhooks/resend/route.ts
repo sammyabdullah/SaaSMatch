@@ -1,26 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
 const NOTIFY_EMAIL = 'sammy@blossomstreetventures.com'
 const FROM = 'UnlockedVC <noreply@unlockedvc.com>'
 
 export async function POST(req: NextRequest) {
   const secret = process.env.RESEND_WEBHOOK_SECRET
-  if (!secret) {
-    return NextResponse.json({ error: 'Webhook secret not configured' }, { status: 500 })
+  const apiKey = process.env.RESEND_API_KEY
+  if (!secret || !apiKey) {
+    return NextResponse.json({ error: 'Webhook not configured' }, { status: 500 })
   }
+  const resend = new Resend(apiKey)
 
   const rawBody = await req.text()
-  const headers = {
-    'svix-id': req.headers.get('svix-id') ?? '',
-    'svix-timestamp': req.headers.get('svix-timestamp') ?? '',
-    'svix-signature': req.headers.get('svix-signature') ?? '',
-  }
 
   let event
   try {
-    event = resend.webhooks.verify(rawBody, headers, secret)
+    event = resend.webhooks.verify({
+      webhookSecret: secret,
+      payload: rawBody,
+      headers: {
+        id: req.headers.get('svix-id') ?? '',
+        timestamp: req.headers.get('svix-timestamp') ?? '',
+        signature: req.headers.get('svix-signature') ?? '',
+      },
+    })
   } catch {
     return NextResponse.json({ error: 'Invalid webhook signature' }, { status: 400 })
   }
