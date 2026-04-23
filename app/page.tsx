@@ -14,8 +14,8 @@ export default async function Home() {
   ] = await Promise.all([
     admin.from('investor_profiles').select('id', { count: 'exact', head: true }).eq('is_approved', true),
     admin.from('lender_profiles').select('id', { count: 'exact', head: true }).eq('is_approved', true),
-    admin.from('investor_profiles').select('firm_name, partner_name').eq('is_approved', true).order('created_at', { ascending: false }).limit(3),
-    admin.from('lender_profiles').select('institution_name, contact_name').eq('is_approved', true).order('created_at', { ascending: false }).limit(3),
+    admin.from('investor_profiles').select('firm_name, partner_name').eq('is_approved', true).order('created_at', { ascending: false }).limit(5),
+    admin.from('lender_profiles').select('institution_name, contact_name').eq('is_approved', true).order('created_at', { ascending: false }).limit(5),
   ])
 
   return (
@@ -61,7 +61,7 @@ export default async function Home() {
 
       <div className="grid grid-cols-2 gap-3">
         <div className="border border-gray-100 rounded-xl p-5 bg-white shadow-sm text-left">
-          <p className="text-xs text-gray-400 mb-3 uppercase tracking-wide">Last Investors to Join</p>
+          <p className="text-xs text-gray-400 mb-3 uppercase tracking-wide">Latest Investors to Join</p>
           {lastInvestors && lastInvestors.length > 0 ? (
             <div className="space-y-3">
               {lastInvestors.map((inv, i) => (
@@ -76,7 +76,7 @@ export default async function Home() {
           )}
         </div>
         <div className="border border-gray-100 rounded-xl p-5 bg-white shadow-sm text-left">
-          <p className="text-xs text-gray-400 mb-3 uppercase tracking-wide">Last Lenders to Join</p>
+          <p className="text-xs text-gray-400 mb-3 uppercase tracking-wide">Latest Lenders to Join</p>
           {lastLenders && lastLenders.length > 0 ? (
             <div className="space-y-3">
               {lastLenders.map((lender, i) => (
