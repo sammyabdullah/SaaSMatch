@@ -18,6 +18,7 @@ const STAGE_OPTIONS: { value: FounderStage; label: string }[] = [
   { value: 'seed', label: 'Seed' },
   { value: 'series-a', label: 'Series A' },
   { value: 'series-b', label: 'Series B' },
+  { value: 'series-c', label: 'Series C' },
 ]
 
 const inputCls =
@@ -198,7 +199,7 @@ export default function InvestorAccountForm({ initialData }: Props) {
           options={SAAS_SUBCATEGORIES}
           selected={saas_subcategories}
           onChange={setSaasSubcategories}
-          minRequired={3}
+          minRequired={1}
         />
       </div>
 

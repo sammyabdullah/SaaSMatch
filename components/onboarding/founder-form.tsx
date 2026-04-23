@@ -13,7 +13,7 @@ function normalizeUrl(url: string): string {
 
 const PRODUCT_CATEGORIES = [
   'iPaaS', 'Vertical SaaS', 'DevTools', 'Security',
-  'Data & Analytics', 'HR Tech', 'FinTech', 'MarTech', 'RevOps', 'Other',
+  'Data & Analytics', 'HR Tech', 'FinTech', 'MarTech', 'RevOps', 'Ed Tech', 'Other',
 ]
 
 const STAGES: { value: FounderStage; label: string }[] = [
@@ -21,6 +21,7 @@ const STAGES: { value: FounderStage; label: string }[] = [
   { value: 'seed', label: 'Seed' },
   { value: 'series-a', label: 'Series A' },
   { value: 'series-b', label: 'Series B' },
+  { value: 'series-c', label: 'Series C' },
 ]
 
 const ARR_RANGES: { value: ArrRange; label: string }[] = [
@@ -308,18 +309,18 @@ export default function FounderForm() {
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             In your own words{' '}
-            <span className="text-gray-400 font-normal">(max 100 characters)</span>
+            <span className="text-gray-400 font-normal">(max 500 characters)</span>
           </label>
           <textarea
             value={form.why_now}
             onChange={(e) => set('why_now', e.target.value)}
-            maxLength={100}
+            maxLength={500}
             rows={3}
             className={inputCls + ' resize-none'}
             placeholder="What makes this the right moment for your company…"
           />
           <p className="text-xs text-gray-400 text-right mt-1">
-            {form.why_now.length}/100
+            {form.why_now.length}/500
           </p>
         </div>
       </section>

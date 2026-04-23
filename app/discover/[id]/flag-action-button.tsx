@@ -2,11 +2,11 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { flagInvestor, unflagInvestor, flagFounder, unflagFounder } from '@/app/actions/discover'
+import { flagInvestor, unflagInvestor, flagFounder, unflagFounder, flagFounderAsLender, unflagFounderAsLender } from '@/app/actions/discover'
 
 interface Props {
   targetId: string
-  mode: 'founder-flagging-investor' | 'investor-flagging-founder'
+  mode: 'founder-flagging-investor' | 'investor-flagging-founder' | 'lender-flagging-founder'
   isAlreadyFlagged: boolean
   flagCount: number
 }
@@ -17,7 +17,7 @@ export default function FlagActionButton({ targetId, mode, isAlreadyFlagged, fla
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  const atLimit = mode === 'founder-flagging-investor' && flagCount >= 10 && !flagged
+  const atLimit = mode === 'founder-flagging-investor' && flagCount >= 25 && !flagged
 
   async function handleFlag() {
     setLoading(true)
@@ -25,6 +25,8 @@ export default function FlagActionButton({ targetId, mode, isAlreadyFlagged, fla
     let result
     if (mode === 'founder-flagging-investor') {
       result = await flagInvestor(targetId)
+    } else if (mode === 'lender-flagging-founder') {
+      result = await flagFounderAsLender(targetId)
     } else {
       result = await flagFounder(targetId)
     }
@@ -43,6 +45,8 @@ export default function FlagActionButton({ targetId, mode, isAlreadyFlagged, fla
     let result
     if (mode === 'founder-flagging-investor') {
       result = await unflagInvestor(targetId)
+    } else if (mode === 'lender-flagging-founder') {
+      result = await unflagFounderAsLender(targetId)
     } else {
       result = await unflagFounder(targetId)
     }
@@ -60,7 +64,7 @@ export default function FlagActionButton({ targetId, mode, isAlreadyFlagged, fla
       {flagged ? (
         <div className="flex items-center gap-3">
           <span className="text-sm text-green-600 font-medium">
-            {mode === 'founder-flagging-investor' ? 'Interest flagged ✓' : 'Interest expressed ✓'}
+            {mode === 'founder-flagging-investor' ? 'Connection request sent ✓' : 'Interest expressed ✓'}
           </span>
           <button
             onClick={handleUnflag}
@@ -83,9 +87,9 @@ export default function FlagActionButton({ targetId, mode, isAlreadyFlagged, fla
           {loading
             ? 'Processing…'
             : atLimit
-            ? 'Flag limit reached (10 max)'
+            ? 'Limit reached (25 max)'
             : mode === 'founder-flagging-investor'
-            ? 'Flag interest'
+            ? 'Send connection request'
             : 'Express interest'}
         </button>
       )}

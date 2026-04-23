@@ -1,85 +1,70 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
 
 import { useState, useMemo, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { flagInvestor, unflagInvestor } from '@/app/actions/discover'
+import { flagInvestor, unflagInvestor, flagLenderAsFounder, unflagLenderAsFounder } from '@/app/actions/discover'
 import { fmtUsd, fmtStage } from '@/lib/format'
-import type { Database } from '@/lib/supabase/types'
 
-type InvestorProfileRow = Database['public']['Tables']['investor_profiles']['Row']
-type FounderProfileRow = Database['public']['Tables']['founder_profiles']['Row']
-
-type InvestorWithProfile = InvestorProfileRow & {
-  profiles: { email: string }
-}
+type FlagState = 'idle' | 'pending_undo' | 'flagged'
+type TypeFilter = 'all' | 'investor' | 'lender'
 
 interface Props {
-  investors: InvestorWithProfile[]
-  myProfile: FounderProfileRow
+  investors: any[]
+  lenders: any[]
+  myProfile: any
   myFlaggedInvestorIds: string[]
+  myFlaggedLenderIds: string[]
 }
 
-const STAGE_OPTIONS = ['pre-seed', 'seed', 'series-a', 'series-b'] as const
+const STAGE_OPTIONS = ['pre-seed', 'seed', 'series-a', 'series-b', 'series-c'] as const
 const SAAS_SUBCATEGORIES = [
   'iPaaS', 'Vertical SaaS', 'DevTools', 'Security',
   'Data & Analytics', 'HR Tech', 'FinTech', 'MarTech', 'RevOps', 'Other',
 ]
 
-type FlagState = 'idle' | 'pending_undo' | 'flagged'
-
-function computeMatchScore(
-  investor: InvestorProfileRow,
-  myProfile: FounderProfileRow
-): number {
+function computeInvestorScore(inv: any, myProfile: any): number {
   let score = 0
-  // Stage match: 2pts
-  if (investor.stages?.includes(myProfile.stage)) score += 2
-  // SaaS subcategory overlap: up to 2pts
-  const overlap = (investor.saas_subcategories ?? []).filter((s) =>
+  if (inv.stages?.includes(myProfile.stage)) score += 2
+  const overlap = (inv.saas_subcategories ?? []).filter((s: string) =>
     (myProfile.product_categories ?? []).includes(s)
   ).length
   score += Math.min(overlap, 2)
-  // Check size includes raising amount: 1pt
-  if (
-    myProfile.raising_amount_usd >= investor.check_size_min_usd &&
-    myProfile.raising_amount_usd <= investor.check_size_max_usd
-  ) {
-    score += 1
-  }
+  if (myProfile.raising_amount_usd >= inv.check_size_min_usd &&
+      myProfile.raising_amount_usd <= inv.check_size_max_usd) score += 1
+  return score
+}
+
+function computeLenderScore(lender: any, myProfile: any): number {
+  let score = 0
+  if (lender.stages?.includes(myProfile.stage)) score += 2
+  const overlap = (lender.saas_subcategories ?? []).filter((s: string) =>
+    (myProfile.product_categories ?? []).includes(s)
+  ).length
+  score += Math.min(overlap, 2)
   return score
 }
 
 function MatchBadge({ score }: { score: number }) {
-  if (score >= 4) {
-    return (
-      <span className="text-xs font-medium bg-green-50 text-green-700 px-2 py-0.5 rounded-full">
-        Strong match
-      </span>
-    )
-  }
-  if (score >= 2) {
-    return (
-      <span className="text-xs font-medium bg-yellow-50 text-yellow-700 px-2 py-0.5 rounded-full">
-        Partial match
-      </span>
-    )
-  }
+  if (score >= 4) return (
+    <span className="text-xs font-medium bg-green-50 text-green-700 px-2 py-0.5 rounded-full">Strong match</span>
+  )
+  if (score >= 2) return (
+    <span className="text-xs font-medium bg-yellow-50 text-yellow-700 px-2 py-0.5 rounded-full">Partial match</span>
+  )
   return (
-    <span className="text-xs font-medium bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">
-      Low match
-    </span>
+    <span className="text-xs font-medium bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">Low match</span>
   )
 }
+
+const FOUNDER_LIMIT = 15
 
 function FlagDots({ used }: { used: number }) {
   return (
     <div className="flex items-center gap-1.5">
-      <span className="text-xs text-gray-500 mr-1">{used} / 10 flags used</span>
-      {Array.from({ length: 10 }).map((_, i) => (
-        <span
-          key={i}
-          className={`w-2 h-2 rounded-full ${i < used ? 'bg-[#534AB7]' : 'bg-gray-200'}`}
-        />
+      <span className="text-xs text-gray-500 mr-1">{used} / {FOUNDER_LIMIT} requests sent</span>
+      {Array.from({ length: FOUNDER_LIMIT }).map((_, i) => (
+        <span key={i} className={`w-2 h-2 rounded-full ${i < used ? 'bg-[#534AB7]' : 'bg-gray-200'}`} />
       ))}
     </div>
   )
@@ -87,30 +72,31 @@ function FlagDots({ used }: { used: number }) {
 
 export default function FounderDiscoverClient({
   investors,
+  lenders,
   myProfile,
   myFlaggedInvestorIds,
+  myFlaggedLenderIds,
 }: Props) {
   const router = useRouter()
 
-  // Filter state
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>('all')
   const [checkMin, setCheckMin] = useState('')
   const [checkMax, setCheckMax] = useState('')
   const [selectedStages, setSelectedStages] = useState<string[]>([])
   const [leadsOnly, setLeadsOnly] = useState(false)
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
 
-  // Flags state
-  const [flaggedIds, setFlaggedIds] = useState<Set<string>>(new Set(myFlaggedInvestorIds))
+  const [investorFlaggedIds, setInvestorFlaggedIds] = useState<Set<string>>(new Set(myFlaggedInvestorIds))
+  const [lenderFlaggedIds, setLenderFlaggedIds] = useState<Set<string>>(new Set(myFlaggedLenderIds))
   const [flagStates, setFlagStates] = useState<Record<string, FlagState>>({})
   const [flagErrors, setFlagErrors] = useState<Record<string, string>>({})
   const timeoutRefs = useRef<Record<string, ReturnType<typeof setTimeout>>>({})
-
-  // Per-card thesis expand state
   const [expandedThesis, setExpandedThesis] = useState<Record<string, boolean>>({})
 
-  const flagsUsed = flaggedIds.size
+  const totalFlagsUsed = investorFlaggedIds.size + lenderFlaggedIds.size
 
   function resetFilters() {
+    setTypeFilter('all')
     setCheckMin('')
     setCheckMax('')
     setSelectedStages([])
@@ -119,164 +105,180 @@ export default function FounderDiscoverClient({
   }
 
   function toggleStage(s: string) {
-    setSelectedStages((prev) =>
-      prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]
-    )
+    setSelectedStages((prev) => prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s])
   }
 
   function toggleCategory(c: string) {
-    setSelectedCategories((prev) =>
-      prev.includes(c) ? prev.filter((x) => x !== c) : [...prev, c]
-    )
+    setSelectedCategories((prev) => prev.includes(c) ? prev.filter((x) => x !== c) : [...prev, c])
   }
 
-  const filtered = useMemo(() => {
+  const filteredInvestors = useMemo(() => {
+    if (typeFilter === 'lender') return []
     return investors.filter((inv) => {
       if (checkMin && inv.check_size_max_usd < Number(checkMin)) return false
       if (checkMax && inv.check_size_min_usd > Number(checkMax)) return false
-      if (selectedStages.length > 0) {
-        const hasStage = selectedStages.some((s) => inv.stages?.includes(s as never))
-        if (!hasStage) return false
-      }
+      if (selectedStages.length > 0 && !selectedStages.some((s) => inv.stages?.includes(s))) return false
       if (leadsOnly && !inv.leads_rounds) return false
-      if (selectedCategories.length > 0) {
-        const hasCategory = selectedCategories.some((c) =>
-          inv.saas_subcategories?.includes(c)
-        )
-        if (!hasCategory) return false
-      }
+      if (selectedCategories.length > 0 && !selectedCategories.some((c) => inv.saas_subcategories?.includes(c))) return false
       return true
     })
-  }, [investors, checkMin, checkMax, selectedStages, leadsOnly, selectedCategories])
+  }, [investors, typeFilter, checkMin, checkMax, selectedStages, leadsOnly, selectedCategories])
 
-  async function handleFlag(investorId: string) {
-    if (flagsUsed >= 10) return
-    setFlaggedIds((prev) => new Set(Array.from(prev).concat(investorId)))
+  const filteredLenders = useMemo(() => {
+    if (typeFilter === 'investor') return []
+    return lenders.filter((lender) => {
+      if (selectedStages.length > 0 && !selectedStages.some((s) => lender.stages?.includes(s))) return false
+      if (selectedCategories.length > 0 && !selectedCategories.some((c) => lender.saas_subcategories?.includes(c))) return false
+      return true
+    })
+  }, [lenders, typeFilter, selectedStages, selectedCategories])
+
+  // Merge and sort by match score descending, lenders mixed in naturally
+  const merged = useMemo(() => {
+    const inv = filteredInvestors.map((i: any) => ({ ...i, _type: 'investor' as const, _score: computeInvestorScore(i, myProfile) }))
+    const len = filteredLenders.map((l: any) => ({ ...l, _type: 'lender' as const, _score: computeLenderScore(l, myProfile) }))
+    return [...inv, ...len].sort((a, b) => b._score - a._score)
+  }, [filteredInvestors, filteredLenders, myProfile])
+
+  async function handleInvestorFlag(investorId: string) {
+    if (totalFlagsUsed >= FOUNDER_LIMIT) return
+    setInvestorFlaggedIds((prev) => new Set(Array.from(prev).concat(investorId)))
     setFlagStates((prev) => ({ ...prev, [investorId]: 'pending_undo' }))
     setFlagErrors((prev) => ({ ...prev, [investorId]: '' }))
-
     const result = await flagInvestor(investorId)
-
     if (result?.error) {
-      // Roll back optimistic update on error
-      setFlaggedIds((prev) => { const next = new Set(prev); next.delete(investorId); return next })
+      setInvestorFlaggedIds((prev) => { const next = new Set(prev); next.delete(investorId); return next })
       setFlagStates((prev) => ({ ...prev, [investorId]: 'idle' }))
       setFlagErrors((prev) => ({ ...prev, [investorId]: result.error! }))
       return
     }
-
     router.refresh()
-
-    const t = setTimeout(() => {
-      setFlagStates((prev) => ({ ...prev, [investorId]: 'flagged' }))
-    }, 5000)
+    const t = setTimeout(() => setFlagStates((prev) => ({ ...prev, [investorId]: 'flagged' })), 5000)
     timeoutRefs.current[investorId] = t
   }
 
-  async function handleUndo(investorId: string) {
+  async function handleInvestorUndo(investorId: string) {
     clearTimeout(timeoutRefs.current[investorId])
     delete timeoutRefs.current[investorId]
     setFlagStates((prev) => ({ ...prev, [investorId]: 'idle' }))
-    setFlaggedIds((prev) => {
-      const next = new Set(prev)
-      next.delete(investorId)
-      return next
-    })
+    setInvestorFlaggedIds((prev) => { const next = new Set(prev); next.delete(investorId); return next })
     await unflagInvestor(investorId)
     router.refresh()
   }
 
-  const inputCls =
-    'border border-gray-200 rounded-md px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-[#534AB7] focus:border-transparent w-full'
+  async function handleLenderFlag(lenderId: string) {
+    if (totalFlagsUsed >= FOUNDER_LIMIT) return
+    setLenderFlaggedIds((prev) => new Set(Array.from(prev).concat(lenderId)))
+    setFlagStates((prev) => ({ ...prev, [lenderId]: 'pending_undo' }))
+    setFlagErrors((prev) => ({ ...prev, [lenderId]: '' }))
+    const result = await flagLenderAsFounder(lenderId)
+    if (result?.error) {
+      setLenderFlaggedIds((prev) => { const next = new Set(prev); next.delete(lenderId); return next })
+      setFlagStates((prev) => ({ ...prev, [lenderId]: 'idle' }))
+      setFlagErrors((prev) => ({ ...prev, [lenderId]: result.error! }))
+      return
+    }
+    router.refresh()
+    const t = setTimeout(() => setFlagStates((prev) => ({ ...prev, [lenderId]: 'flagged' })), 5000)
+    timeoutRefs.current[lenderId] = t
+  }
+
+  async function handleLenderUndo(lenderId: string) {
+    clearTimeout(timeoutRefs.current[lenderId])
+    delete timeoutRefs.current[lenderId]
+    setFlagStates((prev) => ({ ...prev, [lenderId]: 'idle' }))
+    setLenderFlaggedIds((prev) => { const next = new Set(prev); next.delete(lenderId); return next })
+    await unflagLenderAsFounder(lenderId)
+    router.refresh()
+  }
+
+  const inputCls = 'border border-gray-200 rounded-md px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-[#534AB7] focus:border-transparent w-full'
 
   return (
     <div className="max-w-5xl mx-auto px-6 py-12">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Discover Investors</h1>
-          <p className="text-sm text-gray-500 mt-1">{filtered.length} investor{filtered.length !== 1 ? 's' : ''} match your filters</p>
+          <h1 className="text-2xl font-semibold text-gray-900">Discover</h1>
+          <p className="text-sm text-gray-500 mt-1">{merged.length} {merged.length !== 1 ? 'matches' : 'match'}</p>
         </div>
-        <FlagDots used={flagsUsed} />
+        <FlagDots used={totalFlagsUsed} />
       </div>
 
       {/* Filter bar */}
       <div className="border border-gray-200 rounded-lg p-4 mb-8 space-y-4">
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          <div>
-            <label className="block text-xs text-gray-500 mb-1">Check size min (USD)</label>
-            <input
-              type="number"
-              value={checkMin}
-              onChange={(e) => setCheckMin(e.target.value)}
-              className={inputCls}
-              placeholder="500000"
-              min={0}
-            />
-          </div>
-          <div>
-            <label className="block text-xs text-gray-500 mb-1">Check size max (USD)</label>
-            <input
-              type="number"
-              value={checkMax}
-              onChange={(e) => setCheckMax(e.target.value)}
-              className={inputCls}
-              placeholder="5000000"
-              min={0}
-            />
-          </div>
-          <div className="col-span-2 flex items-end gap-2">
-            <label className="flex items-center gap-2 cursor-pointer select-none">
-              <input
-                type="checkbox"
-                checked={leadsOnly}
-                onChange={(e) => setLeadsOnly(e.target.checked)}
-                className="rounded border-gray-300 text-[#534AB7]"
-              />
-              <span className="text-sm text-gray-700">Leads rounds only</span>
-            </label>
+        {/* Type filter */}
+        <div className="flex gap-2">
+          {(['all', 'investor', 'lender'] as const).map((t) => (
             <button
-              onClick={resetFilters}
-              className="ml-auto text-xs text-[#534AB7] hover:text-[#4339A0] border border-[#534AB7] px-3 py-1.5 rounded-md transition-colors"
+              key={t}
+              type="button"
+              onClick={() => setTypeFilter(t)}
+              className={`px-3 py-1 text-xs rounded-md border transition-colors ${
+                typeFilter === t
+                  ? 'bg-[#534AB7] text-white border-[#534AB7]'
+                  : 'border-gray-200 text-gray-600 hover:border-[#534AB7] hover:text-[#534AB7]'
+              }`}
             >
+              {t === 'all' ? 'All' : t === 'investor' ? 'Investors' : 'Lenders'}
+            </button>
+          ))}
+        </div>
+
+        {/* Investor-specific filters */}
+        {typeFilter !== 'lender' && (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">Check size min (USD)</label>
+              <input type="number" value={checkMin} onChange={(e) => setCheckMin(e.target.value)} className={inputCls} placeholder="500000" min={0} />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-500 mb-1">Check size max (USD)</label>
+              <input type="number" value={checkMax} onChange={(e) => setCheckMax(e.target.value)} className={inputCls} placeholder="5000000" min={0} />
+            </div>
+            <div className="col-span-2 flex items-end gap-2">
+              <label className="flex items-center gap-2 cursor-pointer select-none">
+                <input type="checkbox" checked={leadsOnly} onChange={(e) => setLeadsOnly(e.target.checked)} className="rounded border-gray-300 text-[#534AB7]" />
+                <span className="text-sm text-gray-700">Leads rounds only</span>
+              </label>
+              <button onClick={resetFilters} className="ml-auto text-xs text-[#534AB7] hover:text-[#4339A0] border border-[#534AB7] px-3 py-1.5 rounded-md transition-colors">
+                Reset filters
+              </button>
+            </div>
+          </div>
+        )}
+
+        {typeFilter === 'lender' && (
+          <div className="flex justify-end">
+            <button onClick={resetFilters} className="text-xs text-[#534AB7] hover:text-[#4339A0] border border-[#534AB7] px-3 py-1.5 rounded-md transition-colors">
               Reset filters
             </button>
           </div>
-        </div>
+        )}
 
+        {/* Stage filter */}
         <div>
           <p className="text-xs text-gray-500 mb-2">Stage</p>
           <div className="flex flex-wrap gap-2">
             {STAGE_OPTIONS.map((s) => (
-              <button
-                key={s}
-                type="button"
-                onClick={() => toggleStage(s)}
+              <button key={s} type="button" onClick={() => toggleStage(s)}
                 className={`px-3 py-1 text-xs rounded-md border transition-colors ${
-                  selectedStages.includes(s)
-                    ? 'bg-[#534AB7] text-white border-[#534AB7]'
-                    : 'border-gray-200 text-gray-600 hover:border-[#534AB7] hover:text-[#534AB7]'
-                }`}
-              >
+                  selectedStages.includes(s) ? 'bg-[#534AB7] text-white border-[#534AB7]' : 'border-gray-200 text-gray-600 hover:border-[#534AB7] hover:text-[#534AB7]'
+                }`}>
                 {fmtStage(s)}
               </button>
             ))}
           </div>
         </div>
 
+        {/* SaaS subcategory filter */}
         <div>
           <p className="text-xs text-gray-500 mb-2">SaaS subcategory</p>
           <div className="flex flex-wrap gap-2">
             {SAAS_SUBCATEGORIES.map((c) => (
-              <button
-                key={c}
-                type="button"
-                onClick={() => toggleCategory(c)}
+              <button key={c} type="button" onClick={() => toggleCategory(c)}
                 className={`px-3 py-1 text-xs rounded-md border transition-colors ${
-                  selectedCategories.includes(c)
-                    ? 'bg-[#534AB7] text-white border-[#534AB7]'
-                    : 'border-gray-200 text-gray-600 hover:border-[#534AB7] hover:text-[#534AB7]'
-                }`}
-              >
+                  selectedCategories.includes(c) ? 'bg-[#534AB7] text-white border-[#534AB7]' : 'border-gray-200 text-gray-600 hover:border-[#534AB7] hover:text-[#534AB7]'
+                }`}>
                 {c}
               </button>
             ))}
@@ -285,132 +287,150 @@ export default function FounderDiscoverClient({
       </div>
 
       {/* Results */}
-      {filtered.length === 0 ? (
+      {merged.length === 0 ? (
         <div className="text-center py-16 border border-gray-200 rounded-lg">
-          <p className="text-sm text-gray-500 mb-3">
-            No investors match your filters. Try widening your search.
-          </p>
-          <button
-            onClick={resetFilters}
-            className="text-sm text-[#534AB7] hover:text-[#4339A0] border border-[#534AB7] px-4 py-2 rounded-md transition-colors"
-          >
+          <p className="text-sm text-gray-500 mb-3">No matches for your current filters.</p>
+          <button onClick={resetFilters} className="text-sm text-[#534AB7] hover:text-[#4339A0] border border-[#534AB7] px-4 py-2 rounded-md transition-colors">
             Reset filters
           </button>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {filtered.map((inv) => {
-            const score = computeMatchScore(inv, myProfile)
-            const flagState = flagStates[inv.id] ?? (flaggedIds.has(inv.id) ? 'flagged' : 'idle')
-            const isThesisExpanded = expandedThesis[inv.id] ?? false
+          {merged.map((item) => {
+            const id = item.id
+            const isThesisExpanded = expandedThesis[id] ?? false
 
+            if (item._type === 'investor') {
+              const inv = item
+              const flagState = flagStates[id] ?? (investorFlaggedIds.has(id) ? 'flagged' : 'idle')
+              return (
+                <div key={id} onClick={() => router.push(`/discover/${id}`)}
+                  className="border border-gray-200 rounded-lg p-5 cursor-pointer hover:border-[#534AB7] transition-colors">
+                  <div className="flex items-start justify-between gap-2 mb-3">
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900">{inv.firm_name}</p>
+                      <p className="text-xs text-gray-500">{inv.partner_name}</p>
+                      <p className="text-xs text-gray-400">{inv.location}</p>
+                    </div>
+                    <MatchBadge score={inv._score} />
+                  </div>
+
+                  <p className="text-xs text-gray-700 font-medium mb-2">
+                    {fmtUsd(inv.check_size_min_usd)} – {fmtUsd(inv.check_size_max_usd)}
+                  </p>
+
+                  {inv.stages?.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mb-2">
+                      {inv.stages.map((s: string) => (
+                        <span key={s} className="text-xs bg-purple-50 text-[#534AB7] px-2 py-0.5 rounded-full">{fmtStage(s)}</span>
+                      ))}
+                    </div>
+                  )}
+
+                  {inv.saas_subcategories?.length > 0 && (
+                    <div className="flex flex-wrap gap-1 mb-3">
+                      {inv.saas_subcategories.slice(0, 3).map((c: string) => (
+                        <span key={c} className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{c}</span>
+                      ))}
+                    </div>
+                  )}
+
+                  {inv.thesis_statement && (
+                    <div className="mb-3">
+                      <p className={`text-xs text-gray-600 italic ${isThesisExpanded ? '' : 'line-clamp-2'}`}>
+                        &ldquo;{inv.thesis_statement}&rdquo;
+                      </p>
+                      <button type="button" onClick={(e) => { e.stopPropagation(); setExpandedThesis((prev) => ({ ...prev, [id]: !isThesisExpanded })) }}
+                        className="text-xs text-[#534AB7] hover:text-[#4339A0] mt-1">
+                        {isThesisExpanded ? 'Show less' : 'Read more'}
+                      </button>
+                    </div>
+                  )}
+
+                  <div onClick={(e) => e.stopPropagation()}>
+                    {flagErrors[id] && <p className="text-xs text-red-500 mb-1">{flagErrors[id]}</p>}
+                    {flagState === 'idle' && (
+                      <button onClick={() => handleInvestorFlag(id)} disabled={totalFlagsUsed >= FOUNDER_LIMIT}
+                        className={`w-full text-sm py-2 rounded-md border transition-colors ${totalFlagsUsed >= FOUNDER_LIMIT ? 'border-gray-200 text-gray-400 cursor-not-allowed' : 'border-[#534AB7] text-[#534AB7] hover:bg-[#534AB7] hover:text-white'}`}>
+                        {totalFlagsUsed >= FOUNDER_LIMIT ? 'Limit reached (15 max)' : 'Send connection request'}
+                      </button>
+                    )}
+                    {flagState === 'pending_undo' && (
+                      <div className="flex items-center gap-2">
+                        <span className="flex-1 text-sm text-center text-green-600">Flagged ✓</span>
+                        <button onClick={() => handleInvestorUndo(id)} className="text-xs text-gray-500 hover:text-gray-700 border border-gray-200 px-2.5 py-1 rounded-md transition-colors">Undo</button>
+                      </div>
+                    )}
+                    {flagState === 'flagged' && <div className="text-sm text-center text-green-600 py-2">Flagged ✓</div>}
+                  </div>
+                </div>
+              )
+            }
+
+            // Lender card
+            const lender = item
+            const flagState = flagStates[id] ?? (lenderFlaggedIds.has(id) ? 'flagged' : 'idle')
             return (
-              <div
-                key={inv.id}
-                onClick={() => router.push(`/discover/${inv.id}`)}
-                className="border border-gray-200 rounded-lg p-5 cursor-pointer hover:border-[#534AB7] transition-colors"
-              >
+              <div key={id} className="border border-gray-200 rounded-lg p-5">
                 <div className="flex items-start justify-between gap-2 mb-3">
                   <div>
-                    <p className="text-sm font-semibold text-gray-900">{inv.firm_name}</p>
-                    <p className="text-xs text-gray-500">{inv.partner_name}</p>
-                    <p className="text-xs text-gray-400">{inv.location}</p>
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <p className="text-sm font-semibold text-gray-900">{lender.institution_name}</p>
+                      <span className="text-xs font-medium bg-sky-50 text-sky-600 border border-sky-200 px-2 py-0.5 rounded-full">Lender</span>
+                    </div>
+                    <p className="text-xs text-gray-500">{lender.contact_name}</p>
+                    <p className="text-xs text-gray-400">{lender.location}</p>
                   </div>
-                  <MatchBadge score={score} />
+                  <MatchBadge score={lender._score} />
                 </div>
 
                 <p className="text-xs text-gray-700 font-medium mb-2">
-                  {fmtUsd(inv.check_size_min_usd)} – {fmtUsd(inv.check_size_max_usd)}
+                  {fmtUsd(lender.loan_size_min_usd)} – {fmtUsd(lender.loan_size_max_usd)} loan
                 </p>
 
-                {/* Stage badges */}
-                {inv.stages && inv.stages.length > 0 && (
+                {lender.stages?.length > 0 && (
                   <div className="flex flex-wrap gap-1 mb-2">
-                    {inv.stages.map((s) => (
-                      <span
-                        key={s}
-                        className="text-xs bg-purple-50 text-[#534AB7] px-2 py-0.5 rounded-full"
-                      >
-                        {fmtStage(s)}
-                      </span>
+                    {lender.stages.map((s: string) => (
+                      <span key={s} className="text-xs bg-purple-50 text-[#534AB7] px-2 py-0.5 rounded-full">{fmtStage(s)}</span>
                     ))}
                   </div>
                 )}
 
-                {/* SaaS subcategory chips */}
-                {inv.saas_subcategories && inv.saas_subcategories.length > 0 && (
+                {lender.saas_subcategories?.length > 0 && (
                   <div className="flex flex-wrap gap-1 mb-3">
-                    {inv.saas_subcategories.slice(0, 3).map((c) => (
-                      <span
-                        key={c}
-                        className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full"
-                      >
-                        {c}
-                      </span>
+                    {lender.saas_subcategories.slice(0, 3).map((c: string) => (
+                      <span key={c} className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">{c}</span>
                     ))}
                   </div>
                 )}
 
-                {/* Thesis */}
-                {inv.thesis_statement && (
+                {lender.thesis_statement && (
                   <div className="mb-3">
-                    <p
-                      className={`text-xs text-gray-600 italic ${isThesisExpanded ? '' : 'line-clamp-2'}`}
-                    >
-                      &ldquo;{inv.thesis_statement}&rdquo;
+                    <p className={`text-xs text-gray-600 italic ${isThesisExpanded ? '' : 'line-clamp-2'}`}>
+                      &ldquo;{lender.thesis_statement}&rdquo;
                     </p>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setExpandedThesis((prev) => ({
-                          ...prev,
-                          [inv.id]: !isThesisExpanded,
-                        }))
-                      }}
-                      className="text-xs text-[#534AB7] hover:text-[#4339A0] mt-1"
-                    >
+                    <button type="button" onClick={() => setExpandedThesis((prev) => ({ ...prev, [id]: !isThesisExpanded }))}
+                      className="text-xs text-[#534AB7] hover:text-[#4339A0] mt-1">
                       {isThesisExpanded ? 'Show less' : 'Read more'}
                     </button>
                   </div>
                 )}
 
-                {/* Flag button */}
-                <div onClick={(e) => e.stopPropagation()}>
-                  {flagErrors[inv.id] && (
-                    <p className="text-xs text-red-500 mb-1">{flagErrors[inv.id]}</p>
-                  )}
+                <div>
+                  {flagErrors[id] && <p className="text-xs text-red-500 mb-1">{flagErrors[id]}</p>}
                   {flagState === 'idle' && (
-                    <button
-                      onClick={() => handleFlag(inv.id)}
-                      disabled={flagsUsed >= 10}
-                      className={`w-full text-sm py-2 rounded-md border transition-colors ${
-                        flagsUsed >= 10
-                          ? 'border-gray-200 text-gray-400 cursor-not-allowed'
-                          : 'border-[#534AB7] text-[#534AB7] hover:bg-[#534AB7] hover:text-white'
-                      }`}
-                    >
-                      {flagsUsed >= 10 ? 'Flag limit reached' : 'Flag interest'}
+                    <button onClick={() => handleLenderFlag(id)} disabled={totalFlagsUsed >= FOUNDER_LIMIT}
+                      className={`w-full text-sm py-2 rounded-md border transition-colors ${totalFlagsUsed >= FOUNDER_LIMIT ? 'border-gray-200 text-gray-400 cursor-not-allowed' : 'border-sky-500 text-sky-600 hover:bg-sky-500 hover:text-white'}`}>
+                      {totalFlagsUsed >= FOUNDER_LIMIT ? 'Limit reached (15 max)' : 'Express interest'}
                     </button>
                   )}
                   {flagState === 'pending_undo' && (
                     <div className="flex items-center gap-2">
-                      <span className="flex-1 text-sm text-center text-green-600">
-                        Flagged ✓
-                      </span>
-                      <button
-                        onClick={() => handleUndo(inv.id)}
-                        className="text-xs text-gray-500 hover:text-gray-700 border border-gray-200 px-2.5 py-1 rounded-md transition-colors"
-                      >
-                        Undo
-                      </button>
+                      <span className="flex-1 text-sm text-center text-green-600">Sent ✓</span>
+                      <button onClick={() => handleLenderUndo(id)} className="text-xs text-gray-500 hover:text-gray-700 border border-gray-200 px-2.5 py-1 rounded-md transition-colors">Undo</button>
                     </div>
                   )}
-                  {flagState === 'flagged' && (
-                    <div className="text-sm text-center text-green-600 py-2">
-                      Flagged ✓
-                    </div>
-                  )}
+                  {flagState === 'flagged' && <div className="text-sm text-center text-green-600 py-2">Sent ✓</div>}
                 </div>
               </div>
             )

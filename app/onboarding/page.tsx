@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import FounderForm from '@/components/onboarding/founder-form'
 import InvestorForm from '@/components/onboarding/investor-form'
+import LenderForm from '@/components/onboarding/lender-form'
 
 export default async function OnboardingPage() {
   const supabase = await createClient()
@@ -50,6 +51,24 @@ export default async function OnboardingPage() {
           <h1 className="text-2xl font-bold text-gray-900">Investor Profile</h1>
         </div>
         <InvestorForm />
+      </div>
+    )
+  }
+
+  if (profile.role === 'lender') {
+    const { data: lp } = await supabase
+      .from('lender_profiles')
+      .select('id')
+      .eq('id', user.id)
+      .maybeSingle()
+
+    if (lp) redirect('/dashboard')
+    return (
+      <div className="max-w-xl mx-auto px-6 py-12">
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-gray-900">Lender Profile</h1>
+        </div>
+        <LenderForm />
       </div>
     )
   }

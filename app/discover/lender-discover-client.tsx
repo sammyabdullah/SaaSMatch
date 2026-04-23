@@ -2,12 +2,12 @@
 
 import { useState, useMemo, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { flagFounder, unflagFounder } from '@/app/actions/discover'
+import { flagFounderAsLender, unflagFounderAsLender } from '@/app/actions/discover'
 import { fmtArrRange, fmtStage } from '@/lib/format'
 import type { Database } from '@/lib/supabase/types'
 
 type FounderProfileRow = Database['public']['Tables']['founder_profiles']['Row']
-type InvestorProfileRow = Database['public']['Tables']['investor_profiles']['Row']
+type LenderProfileRow = Database['public']['Tables']['lender_profiles']['Row']
 
 type FounderWithProfile = FounderProfileRow & {
   profiles: { email: string }
@@ -15,7 +15,7 @@ type FounderWithProfile = FounderProfileRow & {
 
 interface Props {
   founders: FounderWithProfile[]
-  myProfile: InvestorProfileRow
+  myProfile: LenderProfileRow
   myFlaggedFounderIds: string[]
 }
 
@@ -28,7 +28,6 @@ const ARR_RANGE_OPTIONS = [
   { value: '5m-plus', label: '$5M+' },
 ] as const
 const GTM_OPTIONS = ['sales-led', 'product-led', 'hybrid'] as const
-const REVENUE_OPTIONS = ['seat-based', 'usage-based', 'platform-fee', 'other'] as const
 const PRODUCT_CATEGORIES = [
   'iPaaS', 'Vertical SaaS', 'DevTools', 'Security',
   'Data & Analytics', 'HR Tech', 'FinTech', 'MarTech', 'RevOps', 'Ed Tech', 'Other',
@@ -36,26 +35,16 @@ const PRODUCT_CATEGORIES = [
 
 type FlagState = 'idle' | 'pending_undo' | 'flagged'
 
-
 function computeMatchScore(
   founder: FounderProfileRow,
-  myProfile: InvestorProfileRow
+  myProfile: LenderProfileRow
 ): number {
   let score = 0
-  // Stage match: 2pts
   if (myProfile.stages?.includes(founder.stage)) score += 2
-  // Product category overlap: up to 2pts
   const overlap = (myProfile.saas_subcategories ?? []).filter((s) =>
     (founder.product_categories ?? []).includes(s)
   ).length
   score += Math.min(overlap, 2)
-  // Check size includes raising amount: 1pt
-  if (
-    founder.raising_amount_usd >= myProfile.check_size_min_usd &&
-    founder.raising_amount_usd <= myProfile.check_size_max_usd
-  ) {
-    score += 1
-  }
   return score
 }
 
@@ -81,28 +70,24 @@ function MatchBadge({ score }: { score: number }) {
   )
 }
 
-export default function InvestorDiscoverClient({
+export default function LenderDiscoverClient({
   founders,
   myProfile,
   myFlaggedFounderIds,
 }: Props) {
   const router = useRouter()
 
-  // Filter state
   const [arrRange, setArrRange] = useState('')
   const [selectedStages, setSelectedStages] = useState<string[]>([])
   const [momGrowthMin, setMomGrowthMin] = useState('')
   const [selectedGtm, setSelectedGtm] = useState<string[]>([])
-  const [selectedRevModel, setSelectedRevModel] = useState<string[]>([])
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
 
-  // Flags & pass state
   const [flaggedIds, setFlaggedIds] = useState<Set<string>>(new Set(myFlaggedFounderIds))
   const [flagStates, setFlagStates] = useState<Record<string, FlagState>>({})
   const [passedIds, setPassedIds] = useState<Set<string>>(new Set())
   const timeoutRefs = useRef<Record<string, ReturnType<typeof setTimeout>>>({})
 
-  // Per-card why_now expand state
   const [expandedWhyNow, setExpandedWhyNow] = useState<Record<string, boolean>>({})
 
   function resetFilters() {
@@ -110,7 +95,6 @@ export default function InvestorDiscoverClient({
     setSelectedStages([])
     setMomGrowthMin('')
     setSelectedGtm([])
-    setSelectedRevModel([])
     setSelectedCategories([])
   }
 
@@ -123,12 +107,6 @@ export default function InvestorDiscoverClient({
   function toggleGtm(g: string) {
     setSelectedGtm((prev) =>
       prev.includes(g) ? prev.filter((x) => x !== g) : [...prev, g]
-    )
-  }
-
-  function toggleRevModel(r: string) {
-    setSelectedRevModel((prev) =>
-      prev.includes(r) ? prev.filter((x) => x !== r) : [...prev, r]
     )
   }
 
@@ -146,7 +124,6 @@ export default function InvestorDiscoverClient({
         if (selectedStages.length > 0 && !selectedStages.includes(f.stage)) return false
         if (momGrowthMin && (f.mom_growth_pct == null || f.mom_growth_pct < Number(momGrowthMin))) return false
         if (selectedGtm.length > 0 && !selectedGtm.includes(f.gtm_motion)) return false
-        if (selectedRevModel.length > 0 && !selectedRevModel.includes(f.revenue_model)) return false
         if (selectedCategories.length > 0) {
           const hasCategory = selectedCategories.some((c) =>
             f.product_categories?.includes(c)
@@ -155,13 +132,13 @@ export default function InvestorDiscoverClient({
         }
         return true
       })
-  }, [founders, passedIds, arrRange, selectedStages, momGrowthMin, selectedGtm, selectedRevModel, selectedCategories])
+  }, [founders, passedIds, arrRange, selectedStages, momGrowthMin, selectedGtm, selectedCategories])
 
   async function handleFlag(founderId: string) {
     setFlaggedIds((prev) => new Set(Array.from(prev).concat(founderId)))
     setFlagStates((prev) => ({ ...prev, [founderId]: 'pending_undo' }))
 
-    await flagFounder(founderId)
+    await flagFounderAsLender(founderId)
 
     const t = setTimeout(() => {
       setFlagStates((prev) => ({ ...prev, [founderId]: 'flagged' }))
@@ -178,7 +155,7 @@ export default function InvestorDiscoverClient({
       next.delete(founderId)
       return next
     })
-    await unflagFounder(founderId)
+    await unflagFounderAsLender(founderId)
   }
 
   function handlePass(founderId: string) {
@@ -224,7 +201,7 @@ export default function InvestorDiscoverClient({
             </select>
           </div>
           <div>
-            <label className="block text-xs text-gray-500 mb-1">MoM growth min %</label>
+            <label className="block text-xs text-gray-500 mb-1">YOY growth min %</label>
             <input
               type="number"
               value={momGrowthMin}
@@ -261,17 +238,6 @@ export default function InvestorDiscoverClient({
             {GTM_OPTIONS.map((g) => (
               <button key={g} type="button" onClick={() => toggleGtm(g)} className={chipBtn(selectedGtm.includes(g))}>
                 {g.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <p className="text-xs text-gray-500 mb-2">Revenue model</p>
-          <div className="flex flex-wrap gap-2">
-            {REVENUE_OPTIONS.map((r) => (
-              <button key={r} type="button" onClick={() => toggleRevModel(r)} className={chipBtn(selectedRevModel.includes(r))}>
-                {r.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
               </button>
             ))}
           </div>
@@ -408,7 +374,6 @@ export default function InvestorDiscoverClient({
                   className="flex gap-2 mt-2"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  {/* Pass button */}
                   <button
                     onClick={() => handlePass(f.id)}
                     className="flex-1 text-sm py-2 rounded-md border border-gray-200 text-gray-500 hover:border-gray-400 hover:text-gray-700 transition-colors"
@@ -416,7 +381,6 @@ export default function InvestorDiscoverClient({
                     Pass
                   </button>
 
-                  {/* Flag / Undo / Flagged */}
                   {flagState === 'idle' && (
                     <button
                       onClick={() => handleFlag(f.id)}

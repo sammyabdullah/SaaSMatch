@@ -1,8 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { createAdminClient } from '@/lib/supabase/server'
 import { fmtDate, fmtArrRange, fmtStage } from '@/lib/format'
-import UnflagInvestorFlag from './unflag-investor-flag'
-import AcceptDeclineFlag from './accept-decline-flag'
+import UnflagLenderFlag from './unflag-lender-flag'
+import AcceptDeclineLenderFlag from './accept-decline-lender-flag'
 
 interface Props {
   userId: string
@@ -51,75 +51,66 @@ function FounderNameLink({ name, website }: { name: string; website?: string | n
   return <p className="text-sm font-semibold text-gray-900">{name}</p>
 }
 
-export default async function InvestorDashboard({ userId }: Props) {
+export default async function LenderDashboard({ userId }: Props) {
   const admin = createAdminClient()
 
-  // Founders browsed this week
-  const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
-  const { count: browsedThisWeek } = await admin
-    .from('profile_views')
+  // Founders this lender has expressed interest in (all outgoing flags)
+  const { count: expressedInterestCount } = await admin
+    .from('lender_flags')
     .select('id', { count: 'exact', head: true })
-    .eq('investor_id', userId)
-    .gte('viewed_at', weekAgo)
+    .eq('lender_id', userId)
+    .eq('flagged_by', 'lender')
 
-  // Incoming introductions: founders who flagged this investor, pending response
+  // Incoming flags: founders who flagged this lender, pending response
   const { data: incomingFlags } = await admin
-    .from('flags')
+    .from('lender_flags')
     .select('*, founder_profiles(company_name, website, product_categories, location, arr_range, stage, mom_growth_pct, raising_amount_usd, why_now)')
-    .eq('investor_id', userId)
+    .eq('lender_id', userId)
     .eq('flagged_by', 'founder')
     .eq('status', 'pending')
     .order('created_at', { ascending: false }) as { data: any[] | null }
 
   // Accepted connections where founder initiated
   const { data: acceptedIncoming } = await admin
-    .from('flags')
-    .select('*, founder_profiles!flags_founder_id_fkey(company_name, website, product_categories, location, arr_range, stage, mom_growth_pct, profiles(email))')
-    .eq('investor_id', userId)
+    .from('lender_flags')
+    .select('*, founder_profiles!lender_flags_founder_id_fkey(company_name, website, product_categories, location, arr_range, stage, mom_growth_pct, profiles(email))')
+    .eq('lender_id', userId)
     .eq('flagged_by', 'founder')
     .eq('status', 'accepted')
     .order('responded_at', { ascending: false }) as { data: any[] | null }
 
-  // Outgoing flags: investor flagged a founder, pending
+  // Outgoing flags: lender flagged a founder, pending
   const { data: outgoingFlags } = await admin
-    .from('flags')
+    .from('lender_flags')
     .select('*, founder_profiles(company_name, website, product_categories, location, arr_range, stage, mom_growth_pct)')
-    .eq('investor_id', userId)
-    .eq('flagged_by', 'investor')
+    .eq('lender_id', userId)
+    .eq('flagged_by', 'lender')
     .in('status', ['pending'])
     .order('created_at', { ascending: false }) as { data: any[] | null }
 
-  // Accepted connections where investor initiated
+  // Accepted connections where lender initiated
   const { data: acceptedOutgoing } = await admin
-    .from('flags')
-    .select('*, founder_profiles!flags_founder_id_fkey(company_name, website, product_categories, location, arr_range, stage, mom_growth_pct, profiles(email))')
-    .eq('investor_id', userId)
-    .eq('flagged_by', 'investor')
+    .from('lender_flags')
+    .select('*, founder_profiles!lender_flags_founder_id_fkey(company_name, website, product_categories, location, arr_range, stage, mom_growth_pct, profiles(email))')
+    .eq('lender_id', userId)
+    .eq('flagged_by', 'lender')
     .eq('status', 'accepted')
     .order('responded_at', { ascending: false }) as { data: any[] | null }
 
-  // Recently viewed founders (for activity feed)
-  const { data: recentViews } = await admin
-    .from('profile_views')
-    .select('*, founder_profiles(company_name)')
-    .eq('investor_id', userId)
-    .order('viewed_at', { ascending: false })
-    .limit(20) as { data: any[] | null }
-
   // All outgoing flags for activity feed (all statuses)
   const { data: allOutgoingForActivity } = await admin
-    .from('flags')
+    .from('lender_flags')
     .select('*, founder_profiles(company_name)')
-    .eq('investor_id', userId)
-    .eq('flagged_by', 'investor')
+    .eq('lender_id', userId)
+    .eq('flagged_by', 'lender')
     .order('created_at', { ascending: false })
     .limit(20) as { data: any[] | null }
 
   // All incoming flags for activity feed (all statuses)
   const { data: allIncomingForActivity } = await admin
-    .from('flags')
+    .from('lender_flags')
     .select('*, founder_profiles(company_name)')
-    .eq('investor_id', userId)
+    .eq('lender_id', userId)
     .eq('flagged_by', 'founder')
     .order('created_at', { ascending: false })
     .limit(20) as { data: any[] | null }
@@ -131,17 +122,10 @@ export default async function InvestorDashboard({ userId }: Props) {
   type ActivityItem = { date: string; text: string }
   const activity: ActivityItem[] = []
 
-  if (recentViews) {
-    for (const v of recentViews) {
-      const company = v.founder_profiles?.company_name ?? 'A founder'
-      activity.push({ date: v.viewed_at, text: `You viewed ${company}` })
-    }
-  }
-
   if (allOutgoingForActivity) {
     for (const f of allOutgoingForActivity) {
       const company = f.founder_profiles?.company_name ?? 'A founder'
-      activity.push({ date: f.created_at, text: `You flagged ${company}` })
+      activity.push({ date: f.created_at, text: `You sent a connection request to ${company}` })
       if (f.status === 'accepted' && f.responded_at) {
         activity.push({ date: f.responded_at, text: `You connected with ${company}` })
       } else if (f.status === 'declined' && f.responded_at) {
@@ -166,13 +150,13 @@ export default async function InvestorDashboard({ userId }: Props) {
   return (
     <div className="max-w-5xl mx-auto px-6 py-12">
       <div className="mb-8">
-        <h1 className="text-2xl font-semibold text-gray-900">Investor Dashboard</h1>
+        <h1 className="text-2xl font-semibold text-gray-900">Lender Dashboard</h1>
         <p className="text-sm text-gray-500 mt-1">Track your connections, introductions, and activity.</p>
       </div>
 
       {/* Metric cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-10">
-        <MetricCard label="Founders browsed this week" value={browsedThisWeek ?? 0} />
+        <MetricCard label="Founders expressed interest in" value={expressedInterestCount ?? 0} />
         <MetricCard label="Connections" value={totalConnections} accent={totalConnections > 0 ? 'green' : 'gray'} />
         <MetricCard
           label="Pending intros"
@@ -181,7 +165,7 @@ export default async function InvestorDashboard({ userId }: Props) {
         />
       </div>
 
-      {/* Incoming founder introductions — action required */}
+      {/* Incoming founder introductions */}
       {incomingFlags && incomingFlags.length > 0 && (
         <section className="mb-10">
           <h2 className="text-base font-semibold text-gray-900 mb-1">
@@ -201,9 +185,7 @@ export default async function InvestorDashboard({ userId }: Props) {
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1">
                       <FounderNameLink name={fp?.company_name ?? 'Unknown company'} website={fp?.website} />
-                      {fp?.location && (
-                        <p className="text-xs text-gray-500 mt-0.5">{fp.location}</p>
-                      )}
+                      {fp?.location && <p className="text-xs text-gray-500 mt-0.5">{fp.location}</p>}
                       <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1">
                         {fp?.stage && <span className="text-xs text-gray-600">{fmtStage(fp.stage)}</span>}
                         {fp?.arr_range && <span className="text-xs text-gray-500">{fmtArrRange(fp.arr_range)}</span>}
@@ -221,7 +203,7 @@ export default async function InvestorDashboard({ userId }: Props) {
                       )}
                       <p className="text-xs text-gray-400 mt-1">Expressed interest {fmtDate(flag.created_at)}</p>
                     </div>
-                    <AcceptDeclineFlag flagId={flag.id} />
+                    <AcceptDeclineLenderFlag flagId={flag.id} />
                   </div>
                 </div>
               )
@@ -292,16 +274,13 @@ export default async function InvestorDashboard({ userId }: Props) {
                       <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1">
                         {fp?.stage && <span className="text-xs text-gray-500">{fmtStage(fp.stage)}</span>}
                         {fp?.arr_range && <span className="text-xs text-gray-500">{fmtArrRange(fp.arr_range)}</span>}
-                        {fp?.mom_growth_pct != null && (
-                          <span className="text-xs text-gray-500">{fp.mom_growth_pct}% YOY</span>
-                        )}
                       </div>
                       {fp?.product_categories?.length > 0 && (
                         <p className="text-xs text-gray-400 mt-0.5">{fp.product_categories.join(' · ')}</p>
                       )}
                       <p className="text-xs text-amber-600 mt-1">Awaiting response</p>
                     </div>
-                    <UnflagInvestorFlag founderId={flag.founder_id} />
+                    <UnflagLenderFlag founderId={flag.founder_id} />
                   </div>
                 )
               })}

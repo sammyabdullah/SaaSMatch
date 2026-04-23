@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache'
 import {
   sendFounderFlaggedInvestorEmail,
   sendInvestorFlaggedFounderEmail,
+  sendLenderFlaggedFounderEmail,
 } from '@/lib/email'
 
 // ─── Founder flags an investor ────────────────────────────────────────────────
@@ -14,6 +15,14 @@ export async function flagInvestor(investorId: string): Promise<{ error?: string
   if (!user) return { error: 'Not authenticated' }
 
   const admin = createAdminClient()
+
+  const [{ count: investorCount }, { count: lenderCount }] = await Promise.all([
+    admin.from('flags').select('id', { count: 'exact', head: true }).eq('founder_id', user.id).eq('flagged_by', 'founder').eq('status', 'pending'),
+    admin.from('lender_flags').select('id', { count: 'exact', head: true }).eq('founder_id', user.id).eq('flagged_by', 'founder').eq('status', 'pending'),
+  ])
+  if ((investorCount ?? 0) + (lenderCount ?? 0) >= 15) {
+    return { error: 'You have reached the 15-request limit. Remove an existing request or wait for one to be accepted.' }
+  }
 
   const { error } = await admin.from('flags').insert({
     founder_id: user.id,
@@ -141,6 +150,133 @@ export async function unflagFounder(founderId: string): Promise<{ error?: string
     .eq('investor_id', user.id)
     .eq('founder_id', founderId)
     .eq('flagged_by', 'investor')
+    .eq('status', 'pending')
+
+  if (error) return { error: error.message }
+  revalidatePath('/discover')
+  revalidatePath('/dashboard')
+  return { success: true }
+}
+
+// ─── Founder expresses interest in a lender ──────────────────────────────────
+export async function flagLenderAsFounder(lenderId: string): Promise<{ error?: string; success?: boolean }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+
+  const admin = createAdminClient()
+
+  const [{ count: investorCount }, { count: lenderCount }] = await Promise.all([
+    admin.from('flags').select('id', { count: 'exact', head: true }).eq('founder_id', user.id).eq('flagged_by', 'founder').eq('status', 'pending'),
+    admin.from('lender_flags').select('id', { count: 'exact', head: true }).eq('founder_id', user.id).eq('flagged_by', 'founder').eq('status', 'pending'),
+  ])
+  if ((investorCount ?? 0) + (lenderCount ?? 0) >= 15) {
+    return { error: 'You have reached the 15-request limit. Remove an existing request or wait for one to be accepted.' }
+  }
+
+  const { error } = await admin.from('lender_flags').insert({
+    founder_id: user.id,
+    lender_id: lenderId,
+    flagged_by: 'founder',
+    status: 'pending',
+  })
+
+  if (error) {
+    if (error.code === '23505') {
+      revalidatePath('/discover')
+      revalidatePath('/dashboard')
+      return { success: true }
+    }
+    return { error: error.message }
+  }
+
+  revalidatePath('/discover')
+  revalidatePath('/dashboard')
+  return { success: true }
+}
+
+// ─── Founder withdraws interest in a lender ──────────────────────────────────
+export async function unflagLenderAsFounder(lenderId: string): Promise<{ error?: string; success?: boolean }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+
+  const admin = createAdminClient()
+  const { error } = await admin
+    .from('lender_flags')
+    .delete()
+    .eq('founder_id', user.id)
+    .eq('lender_id', lenderId)
+    .eq('flagged_by', 'founder')
+    .eq('status', 'pending')
+
+  if (error) return { error: error.message }
+  revalidatePath('/discover')
+  revalidatePath('/dashboard')
+  return { success: true }
+}
+
+// ─── Lender flags a founder ───────────────────────────────────────────────────
+export async function flagFounderAsLender(founderId: string): Promise<{ error?: string; success?: boolean }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+
+  const admin = createAdminClient()
+
+  const { error } = await admin.from('lender_flags').insert({
+    founder_id: founderId,
+    lender_id: user.id,
+    flagged_by: 'lender',
+    status: 'pending',
+  })
+
+  if (error) {
+    if (error.code === '23505') {
+      revalidatePath('/discover')
+      revalidatePath('/dashboard')
+      return { success: true }
+    }
+    return { error: error.message }
+  }
+
+  try {
+    const [{ data: lp }, { data: founderProfileRow }] = await Promise.all([
+      admin.from('lender_profiles')
+        .select('institution_name, contact_name, loan_size_min_usd, loan_size_max_usd, stages, geography_focus, thesis_statement')
+        .eq('id', user.id)
+        .single(),
+      admin.from('profiles').select('email').eq('id', founderId).single(),
+    ])
+
+    if (lp && founderProfileRow?.email) {
+      await sendLenderFlaggedFounderEmail({
+        founderEmail: founderProfileRow.email,
+        lender: lp as Parameters<typeof sendLenderFlaggedFounderEmail>[0]['lender'],
+      })
+    }
+  } catch {
+    // Email errors are non-fatal
+  }
+
+  revalidatePath('/discover')
+  revalidatePath('/dashboard')
+  return { success: true }
+}
+
+// ─── Lender unflags a founder (only while still pending) ─────────────────────
+export async function unflagFounderAsLender(founderId: string): Promise<{ error?: string; success?: boolean }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+
+  const admin = createAdminClient()
+  const { error } = await admin
+    .from('lender_flags')
+    .delete()
+    .eq('lender_id', user.id)
+    .eq('founder_id', founderId)
+    .eq('flagged_by', 'lender')
     .eq('status', 'pending')
 
   if (error) return { error: error.message }

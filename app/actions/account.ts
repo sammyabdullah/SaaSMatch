@@ -3,7 +3,7 @@
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
-import type { FounderProfileInput, InvestorProfileInput } from '@/app/actions/onboarding'
+import type { FounderProfileInput, InvestorProfileInput, LenderProfileInput } from '@/app/actions/onboarding'
 
 export async function updateFounderProfile(
   data: FounderProfileInput
@@ -75,6 +75,39 @@ export async function updateInvestorProfile(
   return { success: true }
 }
 
+export async function updateLenderProfile(
+  data: LenderProfileInput
+): Promise<{ error?: string; success?: boolean }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+
+  const { error } = await supabase
+    .from('lender_profiles')
+    .update({
+      institution_name: data.institution_name,
+      contact_name: data.contact_name,
+      website: data.website ?? null,
+      location: data.location,
+      loan_size_min_usd: data.loan_size_min_usd,
+      loan_size_max_usd: data.loan_size_max_usd,
+      loan_types: data.loan_types,
+      stages: data.stages,
+      geography_focus: data.geography_focus,
+      saas_subcategories: data.saas_subcategories,
+      arr_min_requirement: data.arr_min_requirement,
+      arr_max_sweet_spot: data.arr_max_sweet_spot,
+      thesis_statement: data.thesis_statement,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', user.id)
+
+  if (error) return { error: error.message }
+  revalidatePath('/account')
+  revalidatePath('/dashboard')
+  return { success: true }
+}
+
 export async function restartFounderClock(): Promise<{ error?: string; success?: boolean }> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -87,7 +120,7 @@ export async function restartFounderClock(): Promise<{ error?: string; success?:
   const { error } = await admin
     .from('founder_profiles')
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .update({ profile_expires_at: expiresAt.toISOString(), status: 'active', updated_at: new Date().toISOString() } as any)
+    .update({ profile_expires_at: expiresAt.toISOString(), status: 'active', updated_at: new Date().toISOString(), clock_restarted_at: new Date().toISOString() } as any)
     .eq('id', user.id)
 
   if (error) return { error: error.message }
@@ -129,6 +162,12 @@ export async function pauseProfile(): Promise<{ error?: string; success?: boolea
       .update({ is_approved: false })
       .eq('id', user.id)
     if (error) return { error: error.message }
+  } else if (profile.role === 'lender') {
+    const { error } = await supabase
+      .from('lender_profiles')
+      .update({ is_approved: false })
+      .eq('id', user.id)
+    if (error) return { error: error.message }
   }
 
   revalidatePath('/account')
@@ -152,6 +191,8 @@ export async function deleteAccount(): Promise<void> {
     await admin.from('founder_profiles').delete().eq('id', user.id)
   } else if (profile?.role === 'investor') {
     await admin.from('investor_profiles').delete().eq('id', user.id)
+  } else if (profile?.role === 'lender') {
+    await admin.from('lender_profiles').delete().eq('id', user.id)
   }
 
   await admin.from('profiles').delete().eq('id', user.id)
