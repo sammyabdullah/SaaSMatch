@@ -8,7 +8,7 @@ import type { FounderStage } from '@/lib/supabase/types'
 
 const SAAS_SUBCATEGORIES = [
   'iPaaS', 'Vertical SaaS', 'DevTools', 'Security',
-  'Data & Analytics', 'HR Tech', 'FinTech', 'MarTech', 'RevOps', 'Other',
+  'Data & Analytics', 'HR Tech', 'FinTech', 'MarTech', 'RevOps', 'Healthcare', 'Other',
 ]
 
 const STAGE_OPTIONS: { value: FounderStage; label: string }[] = [
