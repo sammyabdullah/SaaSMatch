@@ -75,13 +75,23 @@ export default async function FounderDashboard({ userId }: Props) {
     .gte('viewed_at', weekAgo)
 
   // Outgoing flags (founder flagged an investor) — pending only
-  const { data: outgoingFlags, count: flagsUsed } = await admin
+  const { data: outgoingFlags, count: investorFlagsUsed } = await admin
     .from('flags')
     .select('*, investor_profiles(firm_name, partner_name, website, location)', { count: 'exact' })
     .eq('founder_id', userId)
     .eq('flagged_by', 'founder')
     .in('status', ['pending'])
     .order('created_at', { ascending: false }) as { data: any[] | null; count: number | null }
+
+  // Pending lender flags initiated by founder (for combined limit display)
+  const { count: lenderFlagsUsed } = await admin
+    .from('lender_flags')
+    .select('id', { count: 'exact', head: true })
+    .eq('founder_id', userId)
+    .eq('flagged_by', 'founder')
+    .eq('status', 'pending')
+
+  const flagsUsed = (investorFlagsUsed ?? 0) + (lenderFlagsUsed ?? 0)
 
   // Accepted connections where founder initiated
   const { data: acceptedOutgoing } = await admin
@@ -247,7 +257,7 @@ export default async function FounderDashboard({ userId }: Props) {
 
       {/* Metric cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-10">
-        <MetricCard label="Requests sent" value={`${flagsUsed ?? 0} / 25`} />
+        <MetricCard label="Requests sent" value={`${flagsUsed} / 15`} />
         <MetricCard label="Connections" value={totalConnections} accent={totalConnections > 0 ? 'green' : 'gray'} />
         <MetricCard
           label="Profile status"
