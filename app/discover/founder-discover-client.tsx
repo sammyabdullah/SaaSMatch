@@ -20,7 +20,7 @@ interface Props {
 const STAGE_OPTIONS = ['pre-seed', 'seed', 'series-a', 'series-b', 'series-c'] as const
 const SAAS_SUBCATEGORIES = [
   'iPaaS', 'Vertical SaaS', 'DevTools', 'Security',
-  'Data & Analytics', 'HR Tech', 'FinTech', 'MarTech', 'RevOps', 'Other',
+  'Data & Analytics', 'HR Tech', 'FinTech', 'MarTech', 'RevOps', 'Healthcare', 'Other',
 ]
 
 function computeInvestorScore(inv: any, myProfile: any): number {

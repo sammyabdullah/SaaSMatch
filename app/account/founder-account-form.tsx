@@ -15,7 +15,7 @@ function normalizeUrl(url: string): string {
 
 const PRODUCT_CATEGORIES = [
   'iPaaS', 'Vertical SaaS', 'DevTools', 'Security',
-  'Data & Analytics', 'HR Tech', 'FinTech', 'MarTech', 'RevOps', 'Other',
+  'Data & Analytics', 'HR Tech', 'FinTech', 'MarTech', 'RevOps', 'Healthcare', 'Other',
 ]
 
 const STAGES: { value: FounderStage; label: string }[] = [
