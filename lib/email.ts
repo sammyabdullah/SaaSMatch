@@ -1,6 +1,8 @@
 import { Resend } from 'resend'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+function getResend() {
+  return new Resend(process.env.RESEND_API_KEY)
+}
 
 const FROM = 'UnlockedVC <noreply@unlockedvc.com>'
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? 'sammy@blossomstreetventures.com'
@@ -26,7 +28,7 @@ export async function sendFounderFlaggedInvestorEmail({
   const categoryList = founder.product_categories.join(', ')
   const raise = formatUsd(founder.raising_amount_usd)
 
-  await resend.emails.send({
+  await getResend().emails.send({
     from: FROM,
     to: investorEmail,
     subject: 'UnlockedVC request',
@@ -73,7 +75,7 @@ export async function sendInvestorFlaggedFounderEmail({
   const checkRange = `${formatUsd(investor.check_size_min_usd)} – ${formatUsd(investor.check_size_max_usd)}`
   const stages = investor.stages.map(fmtStage).join(', ')
 
-  await resend.emails.send({
+  await getResend().emails.send({
     from: FROM,
     to: founderEmail,
     subject: 'UnlockedVC request',
@@ -136,7 +138,7 @@ export async function sendConnectionAcceptedFounderEmail({
     ? investorStages.map(fmtStage).join(', ')
     : null
 
-  await resend.emails.send({
+  await getResend().emails.send({
     from: FROM,
     to: founderEmail,
     subject: `${investorFirmName} accepted your connection request`,
@@ -194,7 +196,7 @@ export async function sendConnectionAcceptedInvestorEmail({
       ? `<strong>${founderCompanyName}</strong>`
       : 'A founder'
 
-  await resend.emails.send({
+  await getResend().emails.send({
     from: FROM,
     to: investorEmail,
     subject: 'A founder accepted your connection request',
@@ -234,7 +236,7 @@ export async function sendAdminConnectionEmail({
   investorEmail: string
   initiatedBy: 'founder' | 'investor'
 }) {
-  await resend.emails.send({
+  await getResend().emails.send({
     from: FROM,
     to: ADMIN_EMAIL,
     subject: `New connection: ${founderEmail} ↔ ${investorFirmName}`,
@@ -263,7 +265,7 @@ export async function sendAdminNewFounderEmail({
   arr_range: string
   raising_amount_usd: number
 }) {
-  await resend.emails.send({
+  await getResend().emails.send({
     from: FROM,
     to: ADMIN_EMAIL,
     subject: `New founder signup: ${company_name}`,
@@ -298,7 +300,7 @@ export async function sendAdminNewInvestorEmail({
   check_size_min_usd: number
   check_size_max_usd: number
 }) {
-  await resend.emails.send({
+  await getResend().emails.send({
     from: FROM,
     to: ADMIN_EMAIL,
     subject: `New investor signup: ${firm_name}`,
@@ -318,7 +320,7 @@ export async function sendAdminNewInvestorEmail({
 
 // ─── Welcome: founder approved ───────────────────────────────────────────────
 export async function sendWelcomeFounderEmail({ email }: { email: string }) {
-  await resend.emails.send({
+  await getResend().emails.send({
     from: FROM,
     to: email,
     subject: 'You\'re approved — welcome to UnlockedVC',
@@ -334,7 +336,7 @@ export async function sendWelcomeFounderEmail({ email }: { email: string }) {
 
 // ─── Welcome: investor approved ──────────────────────────────────────────────
 export async function sendWelcomeInvestorEmail({ email }: { email: string }) {
-  await resend.emails.send({
+  await getResend().emails.send({
     from: FROM,
     to: email,
     subject: 'You\'re approved — welcome to UnlockedVC',
@@ -364,7 +366,7 @@ export async function sendAdminNewLenderEmail({
   loan_size_min_usd: number
   loan_size_max_usd: number
 }) {
-  await resend.emails.send({
+  await getResend().emails.send({
     from: FROM,
     to: ADMIN_EMAIL,
     subject: `New lender signup: ${institution_name}`,
@@ -384,7 +386,7 @@ export async function sendAdminNewLenderEmail({
 
 // ─── Welcome: lender approved ─────────────────────────────────────────────────
 export async function sendWelcomeLenderEmail({ email }: { email: string }) {
-  await resend.emails.send({
+  await getResend().emails.send({
     from: FROM,
     to: email,
     subject: 'You\'re approved — welcome to UnlockedVC',
@@ -417,7 +419,7 @@ export async function sendLenderFlaggedFounderEmail({
   const loanRange = `${formatUsd(lender.loan_size_min_usd)} – ${formatUsd(lender.loan_size_max_usd)}`
   const stages = lender.stages.map(fmtStage).join(', ')
 
-  await resend.emails.send({
+  await getResend().emails.send({
     from: FROM,
     to: founderEmail,
     subject: 'UnlockedVC request',
@@ -477,7 +479,7 @@ export async function sendConnectionAcceptedLenderEmail({
       ? `<strong>${founderCompanyName}</strong>`
       : 'A founder'
 
-  await resend.emails.send({
+  await getResend().emails.send({
     from: FROM,
     to: lenderEmail,
     subject: 'A founder accepted your connection request',
@@ -542,7 +544,7 @@ export async function sendConnectionAcceptedFounderFromLenderEmail({
     ? lenderStages.map(fmtStage).join(', ')
     : null
 
-  await resend.emails.send({
+  await getResend().emails.send({
     from: FROM,
     to: founderEmail,
     subject: `${lenderInstitutionName} accepted your connection request`,
@@ -578,7 +580,7 @@ export async function sendAdminLenderConnectionEmail({
   lenderEmail: string
   initiatedBy: 'founder' | 'lender'
 }) {
-  await resend.emails.send({
+  await getResend().emails.send({
     from: FROM,
     to: ADMIN_EMAIL,
     subject: `New lender connection: ${founderEmail} ↔ ${lenderInstitutionName}`,
@@ -587,6 +589,86 @@ export async function sendAdminLenderConnectionEmail({
       <p><strong>Founder:</strong> ${founderEmail}<br>
       <strong>Lender:</strong> ${lenderInstitutionName} (${lenderEmail})<br>
       <strong>Initiated by:</strong> ${initiatedBy}</p>
+    `,
+  })
+}
+
+// ─── Monthly digest: founder ──────────────────────────────────────────────────
+export async function sendMonthlyFounderDigest({
+  founderEmail,
+  founderCompanyName,
+  matchingInvestors,
+  matchingLenders,
+}: {
+  founderEmail: string
+  founderCompanyName: string
+  matchingInvestors: { firm_name: string; partner_name: string }[]
+  matchingLenders: { institution_name: string; contact_name: string }[]
+}) {
+  const investorRows = matchingInvestors.map(inv =>
+    `<tr><td style="padding:6px 16px 6px 0;font-size:13px"><strong>${inv.firm_name}</strong></td><td style="padding:6px 0;font-size:13px;color:#555">${inv.partner_name}</td></tr>`
+  ).join('')
+
+  const lenderRows = matchingLenders.map(l =>
+    `<tr><td style="padding:6px 16px 6px 0;font-size:13px"><strong>${l.institution_name}</strong></td><td style="padding:6px 0;font-size:13px;color:#555">${l.contact_name}</td></tr>`
+  ).join('')
+
+  await getResend().emails.send({
+    from: FROM,
+    to: founderEmail,
+    subject: 'Your monthly match digest — UnlockedVC',
+    html: `
+      <p>Hi ${founderCompanyName},</p>
+      <p>Here are investors and lenders on UnlockedVC that match your profile. Log in to Discover to send them a connection request.</p>
+
+      ${matchingInvestors.length > 0 ? `
+        <p style="font-weight:600;margin:20px 0 8px">Matching investors (${matchingInvestors.length})</p>
+        <table style="border-collapse:collapse">${investorRows}</table>
+      ` : ''}
+
+      ${matchingLenders.length > 0 ? `
+        <p style="font-weight:600;margin:20px 0 8px">Matching lenders (${matchingLenders.length})</p>
+        <table style="border-collapse:collapse">${lenderRows}</table>
+      ` : ''}
+
+      <p style="margin-top:28px"><a href="${APP_URL}/discover" style="background:#534AB7;color:white;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block">Browse Discover</a></p>
+
+      <p style="color:#999;font-size:12px;margin-top:24px">You're receiving this monthly digest because you have an active founder profile on UnlockedVC.</p>
+    `,
+  })
+}
+
+// ─── Monthly digest: investor ─────────────────────────────────────────────────
+export async function sendMonthlyInvestorDigest({
+  investorEmail,
+  investorName,
+  matchingFounders,
+}: {
+  investorEmail: string
+  investorName: string
+  matchingFounders: { company_name: string; stage: string; product_categories: string[] }[]
+}) {
+  const founderRows = matchingFounders.map(f =>
+    `<tr>
+      <td style="padding:6px 16px 6px 0;font-size:13px"><strong>${f.company_name}</strong></td>
+      <td style="padding:6px 16px 6px 0;font-size:13px;color:#555">${fmtStage(f.stage)}</td>
+      <td style="padding:6px 0;font-size:13px;color:#888">${f.product_categories.join(', ')}</td>
+    </tr>`
+  ).join('')
+
+  await getResend().emails.send({
+    from: FROM,
+    to: investorEmail,
+    subject: 'Your monthly match digest — UnlockedVC',
+    html: `
+      <p>Hi ${investorName},</p>
+      <p>Here are active founders on UnlockedVC that match your thesis this month. Log in to Discover to express interest.</p>
+
+      <table style="border-collapse:collapse;margin:8px 0">${founderRows}</table>
+
+      <p style="margin-top:28px"><a href="${APP_URL}/discover" style="background:#534AB7;color:white;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block">Browse Discover</a></p>
+
+      <p style="color:#999;font-size:12px;margin-top:24px">You're receiving this monthly digest because you have an approved investor profile on UnlockedVC.</p>
     `,
   })
 }
