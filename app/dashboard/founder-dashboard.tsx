@@ -146,13 +146,23 @@ export default async function FounderDashboard({ userId }: Props) {
     .order('created_at', { ascending: false })
     .limit(20) as { data: any[] | null }
 
-  // Profile views for activity feed
-  const { data: recentViews } = await admin
+  // Profile views for activity feed — fetch investor name via separate query
+  const { data: rawViews } = await admin
     .from('profile_views')
-    .select('*, investor_profiles(firm_name)')
+    .select('investor_id, viewed_at')
     .eq('founder_id', userId)
     .order('viewed_at', { ascending: false })
-    .limit(20) as { data: any[] | null }
+    .limit(20)
+
+  const investorIds = Array.from(new Set((rawViews ?? []).map((v) => v.investor_id)))
+  const { data: investorNames } = investorIds.length > 0
+    ? await admin.from('investor_profiles').select('id, firm_name').in('id', investorIds)
+    : { data: [] }
+  const investorNameMap = Object.fromEntries((investorNames ?? []).map((i) => [i.id, i.firm_name]))
+  const recentViews = (rawViews ?? []).map((v) => ({
+    ...v,
+    firm_name: investorNameMap[v.investor_id] ?? null,
+  }))
 
   // All outgoing flags for activity feed (all statuses)
   const { data: allOutgoingForActivity } = await admin
@@ -192,7 +202,7 @@ export default async function FounderDashboard({ userId }: Props) {
   // Profile views
   if (recentViews) {
     for (const v of recentViews) {
-      const firm = v.investor_profiles?.firm_name ?? 'An investor'
+      const firm = v.firm_name ?? 'An investor'
       activity.push({ date: v.viewed_at, text: `${firm} viewed your profile` })
     }
   }
@@ -257,7 +267,7 @@ export default async function FounderDashboard({ userId }: Props) {
 
       {/* Metric cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-10">
-        <MetricCard label="Requests sent" value={`${flagsUsed} / 15`} />
+        <MetricCard label="Requests sent" value={`${flagsUsed} / 30`} />
         <MetricCard label="Connections" value={totalConnections} accent={totalConnections > 0 ? 'green' : 'gray'} />
         <MetricCard
           label="Profile status"

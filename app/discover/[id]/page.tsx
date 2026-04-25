@@ -3,6 +3,7 @@ import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { fmtUsd, fmtArrRange, fmtStage, fmtDate } from '@/lib/format'
 import { ViewLogger } from './view-logger'
+import { InvestorViewLogger } from './investor-view-logger'
 import FlagActionButton from './flag-action-button'
 
 interface Props {
@@ -181,6 +182,7 @@ export default async function ProfileDetailPage({ params }: Props) {
 
     return (
       <div className="max-w-3xl mx-auto px-6 py-12">
+        <InvestorViewLogger investorId={id} />
         <BackButton />
 
         <div className="mb-8">

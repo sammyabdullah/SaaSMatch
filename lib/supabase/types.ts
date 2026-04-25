@@ -305,6 +305,23 @@ export type Database = {
         ]
       }
 
+      investor_profile_views: {
+        Row: {
+          id: string
+          founder_id: string
+          investor_id: string
+          viewed_at: string
+        }
+        Insert: {
+          id?: string
+          founder_id: string
+          investor_id: string
+          viewed_at?: string
+        }
+        Update: Record<string, never>
+        Relationships: []
+      }
+
       lender_flags: {
         Row: {
           id: string

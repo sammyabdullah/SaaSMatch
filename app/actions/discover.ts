@@ -20,8 +20,8 @@ export async function flagInvestor(investorId: string): Promise<{ error?: string
     admin.from('flags').select('id', { count: 'exact', head: true }).eq('founder_id', user.id).eq('flagged_by', 'founder').eq('status', 'pending'),
     admin.from('lender_flags').select('id', { count: 'exact', head: true }).eq('founder_id', user.id).eq('flagged_by', 'founder').eq('status', 'pending'),
   ])
-  if ((investorCount ?? 0) + (lenderCount ?? 0) >= 15) {
-    return { error: 'You have reached the 15-request limit. Remove an existing request or wait for one to be accepted.' }
+  if ((investorCount ?? 0) + (lenderCount ?? 0) >= 30) {
+    return { error: 'You have reached the 30-request limit. Remove an existing request or wait for one to be accepted.' }
   }
 
   const { error } = await admin.from('flags').insert({
@@ -170,8 +170,8 @@ export async function flagLenderAsFounder(lenderId: string): Promise<{ error?: s
     admin.from('flags').select('id', { count: 'exact', head: true }).eq('founder_id', user.id).eq('flagged_by', 'founder').eq('status', 'pending'),
     admin.from('lender_flags').select('id', { count: 'exact', head: true }).eq('founder_id', user.id).eq('flagged_by', 'founder').eq('status', 'pending'),
   ])
-  if ((investorCount ?? 0) + (lenderCount ?? 0) >= 15) {
-    return { error: 'You have reached the 15-request limit. Remove an existing request or wait for one to be accepted.' }
+  if ((investorCount ?? 0) + (lenderCount ?? 0) >= 30) {
+    return { error: 'You have reached the 30-request limit. Remove an existing request or wait for one to be accepted.' }
   }
 
   const { error } = await admin.from('lender_flags').insert({
@@ -304,6 +304,31 @@ export async function logProfileView(founderId: string): Promise<void> {
     await admin.from('profile_views').insert({
       investor_id: user.id,
       founder_id: founderId,
+    })
+  } catch {
+    // Don't throw on view logging errors
+  }
+}
+
+// ─── Log a founder viewing an investor profile ────────────────────────────────
+export async function logInvestorProfileView(investorId: string): Promise<void> {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
+    if (profile?.role !== 'founder') return
+
+    const admin = createAdminClient()
+    await admin.from('investor_profile_views').insert({
+      founder_id: user.id,
+      investor_id: investorId,
     })
   } catch {
     // Don't throw on view logging errors

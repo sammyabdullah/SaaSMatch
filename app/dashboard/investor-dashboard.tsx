@@ -106,6 +106,14 @@ export default async function InvestorDashboard({ userId }: Props) {
     .order('viewed_at', { ascending: false })
     .limit(20) as { data: any[] | null }
 
+  // Founders who viewed this investor's profile
+  const { data: founderViews } = await admin
+    .from('investor_profile_views')
+    .select('*, founder_profiles(company_name, product_categories, location)')
+    .eq('investor_id', userId)
+    .order('viewed_at', { ascending: false })
+    .limit(20) as { data: any[] | null }
+
   // All outgoing flags for activity feed (all statuses)
   const { data: allOutgoingForActivity } = await admin
     .from('flags')
@@ -135,6 +143,13 @@ export default async function InvestorDashboard({ userId }: Props) {
     for (const v of recentViews) {
       const company = v.founder_profiles?.company_name ?? 'A founder'
       activity.push({ date: v.viewed_at, text: `You viewed ${company}` })
+    }
+  }
+
+  if (founderViews) {
+    for (const v of founderViews) {
+      const company = v.founder_profiles?.company_name ?? 'A founder'
+      activity.push({ date: v.viewed_at, text: `${company} viewed your profile` })
     }
   }
 

@@ -17,7 +17,7 @@ export default function FlagActionButton({ targetId, mode, isAlreadyFlagged, fla
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  const atLimit = mode === 'founder-flagging-investor' && flagCount >= 15 && !flagged
+  const atLimit = mode === 'founder-flagging-investor' && flagCount >= 30 && !flagged
 
   async function handleFlag() {
     setLoading(true)
@@ -87,7 +87,7 @@ export default function FlagActionButton({ targetId, mode, isAlreadyFlagged, fla
           {loading
             ? 'Processing…'
             : atLimit
-            ? 'Limit reached (15 max)'
+            ? 'Limit reached (30 max)'
             : mode === 'founder-flagging-investor'
             ? 'Send connection request'
             : 'Express interest'}
