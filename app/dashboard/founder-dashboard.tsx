@@ -1,10 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { createAdminClient } from '@/lib/supabase/server'
-import { fmtDate, fmtStage, fmtUsd, daysUntil } from '@/lib/format'
+import { fmtDate, fmtStage, fmtUsd } from '@/lib/format'
 import UnflagFounderFlag from './unflag-founder-flag'
 import AcceptDeclineFlag from './accept-decline-flag'
 import AcceptDeclineLenderFlag from './accept-decline-lender-flag'
-import RestartClockButton from './restart-clock-button'
 
 interface Props {
   userId: string
@@ -183,15 +182,9 @@ export default async function FounderDashboard({ userId }: Props) {
     .limit(20) as { data: any[] | null }
 
   // Profile status display
-  let profileStatusValue = founderProfile?.status ?? '—'
-  let profileStatusSub: string | undefined
-  if (founderProfile?.status === 'active' && founderProfile.profile_expires_at) {
-    const days = daysUntil(founderProfile.profile_expires_at)
-    profileStatusSub = days > 0 ? `${days} days remaining` : 'Expires today'
-    profileStatusValue = 'Active'
-  } else if (founderProfile?.status) {
-    profileStatusValue = fmtStage(founderProfile.status)
-  }
+  const profileStatusValue = founderProfile?.status === 'active' ? 'Active'
+    : founderProfile?.status ? fmtStage(founderProfile.status)
+    : '—'
 
   const totalConnections = (acceptedOutgoing?.length ?? 0) + (acceptedIncoming?.length ?? 0) + (acceptedLenderIncoming?.length ?? 0)
 
@@ -248,12 +241,6 @@ export default async function FounderDashboard({ userId }: Props) {
   if (founderProfile?.approved_at) {
     activity.push({ date: founderProfile.approved_at, text: 'Your profile was approved' })
   }
-  if (founderProfile?.clock_restarted_at) {
-    activity.push({ date: founderProfile.clock_restarted_at, text: 'You restarted your 30-day active window' })
-  }
-  if (founderProfile?.status === 'expired' && founderProfile.profile_expires_at) {
-    activity.push({ date: founderProfile.profile_expires_at, text: 'Your profile expired — restart the clock to stay visible' })
-  }
 
   activity.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
   const recentActivity = activity.slice(0, 10)
@@ -272,13 +259,8 @@ export default async function FounderDashboard({ userId }: Props) {
         <MetricCard
           label="Profile status"
           value={profileStatusValue}
-          sub={profileStatusSub}
           accent={founderProfile?.status === 'active' ? 'green' : 'gray'}
-        >
-          {(founderProfile?.status === 'active' || founderProfile?.status === 'expired') && (
-            <RestartClockButton />
-          )}
-        </MetricCard>
+        />
         <MetricCard label="Profile views this week" value={viewsThisWeek ?? 0} />
       </div>
 
