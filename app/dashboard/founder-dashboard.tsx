@@ -61,7 +61,7 @@ export default async function FounderDashboard({ userId }: Props) {
   // Founder profile
   const { data: founderProfile } = await admin
     .from('founder_profiles')
-    .select('status, profile_expires_at, is_approved, approved_at, clock_restarted_at')
+    .select('status, is_approved, approved_at')
     .eq('id', userId)
     .single()
 
