@@ -23,12 +23,10 @@ export async function approveFounder(founderId: string) {
   await requireAdmin()
 
   const admin = createAdminClient()
-  const expiresAt = new Date()
-  expiresAt.setDate(expiresAt.getDate() + 180)
   const { error } = await admin
     .from('founder_profiles')
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .update({ is_approved: true, status: 'active', approved_at: new Date().toISOString(), profile_expires_at: expiresAt.toISOString() } as any)
+    .update({ is_approved: true, status: 'active', approved_at: new Date().toISOString() } as any)
     .eq('id', founderId)
 
   if (error) throw new Error(error.message)
