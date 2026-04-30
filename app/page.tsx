@@ -11,12 +11,50 @@ export default async function Home() {
     { count: lenderCount },
     { data: lastInvestors },
     { data: lastLenders },
+    { data: investorConnections },
+    { data: lenderConnections },
   ] = await Promise.all([
     admin.from('investor_profiles').select('id', { count: 'exact', head: true }).eq('is_approved', true),
     admin.from('lender_profiles').select('id', { count: 'exact', head: true }).eq('is_approved', true),
     admin.from('investor_profiles').select('firm_name, partner_name').eq('is_approved', true).order('created_at', { ascending: false }).limit(5),
     admin.from('lender_profiles').select('institution_name, contact_name').eq('is_approved', true).order('created_at', { ascending: false }).limit(5),
+    admin.from('flags').select('founder_id, investor_id, responded_at').eq('status', 'accepted').order('responded_at', { ascending: false }).limit(10),
+    admin.from('lender_flags').select('founder_id, lender_id, responded_at').eq('status', 'accepted').order('responded_at', { ascending: false }).limit(10),
   ])
+
+  // Look up names for connections
+  const founderIds = Array.from(new Set([
+    ...(investorConnections ?? []).map((c) => c.founder_id),
+    ...(lenderConnections ?? []).map((c) => c.founder_id),
+  ]))
+  const investorIds = Array.from(new Set((investorConnections ?? []).map((c) => c.investor_id)))
+  const lenderIds = Array.from(new Set((lenderConnections ?? []).map((c) => c.lender_id)))
+
+  const [{ data: founderNames }, { data: investorNames }, { data: lenderNames }] = await Promise.all([
+    founderIds.length > 0 ? admin.from('founder_profiles').select('id, company_name').in('id', founderIds) : { data: [] },
+    investorIds.length > 0 ? admin.from('investor_profiles').select('id, firm_name').in('id', investorIds) : { data: [] },
+    lenderIds.length > 0 ? admin.from('lender_profiles').select('id, institution_name').in('id', lenderIds) : { data: [] },
+  ])
+
+  const founderMap = Object.fromEntries((founderNames ?? []).map((f) => [f.id, f.company_name]))
+  const investorMap = Object.fromEntries((investorNames ?? []).map((i) => [i.id, i.firm_name]))
+  const lenderMap = Object.fromEntries((lenderNames ?? []).map((l) => [l.id, l.institution_name]))
+
+  type Connection = { date: string; left: string; right: string }
+  const latestConnections: Connection[] = [
+    ...(investorConnections ?? []).map((c) => ({
+      date: c.responded_at ?? '',
+      left: investorMap[c.investor_id] ?? 'An investor',
+      right: founderMap[c.founder_id] ?? 'A founder',
+    })),
+    ...(lenderConnections ?? []).map((c) => ({
+      date: c.responded_at ?? '',
+      left: lenderMap[c.lender_id] ?? 'A lender',
+      right: founderMap[c.founder_id] ?? 'A founder',
+    })),
+  ]
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .slice(0, 10)
 
   return (
     <div className="max-w-2xl mx-auto px-6 py-32 text-center">
@@ -91,6 +129,23 @@ export default async function Home() {
           )}
         </div>
       </div>
+
+      {latestConnections.length > 0 && (
+        <div className="border border-gray-100 rounded-xl p-5 bg-white shadow-sm mt-3">
+          <p className="text-xs text-gray-400 mb-4 uppercase tracking-wide">Latest Connections</p>
+          <div className="space-y-3">
+            {latestConnections.map((c, i) => (
+              <div key={i} className={i > 0 ? 'pt-3 border-t border-gray-100' : ''}>
+                <div className="flex items-center justify-between gap-3">
+                  <p className="text-sm font-semibold text-gray-900 truncate w-[38%]">{c.left}</p>
+                  <p className="text-xs text-gray-400 shrink-0">just connected with</p>
+                  <p className="text-sm font-semibold text-gray-900 truncate w-[38%] text-right">{c.right}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
