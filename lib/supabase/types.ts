@@ -17,7 +17,7 @@ export type FounderStage = 'pre-seed' | 'seed' | 'series-a' | 'series-b' | 'seri
 export type ArrRange = '0-500k' | '500k-2m' | '2m-5m' | '5m-plus'
 export type GtmMotion = 'sales-led' | 'product-led' | 'hybrid'
 export type RevenueModel = 'seat-based' | 'usage-based' | 'platform-fee' | 'other'
-export type FounderStatus = 'pending' | 'active' | 'expired' | 'closed'
+export type FounderStatus = 'pending' | 'active' | 'closed'
 export type FlagSide = 'founder' | 'investor'
 export type FlagStatus = 'pending' | 'accepted' | 'declined'
 export type LenderFlagSide = 'founder' | 'lender'
@@ -64,10 +64,8 @@ export type Database = {
           why_now: string
           product_categories: string[]
           status: FounderStatus
-          profile_expires_at: string | null
           is_approved: boolean
           approved_at: string | null
-          clock_restarted_at: string | null
           created_at: string
           updated_at: string
         }
@@ -89,10 +87,8 @@ export type Database = {
           website?: string | null
           product_categories?: string[]
           status?: FounderStatus
-          profile_expires_at?: string | null
           is_approved?: boolean
           approved_at?: string | null
-          clock_restarted_at?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -112,10 +108,8 @@ export type Database = {
           why_now?: string
           product_categories?: string[]
           status?: FounderStatus
-          profile_expires_at?: string | null
           is_approved?: boolean
           approved_at?: string | null
-          clock_restarted_at?: string | null
           updated_at?: string
         }
         Relationships: [
