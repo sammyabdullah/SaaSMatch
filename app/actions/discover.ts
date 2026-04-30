@@ -16,14 +16,6 @@ export async function flagInvestor(investorId: string): Promise<{ error?: string
 
   const admin = createAdminClient()
 
-  const [{ count: investorCount }, { count: lenderCount }] = await Promise.all([
-    admin.from('flags').select('id', { count: 'exact', head: true }).eq('founder_id', user.id).eq('flagged_by', 'founder').eq('status', 'pending'),
-    admin.from('lender_flags').select('id', { count: 'exact', head: true }).eq('founder_id', user.id).eq('flagged_by', 'founder').eq('status', 'pending'),
-  ])
-  if ((investorCount ?? 0) + (lenderCount ?? 0) >= 30) {
-    return { error: 'You have reached the 30-request limit. Remove an existing request or wait for one to be accepted.' }
-  }
-
   const { error } = await admin.from('flags').insert({
     founder_id: user.id,
     investor_id: investorId,
@@ -165,14 +157,6 @@ export async function flagLenderAsFounder(lenderId: string): Promise<{ error?: s
   if (!user) return { error: 'Not authenticated' }
 
   const admin = createAdminClient()
-
-  const [{ count: investorCount }, { count: lenderCount }] = await Promise.all([
-    admin.from('flags').select('id', { count: 'exact', head: true }).eq('founder_id', user.id).eq('flagged_by', 'founder').eq('status', 'pending'),
-    admin.from('lender_flags').select('id', { count: 'exact', head: true }).eq('founder_id', user.id).eq('flagged_by', 'founder').eq('status', 'pending'),
-  ])
-  if ((investorCount ?? 0) + (lenderCount ?? 0) >= 30) {
-    return { error: 'You have reached the 30-request limit. Remove an existing request or wait for one to be accepted.' }
-  }
 
   const { error } = await admin.from('lender_flags').insert({
     founder_id: user.id,

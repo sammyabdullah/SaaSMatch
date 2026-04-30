@@ -8,16 +8,13 @@ interface Props {
   targetId: string
   mode: 'founder-flagging-investor' | 'investor-flagging-founder' | 'lender-flagging-founder'
   isAlreadyFlagged: boolean
-  flagCount: number
 }
 
-export default function FlagActionButton({ targetId, mode, isAlreadyFlagged, flagCount }: Props) {
+export default function FlagActionButton({ targetId, mode, isAlreadyFlagged }: Props) {
   const router = useRouter()
   const [flagged, setFlagged] = useState(isAlreadyFlagged)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-
-  const atLimit = mode === 'founder-flagging-investor' && flagCount >= 30 && !flagged
 
   async function handleFlag() {
     setLoading(true)
@@ -77,17 +74,11 @@ export default function FlagActionButton({ targetId, mode, isAlreadyFlagged, fla
       ) : (
         <button
           onClick={handleFlag}
-          disabled={loading || atLimit}
-          className={`px-6 py-2.5 rounded-md text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-            atLimit
-              ? 'bg-gray-100 text-gray-400'
-              : 'bg-[#534AB7] text-white hover:bg-[#4339A0]'
-          }`}
+          disabled={loading}
+          className="px-6 py-2.5 rounded-md text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed bg-[#534AB7] text-white hover:bg-[#4339A0]"
         >
           {loading
             ? 'Processing…'
-            : atLimit
-            ? 'Limit reached (30 max)'
             : mode === 'founder-flagging-investor'
             ? 'Send connection request'
             : 'Express interest'}

@@ -57,15 +57,10 @@ function MatchBadge({ score }: { score: number }) {
   )
 }
 
-const FOUNDER_LIMIT = 30
-
 function FlagDots({ used }: { used: number }) {
   return (
     <div className="flex items-center gap-1.5">
-      <span className="text-xs text-gray-500 mr-1">{used} / {FOUNDER_LIMIT} requests sent</span>
-      {Array.from({ length: FOUNDER_LIMIT }).map((_, i) => (
-        <span key={i} className={`w-2 h-2 rounded-full ${i < used ? 'bg-[#534AB7]' : 'bg-gray-200'}`} />
-      ))}
+      <span className="text-xs text-gray-500">{used} requests sent</span>
     </div>
   )
 }
@@ -141,7 +136,6 @@ export default function FounderDiscoverClient({
   }, [filteredInvestors, filteredLenders, myProfile])
 
   async function handleInvestorFlag(investorId: string) {
-    if (totalFlagsUsed >= FOUNDER_LIMIT) return
     setInvestorFlaggedIds((prev) => new Set(Array.from(prev).concat(investorId)))
     setFlagStates((prev) => ({ ...prev, [investorId]: 'pending_undo' }))
     setFlagErrors((prev) => ({ ...prev, [investorId]: '' }))
@@ -167,7 +161,6 @@ export default function FounderDiscoverClient({
   }
 
   async function handleLenderFlag(lenderId: string) {
-    if (totalFlagsUsed >= FOUNDER_LIMIT) return
     setLenderFlaggedIds((prev) => new Set(Array.from(prev).concat(lenderId)))
     setFlagStates((prev) => ({ ...prev, [lenderId]: 'pending_undo' }))
     setFlagErrors((prev) => ({ ...prev, [lenderId]: '' }))
@@ -350,9 +343,9 @@ export default function FounderDiscoverClient({
                   <div onClick={(e) => e.stopPropagation()}>
                     {flagErrors[id] && <p className="text-xs text-red-500 mb-1">{flagErrors[id]}</p>}
                     {flagState === 'idle' && (
-                      <button onClick={() => handleInvestorFlag(id)} disabled={totalFlagsUsed >= FOUNDER_LIMIT}
-                        className={`w-full text-sm py-2 rounded-md border transition-colors ${totalFlagsUsed >= FOUNDER_LIMIT ? 'border-gray-200 text-gray-400 cursor-not-allowed' : 'border-[#534AB7] text-[#534AB7] hover:bg-[#534AB7] hover:text-white'}`}>
-                        {totalFlagsUsed >= FOUNDER_LIMIT ? 'Limit reached (30 max)' : 'Send connection request'}
+                      <button onClick={() => handleInvestorFlag(id)}
+                        className="w-full text-sm py-2 rounded-md border transition-colors border-[#534AB7] text-[#534AB7] hover:bg-[#534AB7] hover:text-white">
+                        Send connection request
                       </button>
                     )}
                     {flagState === 'pending_undo' && (
@@ -419,9 +412,9 @@ export default function FounderDiscoverClient({
                 <div>
                   {flagErrors[id] && <p className="text-xs text-red-500 mb-1">{flagErrors[id]}</p>}
                   {flagState === 'idle' && (
-                    <button onClick={() => handleLenderFlag(id)} disabled={totalFlagsUsed >= FOUNDER_LIMIT}
-                      className={`w-full text-sm py-2 rounded-md border transition-colors ${totalFlagsUsed >= FOUNDER_LIMIT ? 'border-gray-200 text-gray-400 cursor-not-allowed' : 'border-sky-500 text-sky-600 hover:bg-sky-500 hover:text-white'}`}>
-                      {totalFlagsUsed >= FOUNDER_LIMIT ? 'Limit reached (30 max)' : 'Express interest'}
+                    <button onClick={() => handleLenderFlag(id)}
+                      className="w-full text-sm py-2 rounded-md border transition-colors border-sky-500 text-sky-600 hover:bg-sky-500 hover:text-white">
+                      Express interest
                     </button>
                   )}
                   {flagState === 'pending_undo' && (
