@@ -64,13 +64,6 @@ export default async function ProfileDetailPage({ params }: Props) {
       .eq('flagged_by', 'investor')
       .maybeSingle()
 
-    // Count investor's existing flags to check limit
-    const { count: flagCount } = await admin
-      .from('flags')
-      .select('id', { count: 'exact', head: true })
-      .eq('investor_id', user.id)
-      .eq('flagged_by', 'investor')
-
     const isAlreadyFlagged = !!existingFlag
     const displayName = `${fp.product_categories?.[0] ?? 'SaaS'} Company — ${fp.location}`
 
@@ -140,7 +133,6 @@ export default async function ProfileDetailPage({ params }: Props) {
           targetId={id}
           mode="investor-flagging-founder"
           isAlreadyFlagged={isAlreadyFlagged}
-          flagCount={flagCount ?? 0}
         />
       </div>
     )
@@ -171,12 +163,6 @@ export default async function ProfileDetailPage({ params }: Props) {
       .eq('investor_id', id)
       .eq('flagged_by', 'founder')
       .maybeSingle()
-
-    const [{ count: investorFlagCount }, { count: lenderFlagCount }] = await Promise.all([
-      admin.from('flags').select('id', { count: 'exact', head: true }).eq('founder_id', user.id).eq('flagged_by', 'founder').eq('status', 'pending'),
-      admin.from('lender_flags').select('id', { count: 'exact', head: true }).eq('founder_id', user.id).eq('flagged_by', 'founder').eq('status', 'pending'),
-    ])
-    const flagCount = (investorFlagCount ?? 0) + (lenderFlagCount ?? 0)
 
     const isAlreadyFlagged = !!existingFlag
 
@@ -256,7 +242,6 @@ export default async function ProfileDetailPage({ params }: Props) {
           targetId={id}
           mode="founder-flagging-investor"
           isAlreadyFlagged={isAlreadyFlagged}
-          flagCount={flagCount ?? 0}
         />
       </div>
     )
@@ -339,7 +324,6 @@ export default async function ProfileDetailPage({ params }: Props) {
           targetId={id}
           mode="lender-flagging-founder"
           isAlreadyFlagged={isAlreadyFlagged}
-          flagCount={0}
         />
       </div>
     )

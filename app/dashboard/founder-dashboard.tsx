@@ -254,7 +254,7 @@ export default async function FounderDashboard({ userId }: Props) {
 
       {/* Metric cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-10">
-        <MetricCard label="Requests sent" value={`${flagsUsed} / 30`} />
+        <MetricCard label="Requests sent" value={flagsUsed} />
         <MetricCard label="Connections" value={totalConnections} accent={totalConnections > 0 ? 'green' : 'gray'} />
         <MetricCard
           label="Profile status"
