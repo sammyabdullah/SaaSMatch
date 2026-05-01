@@ -59,7 +59,7 @@ export default async function Home() {
   return (
     <div className="max-w-2xl mx-auto px-6 py-32 text-center">
       <p className="text-gray-500 text-base mb-1">
-        A free platform connecting SaaS founders with SaaS investors.
+        UnlockedVC connects SaaS founders with investors and lenders. It&apos;s free and simple: build a profile in 15 seconds, browse the other side, and flag interest. Contact details are shared only when both parties opt in.
       </p>
       <p className="text-gray-500 text-base mb-12">
         Welcome.
