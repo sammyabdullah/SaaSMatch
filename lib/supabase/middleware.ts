@@ -50,7 +50,8 @@ export async function updateSession(request: NextRequest) {
       pathname.startsWith('/reset-password') ||
       pathname.startsWith('/auth/') ||
       pathname.startsWith('/_next') ||
-      pathname.startsWith('/favicon')
+      pathname.startsWith('/favicon') ||
+      pathname.startsWith('/api/cron/')
 
     if (!user && !isPublicRoute) {
       const url = request.nextUrl.clone()
