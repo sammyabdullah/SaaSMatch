@@ -599,11 +599,13 @@ export async function sendMonthlyFounderDigest({
   founderCompanyName,
   matchingInvestors,
   matchingLenders,
+  platformStats,
 }: {
   founderEmail: string
   founderCompanyName: string
   matchingInvestors: { firm_name: string; partner_name: string }[]
   matchingLenders: { institution_name: string; contact_name: string }[]
+  platformStats: PlatformStats
 }) {
   const investorRows = matchingInvestors.map(inv =>
     `<tr><td style="padding:6px 16px 6px 0;font-size:13px"><strong>${inv.firm_name}</strong></td><td style="padding:6px 0;font-size:13px;color:#555">${inv.partner_name}</td></tr>`
@@ -633,7 +635,9 @@ export async function sendMonthlyFounderDigest({
 
       <p style="margin-top:28px"><a href="${APP_URL}/discover" style="background:#534AB7;color:white;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block">Browse Discover</a></p>
 
-      <p style="color:#999;font-size:12px;margin-top:24px">You're receiving this monthly digest because you have an active founder profile on UnlockedVC.</p>
+      ${buildPlatformStatsHtml(platformStats)}
+
+      <p style="color:#999;font-size:12px;margin-top:24px">You're receiving this digest because you have an active founder profile on UnlockedVC.</p>
     `,
   })
 }
@@ -643,10 +647,12 @@ export async function sendMonthlyInvestorDigest({
   investorEmail,
   investorName,
   matchingFounders,
+  platformStats,
 }: {
   investorEmail: string
   investorName: string
   matchingFounders: { company_name: string; stage: string; product_categories: string[] }[]
+  platformStats: PlatformStats
 }) {
   const founderRows = matchingFounders.map(f =>
     `<tr>
@@ -668,9 +674,93 @@ export async function sendMonthlyInvestorDigest({
 
       <p style="margin-top:28px"><a href="${APP_URL}/discover" style="background:#534AB7;color:white;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block">Browse Discover</a></p>
 
-      <p style="color:#999;font-size:12px;margin-top:24px">You're receiving this monthly digest because you have an approved investor profile on UnlockedVC.</p>
+      ${buildPlatformStatsHtml(platformStats)}
+
+      <p style="color:#999;font-size:12px;margin-top:24px">You're receiving this digest because you have an approved investor profile on UnlockedVC.</p>
     `,
   })
+}
+
+// ─── Platform stats type & HTML builder ──────────────────────────────────────
+type PlatformStats = {
+  investorCount: number
+  lenderCount: number
+  latestInvestors: { firm_name: string; partner_name: string }[]
+  latestLenders: { institution_name: string; contact_name: string }[]
+  latestConnections: { left: string; right: string }[]
+}
+
+function buildPlatformStatsHtml(s: PlatformStats): string {
+  const invItems = s.latestInvestors.map((inv, i) => `
+    <div style="${i > 0 ? 'border-top:1px solid #f3f4f6;padding-top:10px;margin-top:10px' : ''}">
+      <p style="font-size:13px;font-weight:600;color:#111827;margin:0">${inv.firm_name}</p>
+      <p style="font-size:12px;color:#6b7280;margin:2px 0 0">${inv.partner_name}</p>
+    </div>`).join('')
+
+  const lenItems = s.latestLenders.map((l, i) => `
+    <div style="${i > 0 ? 'border-top:1px solid #f3f4f6;padding-top:10px;margin-top:10px' : ''}">
+      <p style="font-size:13px;font-weight:600;color:#111827;margin:0">${l.institution_name}</p>
+      <p style="font-size:12px;color:#6b7280;margin:2px 0 0">${l.contact_name}</p>
+    </div>`).join('')
+
+  const connRows = s.latestConnections.map((c, i) => `
+    <div style="${i > 0 ? 'border-top:1px solid #f3f4f6;padding-top:10px;margin-top:10px' : ''}">
+      <table width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <td style="font-size:13px;font-weight:600;color:#111827;width:38%">${c.left}</td>
+          <td style="font-size:12px;color:#9ca3af;text-align:center">just connected with</td>
+          <td style="font-size:13px;font-weight:600;color:#111827;text-align:right;width:38%">${c.right}</td>
+        </tr>
+      </table>
+    </div>`).join('')
+
+  return `
+    <div style="margin-top:36px;border-top:1px solid #e5e7eb;padding-top:24px">
+      <p style="font-size:11px;color:#9ca3af;letter-spacing:0.05em;text-transform:uppercase;margin:0 0 16px">Platform activity</p>
+
+      <!-- Live counts -->
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:12px">
+        <tr>
+          <td width="50%" style="padding-right:6px">
+            <div style="border:1px solid #e5e7eb;border-radius:10px;padding:14px;text-align:center">
+              <p style="font-size:10px;color:#9ca3af;letter-spacing:0.05em;text-transform:uppercase;margin:0 0 4px">Live Investors on Unlocked</p>
+              <p style="font-size:28px;font-weight:700;color:#534AB7;margin:0">${s.investorCount}</p>
+            </div>
+          </td>
+          <td width="50%" style="padding-left:6px">
+            <div style="border:1px solid #e5e7eb;border-radius:10px;padding:14px;text-align:center">
+              <p style="font-size:10px;color:#9ca3af;letter-spacing:0.05em;text-transform:uppercase;margin:0 0 4px">Live Lenders on Unlocked</p>
+              <p style="font-size:28px;font-weight:700;color:#534AB7;margin:0">${s.lenderCount}</p>
+            </div>
+          </td>
+        </tr>
+      </table>
+
+      <!-- Latest to join -->
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:12px">
+        <tr>
+          <td width="50%" valign="top" style="padding-right:6px">
+            <div style="border:1px solid #e5e7eb;border-radius:10px;padding:14px">
+              <p style="font-size:10px;color:#9ca3af;letter-spacing:0.05em;text-transform:uppercase;margin:0 0 12px">Latest Investors to Join</p>
+              ${invItems}
+            </div>
+          </td>
+          <td width="50%" valign="top" style="padding-left:6px">
+            <div style="border:1px solid #e5e7eb;border-radius:10px;padding:14px">
+              <p style="font-size:10px;color:#9ca3af;letter-spacing:0.05em;text-transform:uppercase;margin:0 0 12px">Latest Lenders to Join</p>
+              ${lenItems}
+            </div>
+          </td>
+        </tr>
+      </table>
+
+      <!-- Latest connections -->
+      ${s.latestConnections.length > 0 ? `
+      <div style="border:1px solid #e5e7eb;border-radius:10px;padding:14px">
+        <p style="font-size:10px;color:#9ca3af;letter-spacing:0.05em;text-transform:uppercase;margin:0 0 12px;text-align:center">Latest Connections</p>
+        ${connRows}
+      </div>` : ''}
+    </div>`
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
