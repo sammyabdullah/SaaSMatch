@@ -27,6 +27,12 @@ export async function GET(req: NextRequest) {
     { data: lenders },
     { data: investorFlags },
     { data: lenderFlags },
+    { count: investorCount },
+    { count: lenderCount },
+    { data: latestInvestors },
+    { data: latestLenders },
+    { data: acceptedInvConn },
+    { data: acceptedLenConn },
   ] = await Promise.all([
     admin.from('founder_profiles')
       .select('id, stage, product_categories, company_name, profiles(email)')
@@ -40,11 +46,47 @@ export async function GET(req: NextRequest) {
       .eq('is_approved', true),
     admin.from('flags').select('founder_id, investor_id').in('status', ['pending', 'accepted']),
     admin.from('lender_flags').select('founder_id, lender_id').in('status', ['pending', 'accepted']),
+    admin.from('investor_profiles').select('id', { count: 'exact', head: true }).eq('is_approved', true),
+    admin.from('lender_profiles').select('id', { count: 'exact', head: true }).eq('is_approved', true),
+    admin.from('investor_profiles').select('firm_name, partner_name').eq('is_approved', true).order('created_at', { ascending: false }).limit(5),
+    admin.from('lender_profiles').select('institution_name, contact_name').eq('is_approved', true).order('created_at', { ascending: false }).limit(5),
+    admin.from('flags').select('founder_id, investor_id, responded_at').eq('status', 'accepted').order('responded_at', { ascending: false }).limit(10),
+    admin.from('lender_flags').select('founder_id, lender_id, responded_at').eq('status', 'accepted').order('responded_at', { ascending: false }).limit(10),
   ])
 
   // Build existing-connection lookup sets
   const investorPairs = new Set((investorFlags ?? []).map((f) => `${f.founder_id}:${f.investor_id}`))
   const lenderPairs = new Set((lenderFlags ?? []).map((f) => `${f.founder_id}:${f.lender_id}`))
+
+  // Build name maps for latest connections
+  const investorNameMap = Object.fromEntries((investors ?? []).map((i) => [i.id, i.firm_name]))
+  const lenderNameMap = Object.fromEntries((lenders ?? []).map((l) => [l.id, l.institution_name]))
+  const founderNameMap = Object.fromEntries((founders ?? []).map((f) => [f.id, f.company_name]))
+
+  type ConnRow = { date: string; left: string; right: string }
+  const latestConnections = [
+    ...(acceptedInvConn ?? []).map((c): ConnRow => ({
+      date: c.responded_at ?? '',
+      left: investorNameMap[c.investor_id] ?? 'An investor',
+      right: founderNameMap[c.founder_id] ?? 'A founder',
+    })),
+    ...(acceptedLenConn ?? []).map((c): ConnRow => ({
+      date: c.responded_at ?? '',
+      left: lenderNameMap[c.lender_id] ?? 'A lender',
+      right: founderNameMap[c.founder_id] ?? 'A founder',
+    })),
+  ]
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .slice(0, 10)
+    .map(({ left, right }) => ({ left, right }))
+
+  const platformStats = {
+    investorCount: investorCount ?? 0,
+    lenderCount: lenderCount ?? 0,
+    latestInvestors: (latestInvestors ?? []) as { firm_name: string; partner_name: string }[],
+    latestLenders: (latestLenders ?? []) as { institution_name: string; contact_name: string }[],
+    latestConnections,
+  }
 
   let emailsSent = 0
 
@@ -81,6 +123,7 @@ export async function GET(req: NextRequest) {
         institution_name: l.institution_name,
         contact_name: l.contact_name,
       })),
+      platformStats,
     })
     emailsSent++
   }
@@ -110,6 +153,7 @@ export async function GET(req: NextRequest) {
         stage: f.stage as string,
         product_categories: (f.product_categories ?? []) as string[],
       })),
+      platformStats,
     })
     emailsSent++
   }
