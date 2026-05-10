@@ -11,6 +11,13 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
+  // Only run on the 2nd Wednesday of the month (day 8–14)
+  const today = new Date()
+  const dayOfMonth = today.getUTCDate()
+  if (dayOfMonth < 8 || dayOfMonth > 14) {
+    return NextResponse.json({ ok: true, skipped: true, reason: 'Not the 2nd Wednesday' })
+  }
+
   const admin = createAdminClient()
 
   // Fetch all data in parallel
