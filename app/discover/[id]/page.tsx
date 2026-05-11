@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation'
 import { fmtUsd, fmtArrRange, fmtStage, fmtDate } from '@/lib/format'
 import { ViewLogger } from './view-logger'
 import { InvestorViewLogger } from './investor-view-logger'
+import { LenderViewLogger } from './lender-view-logger'
 import FlagActionButton from './flag-action-button'
 
 interface Props {
@@ -139,7 +140,7 @@ export default async function ProfileDetailPage({ params }: Props) {
   }
 
   if (profile.role === 'founder') {
-    // Founder viewing an investor profile
+    // Try investor profile first
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: ip } = await admin
       .from('investor_profiles')
@@ -148,14 +149,94 @@ export default async function ProfileDetailPage({ params }: Props) {
       .single() as { data: any }
 
     if (!ip) {
+      // Try lender profile
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: lp } = await admin
+        .from('lender_profiles')
+        .select('*, profiles(email)')
+        .eq('id', id)
+        .single() as { data: any }
+
+      if (!lp) {
+        return (
+          <div className="max-w-3xl mx-auto px-6 py-12">
+            <p className="text-sm text-gray-500">Profile not found.</p>
+          </div>
+        )
+      }
+
+      const { data: existingLenderFlag } = await admin
+        .from('lender_flags')
+        .select('id')
+        .eq('founder_id', user.id)
+        .eq('lender_id', id)
+        .eq('flagged_by', 'founder')
+        .maybeSingle()
+
       return (
         <div className="max-w-3xl mx-auto px-6 py-12">
-          <p className="text-sm text-gray-500">Profile not found.</p>
+          <LenderViewLogger lenderId={id} />
+          <BackButton />
+
+          <div className="mb-8">
+            <div className="flex items-center gap-2 mb-1">
+              <h1 className="text-2xl font-semibold text-gray-900">{lp.institution_name}</h1>
+              <span className="text-xs font-medium bg-sky-50 text-sky-600 border border-sky-200 px-2 py-0.5 rounded-full">Lender</span>
+            </div>
+            <p className="text-sm text-gray-600 mt-0.5">{lp.contact_name}</p>
+            <p className="text-sm text-gray-400">{lp.location}</p>
+          </div>
+
+          <div className="border border-gray-200 rounded-lg p-6 mb-6">
+            <h2 className="text-sm font-semibold text-gray-900 border-b border-gray-100 pb-2 mb-4">Lending parameters</h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-4">
+              <Field label="Loan size" value={`${fmtUsd(lp.loan_size_min_usd)} – ${fmtUsd(lp.loan_size_max_usd)}`} />
+              <Field label="Geography focus" value={lp.geography_focus} />
+              {lp.arr_min_requirement > 0 && <Field label="Min ARR requirement" value={fmtUsd(lp.arr_min_requirement)} />}
+              {lp.arr_max_sweet_spot > 0 && <Field label="ARR sweet spot" value={`up to ${fmtUsd(lp.arr_max_sweet_spot)}`} />}
+              {lp.website && <Field label="Website" value={lp.website} />}
+            </div>
+          </div>
+
+          {lp.stages?.length > 0 && (
+            <div className="border border-gray-200 rounded-lg p-6 mb-6">
+              <h2 className="text-sm font-semibold text-gray-900 border-b border-gray-100 pb-2 mb-4">Stages</h2>
+              <div className="flex flex-wrap gap-2">
+                {lp.stages.map((s: string) => (
+                  <span key={s} className="text-xs bg-purple-50 text-[#534AB7] px-2.5 py-1 rounded-full">{fmtStage(s)}</span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {lp.saas_subcategories?.length > 0 && (
+            <div className="border border-gray-200 rounded-lg p-6 mb-6">
+              <h2 className="text-sm font-semibold text-gray-900 border-b border-gray-100 pb-2 mb-4">SaaS focus areas</h2>
+              <div className="flex flex-wrap gap-2">
+                {lp.saas_subcategories.map((c: string) => (
+                  <span key={c} className="text-xs bg-gray-100 text-gray-600 px-2.5 py-1 rounded-full">{c}</span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {lp.thesis_statement && (
+            <div className="border border-gray-200 rounded-lg p-6 mb-6">
+              <h2 className="text-sm font-semibold text-gray-900 border-b border-gray-100 pb-2 mb-4">Thesis</h2>
+              <p className="text-sm text-gray-700 italic">&ldquo;{lp.thesis_statement}&rdquo;</p>
+            </div>
+          )}
+
+          <div className="flex items-center justify-between text-xs text-gray-400 mb-8">
+            <span>Listed {fmtDate(lp.created_at)}</span>
+          </div>
+
+          <FlagActionButton targetId={id} mode="founder-flagging-lender" isAlreadyFlagged={!!existingLenderFlag} />
         </div>
       )
     }
 
-    // Check if already flagged
+    // Investor profile — check if already flagged
     const { data: existingFlag } = await admin
       .from('flags')
       .select('id')

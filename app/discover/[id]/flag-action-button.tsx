@@ -2,11 +2,11 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { flagInvestor, unflagInvestor, flagFounder, unflagFounder, flagFounderAsLender, unflagFounderAsLender } from '@/app/actions/discover'
+import { flagInvestor, unflagInvestor, flagFounder, unflagFounder, flagFounderAsLender, unflagFounderAsLender, flagLenderAsFounder, unflagLenderAsFounder } from '@/app/actions/discover'
 
 interface Props {
   targetId: string
-  mode: 'founder-flagging-investor' | 'investor-flagging-founder' | 'lender-flagging-founder'
+  mode: 'founder-flagging-investor' | 'founder-flagging-lender' | 'investor-flagging-founder' | 'lender-flagging-founder'
   isAlreadyFlagged: boolean
 }
 
@@ -22,6 +22,8 @@ export default function FlagActionButton({ targetId, mode, isAlreadyFlagged }: P
     let result
     if (mode === 'founder-flagging-investor') {
       result = await flagInvestor(targetId)
+    } else if (mode === 'founder-flagging-lender') {
+      result = await flagLenderAsFounder(targetId)
     } else if (mode === 'lender-flagging-founder') {
       result = await flagFounderAsLender(targetId)
     } else {
@@ -42,6 +44,8 @@ export default function FlagActionButton({ targetId, mode, isAlreadyFlagged }: P
     let result
     if (mode === 'founder-flagging-investor') {
       result = await unflagInvestor(targetId)
+    } else if (mode === 'founder-flagging-lender') {
+      result = await unflagLenderAsFounder(targetId)
     } else if (mode === 'lender-flagging-founder') {
       result = await unflagFounderAsLender(targetId)
     } else {
@@ -61,7 +65,7 @@ export default function FlagActionButton({ targetId, mode, isAlreadyFlagged }: P
       {flagged ? (
         <div className="flex items-center gap-3">
           <span className="text-sm text-green-600 font-medium">
-            {mode === 'founder-flagging-investor' ? 'Connection request sent ✓' : 'Interest expressed ✓'}
+            {mode === 'founder-flagging-investor' ? 'Connection request sent ✓' : mode === 'founder-flagging-lender' ? 'Interest expressed ✓' : 'Interest expressed ✓'}
           </span>
           <button
             onClick={handleUnflag}
@@ -81,6 +85,8 @@ export default function FlagActionButton({ targetId, mode, isAlreadyFlagged }: P
             ? 'Processing…'
             : mode === 'founder-flagging-investor'
             ? 'Send connection request'
+            : mode === 'founder-flagging-lender'
+            ? 'Express interest'
             : 'Express interest'}
         </button>
       )}

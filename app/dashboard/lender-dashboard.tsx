@@ -54,6 +54,23 @@ function FounderNameLink({ name, website }: { name: string; website?: string | n
 export default async function LenderDashboard({ userId }: Props) {
   const admin = createAdminClient()
 
+  const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+
+  // Founders who viewed this lender's profile this week
+  const { count: profileViewsThisWeek } = await admin
+    .from('lender_profile_views')
+    .select('id', { count: 'exact', head: true })
+    .eq('lender_id', userId)
+    .gte('viewed_at', weekAgo)
+
+  // Founders who viewed this lender's profile (for activity feed)
+  const { data: founderViews } = await admin
+    .from('lender_profile_views')
+    .select('*, founder_profiles(company_name)')
+    .eq('lender_id', userId)
+    .order('viewed_at', { ascending: false })
+    .limit(20) as { data: any[] | null }
+
   // Founders this lender has expressed interest in (all outgoing flags)
   const { count: expressedInterestCount } = await admin
     .from('lender_flags')
@@ -122,6 +139,13 @@ export default async function LenderDashboard({ userId }: Props) {
   type ActivityItem = { date: string; text: string }
   const activity: ActivityItem[] = []
 
+  if (founderViews) {
+    for (const v of founderViews) {
+      const company = v.founder_profiles?.company_name ?? 'A founder'
+      activity.push({ date: v.viewed_at, text: `${company} viewed your profile` })
+    }
+  }
+
   if (allOutgoingForActivity) {
     for (const f of allOutgoingForActivity) {
       const company = f.founder_profiles?.company_name ?? 'A founder'
@@ -155,7 +179,8 @@ export default async function LenderDashboard({ userId }: Props) {
       </div>
 
       {/* Metric cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-10">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-10">
+        <MetricCard label="Profile views this week" value={profileViewsThisWeek ?? 0} />
         <MetricCard label="Founders expressed interest in" value={expressedInterestCount ?? 0} />
         <MetricCard label="Connections" value={totalConnections} accent={totalConnections > 0 ? 'green' : 'gray'} />
         <MetricCard
