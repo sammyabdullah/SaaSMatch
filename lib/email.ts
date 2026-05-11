@@ -608,11 +608,11 @@ export async function sendMonthlyFounderDigest({
   platformStats: PlatformStats
 }) {
   const investorRows = matchingInvestors.map(inv =>
-    `<tr><td style="padding:6px 16px 6px 0;font-size:13px"><strong>${inv.firm_name}</strong></td><td style="padding:6px 0;font-size:13px;color:#555">${inv.partner_name}</td></tr>`
+    `<tr><td style="padding:2px 16px 2px 0;font-size:13px;width:200px"><strong>${inv.firm_name}</strong></td><td style="padding:2px 0;font-size:13px;color:#555">${inv.partner_name}</td></tr>`
   ).join('')
 
   const lenderRows = matchingLenders.map(l =>
-    `<tr><td style="padding:6px 16px 6px 0;font-size:13px"><strong>${l.institution_name}</strong></td><td style="padding:6px 0;font-size:13px;color:#555">${l.contact_name}</td></tr>`
+    `<tr><td style="padding:2px 16px 2px 0;font-size:13px;width:200px"><strong>${l.institution_name}</strong></td><td style="padding:2px 0;font-size:13px;color:#555">${l.contact_name}</td></tr>`
   ).join('')
 
   await getResend().emails.send({
@@ -620,20 +620,19 @@ export async function sendMonthlyFounderDigest({
     to: founderEmail,
     subject: 'Unlocked matches',
     html: `
-      <p>Hi ${founderCompanyName},</p>
-      <p>Here are investors and lenders on UnlockedVC that match your profile. Log in to Discover to send them a connection request.</p>
+      <p>Here are investors and lenders on UnlockedVC that match your profile.</p>
 
       ${matchingInvestors.length > 0 ? `
-        <p style="font-weight:600;margin:20px 0 8px">Matching investors (${matchingInvestors.length})</p>
+        <p style="font-weight:600;margin:20px 0 6px">Matching investors (${matchingInvestors.length})</p>
         <table style="border-collapse:collapse">${investorRows}</table>
       ` : ''}
 
       ${matchingLenders.length > 0 ? `
-        <p style="font-weight:600;margin:20px 0 8px">Matching lenders (${matchingLenders.length})</p>
+        <p style="font-weight:600;margin:20px 0 6px">Matching lenders (${matchingLenders.length})</p>
         <table style="border-collapse:collapse">${lenderRows}</table>
       ` : ''}
 
-      <p style="margin-top:28px"><a href="${APP_URL}/discover" style="background:#534AB7;color:white;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block">Browse Discover</a></p>
+      <p style="margin-top:28px"><a href="${APP_URL}/login" style="background:#534AB7;color:white;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block">Log In</a></p>
 
       ${buildPlatformStatsHtml(platformStats)}
 
@@ -656,9 +655,9 @@ export async function sendMonthlyInvestorDigest({
 }) {
   const founderRows = matchingFounders.map(f =>
     `<tr>
-      <td style="padding:6px 16px 6px 0;font-size:13px"><strong>${f.company_name}</strong></td>
-      <td style="padding:6px 16px 6px 0;font-size:13px;color:#555">${fmtStage(f.stage)}</td>
-      <td style="padding:6px 0;font-size:13px;color:#888">${f.product_categories.join(', ')}</td>
+      <td style="padding:2px 16px 2px 0;font-size:13px;width:200px"><strong>${f.company_name}</strong></td>
+      <td style="padding:2px 16px 2px 0;font-size:13px;color:#555">${fmtStage(f.stage)}</td>
+      <td style="padding:2px 0;font-size:13px;color:#888">${f.product_categories.join(', ')}</td>
     </tr>`
   ).join('')
 
@@ -667,12 +666,11 @@ export async function sendMonthlyInvestorDigest({
     to: investorEmail,
     subject: 'Unlocked matches',
     html: `
-      <p>Hi ${investorName},</p>
-      <p>Here are active founders on UnlockedVC that match your thesis this month. Log in to Discover to express interest.</p>
+      <p>Here are active founders on UnlockedVC that match your thesis this month.</p>
 
       <table style="border-collapse:collapse;margin:8px 0">${founderRows}</table>
 
-      <p style="margin-top:28px"><a href="${APP_URL}/discover" style="background:#534AB7;color:white;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block">Browse Discover</a></p>
+      <p style="margin-top:28px"><a href="${APP_URL}/login" style="background:#534AB7;color:white;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block">Log In</a></p>
 
       ${buildPlatformStatsHtml(platformStats)}
 
