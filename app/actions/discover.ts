@@ -6,6 +6,7 @@ import {
   sendFounderFlaggedInvestorEmail,
   sendInvestorFlaggedFounderEmail,
   sendLenderFlaggedFounderEmail,
+  sendFounderFlaggedLenderEmail,
 } from '@/lib/email'
 
 // ─── Founder flags an investor ────────────────────────────────────────────────
@@ -172,6 +173,33 @@ export async function flagLenderAsFounder(lenderId: string): Promise<{ error?: s
       return { success: true }
     }
     return { error: error.message }
+  }
+
+  // Send notification email to the lender
+  try {
+    const [{ data: lp }, { data: founderProfile }] = await Promise.all([
+      admin.from('lender_profiles')
+        .select('institution_name, contact_name, loan_size_min_usd, loan_size_max_usd, stages, geography_focus, thesis_statement')
+        .eq('id', lenderId)
+        .single(),
+      admin.from('profiles').select('email').eq('id', lenderId).single(),
+    ])
+
+    const [{ data: fp }] = await Promise.all([
+      admin.from('founder_profiles')
+        .select('stage, arr_range, raising_amount_usd, product_categories, mom_growth_pct, why_now, location')
+        .eq('id', user.id)
+        .single(),
+    ])
+
+    if (lp && founderProfile?.email && fp) {
+      await sendFounderFlaggedLenderEmail({
+        lenderEmail: founderProfile.email,
+        founder: fp as Parameters<typeof sendFounderFlaggedLenderEmail>[0]['founder'],
+      })
+    }
+  } catch {
+    // Email errors are non-fatal
   }
 
   revalidatePath('/discover')

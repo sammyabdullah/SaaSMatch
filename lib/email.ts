@@ -400,6 +400,53 @@ export async function sendWelcomeLenderEmail({ email }: { email: string }) {
   })
 }
 
+// ─── Founder flagged a lender ─────────────────────────────────────────────────
+// Email goes to the lender with the founder's profile summary.
+export async function sendFounderFlaggedLenderEmail({
+  lenderEmail,
+  founder,
+}: {
+  lenderEmail: string
+  founder: {
+    stage: string
+    arr_range: string
+    raising_amount_usd: number
+    product_categories: string[]
+    mom_growth_pct: number | null
+    why_now: string
+    location: string
+  }
+}) {
+  const categoryList = founder.product_categories.join(', ')
+  const raise = formatUsd(founder.raising_amount_usd)
+
+  await getResend().emails.send({
+    from: FROM,
+    to: lenderEmail,
+    subject: 'UnlockedVC request',
+    html: `
+      <p>A founder in the UnlockedVC network has expressed interest in connecting with you.</p>
+
+      <table style="border-collapse:collapse;margin:16px 0">
+        <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Stage</td><td style="font-size:13px">${fmtStage(founder.stage)}</td></tr>
+        <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">ARR range</td><td style="font-size:13px">${fmtArr(founder.arr_range)}</td></tr>
+        <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Raising</td><td style="font-size:13px">${raise}</td></tr>
+        ${founder.mom_growth_pct != null ? `<tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">YOY growth</td><td style="font-size:13px">${founder.mom_growth_pct}%</td></tr>` : ''}
+        <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Categories</td><td style="font-size:13px">${categoryList}</td></tr>
+        <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Location</td><td style="font-size:13px">${founder.location}</td></tr>
+      </table>
+
+      ${founder.why_now ? `<p style="font-style:italic;color:#444">"${founder.why_now}"</p>` : ''}
+
+      <p>Log in to your dashboard to accept or decline this introduction.</p>
+
+      <p><a href="${APP_URL}/dashboard" style="background:#534AB7;color:white;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block">View in Dashboard</a></p>
+
+      <p style="color:#999;font-size:12px">You're receiving this because you have an approved lender profile on UnlockedVC.</p>
+    `,
+  })
+}
+
 // ─── Lender flagged a founder ─────────────────────────────────────────────────
 export async function sendLenderFlaggedFounderEmail({
   founderEmail,
