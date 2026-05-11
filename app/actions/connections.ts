@@ -103,7 +103,7 @@ export async function acceptFlag(flagId: string): Promise<{ error?: string; succ
         }),
       ])
     } else {
-      // Founder accepted an investor's flag → notify the investor
+      // Founder accepted an investor's flag → notify both parties
       await Promise.allSettled([
         sendConnectionAcceptedInvestorEmail({
           investorEmail,
@@ -118,6 +118,19 @@ export async function acceptFlag(flagId: string): Promise<{ error?: string; succ
           founderMomGrowthPct: fp?.mom_growth_pct ?? null,
           founderRaisingAmount: fp?.raising_amount_usd ?? null,
           founderWhyNow: fp?.why_now ?? null,
+        }),
+        sendConnectionAcceptedFounderEmail({
+          founderEmail,
+          investorFirmName: ip?.firm_name ?? '',
+          investorPartnerName: ip?.partner_name ?? '',
+          investorWebsite: ip?.website ?? null,
+          investorLocation: ip?.location ?? null,
+          investorCheckSizeMin: ip?.check_size_min_usd ?? null,
+          investorCheckSizeMax: ip?.check_size_max_usd ?? null,
+          investorStages: ip?.stages ?? [],
+          investorGeography: ip?.geography_focus ?? null,
+          investorThesis: ip?.thesis_statement ?? null,
+          investorEmail,
         }),
         sendAdminConnectionEmail({
           founderEmail,
