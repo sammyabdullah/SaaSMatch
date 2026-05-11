@@ -61,7 +61,7 @@ export async function acceptLenderFlag(flagId: string): Promise<{ error?: string
     const lp = lenderProfile.data
 
     if (flag.flagged_by === 'lender') {
-      // Founder accepted lender's flag → notify the lender
+      // Founder accepted lender's flag → notify both parties
       await Promise.allSettled([
         sendConnectionAcceptedLenderEmail({
           lenderEmail,
@@ -77,6 +77,19 @@ export async function acceptLenderFlag(flagId: string): Promise<{ error?: string
           founderRaisingAmount: fp?.raising_amount_usd ?? null,
           founderWhyNow: fp?.why_now ?? null,
         }),
+        sendConnectionAcceptedFounderFromLenderEmail({
+          founderEmail,
+          lenderInstitutionName: lp?.institution_name ?? '',
+          lenderContactName: lp?.contact_name ?? '',
+          lenderWebsite: lp?.website ?? null,
+          lenderLocation: lp?.location ?? null,
+          lenderLoanSizeMin: lp?.loan_size_min_usd ?? null,
+          lenderLoanSizeMax: lp?.loan_size_max_usd ?? null,
+          lenderStages: lp?.stages ?? [],
+          lenderGeography: lp?.geography_focus ?? null,
+          lenderThesis: lp?.thesis_statement ?? null,
+          lenderEmail,
+        }),
         sendAdminLenderConnectionEmail({
           founderEmail,
           lenderInstitutionName: lp?.institution_name ?? '',
@@ -85,7 +98,7 @@ export async function acceptLenderFlag(flagId: string): Promise<{ error?: string
         }),
       ])
     } else {
-      // Lender accepted a founder's flag → notify the founder
+      // Lender accepted a founder's flag → notify both parties
       await Promise.allSettled([
         sendConnectionAcceptedFounderFromLenderEmail({
           founderEmail,
@@ -99,6 +112,20 @@ export async function acceptLenderFlag(flagId: string): Promise<{ error?: string
           lenderGeography: lp?.geography_focus ?? null,
           lenderThesis: lp?.thesis_statement ?? null,
           lenderEmail,
+        }),
+        sendConnectionAcceptedLenderEmail({
+          lenderEmail,
+          lenderName: lp?.contact_name ?? '',
+          founderEmail,
+          founderCompanyName: fp?.company_name ?? null,
+          founderWebsite: fp?.website ?? null,
+          founderLocation: fp?.location ?? null,
+          founderStage: fp?.stage ?? '',
+          founderArrRange: fp?.arr_range ?? null,
+          founderCategories: fp?.product_categories ?? [],
+          founderMomGrowthPct: fp?.mom_growth_pct ?? null,
+          founderRaisingAmount: fp?.raising_amount_usd ?? null,
+          founderWhyNow: fp?.why_now ?? null,
         }),
         sendAdminLenderConnectionEmail({
           founderEmail,
