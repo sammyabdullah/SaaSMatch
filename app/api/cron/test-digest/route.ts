@@ -41,11 +41,26 @@ export async function GET(req: NextRequest) {
     admin.from('lender_flags').select('founder_id, lender_id, responded_at').eq('status', 'accepted').order('responded_at', { ascending: false }).limit(10),
   ])
 
+  // Targeted name lookups for the actual connection IDs
+  const invConnIds = (acceptedInvConn ?? []).map((c) => c.investor_id)
+  const lenConnIds = (acceptedLenConn ?? []).map((c) => c.lender_id)
+  const fdrConnIds = Array.from(new Set([
+    ...(acceptedInvConn ?? []).map((c) => c.founder_id),
+    ...(acceptedLenConn ?? []).map((c) => c.founder_id),
+  ]))
+
+  const [{ data: connInvestors }, { data: connLenders }, { data: connFounders }] = await Promise.all([
+    invConnIds.length > 0 ? admin.from('investor_profiles').select('id, firm_name').in('id', invConnIds) : { data: [] },
+    lenConnIds.length > 0 ? admin.from('lender_profiles').select('id, institution_name').in('id', lenConnIds) : { data: [] },
+    fdrConnIds.length > 0 ? admin.from('founder_profiles').select('id, company_name').in('id', fdrConnIds) : { data: [] },
+  ])
+
+  const investorNameMap = Object.fromEntries((connInvestors ?? []).map((i) => [i.id, i.firm_name]))
+  const lenderNameMap = Object.fromEntries((connLenders ?? []).map((l) => [l.id, l.institution_name]))
+  const founderNameMap = Object.fromEntries((connFounders ?? []).map((f) => [f.id, f.company_name]))
+
   const investorPairs = new Set((investorFlags ?? []).map((f) => `${f.founder_id}:${f.investor_id}`))
   const lenderPairs = new Set((lenderFlags ?? []).map((f) => `${f.founder_id}:${f.lender_id}`))
-  const investorNameMap = Object.fromEntries((investors ?? []).map((i) => [i.id, i.firm_name]))
-  const lenderNameMap = Object.fromEntries((lenders ?? []).map((l) => [l.id, l.institution_name]))
-  const founderNameMap = Object.fromEntries((founders ?? []).map((f) => [f.id, f.company_name]))
 
   type ConnRow = { date: string; left: string; right: string }
   const latestConnections = [
