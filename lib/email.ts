@@ -596,13 +596,11 @@ export async function sendAdminLenderConnectionEmail({
 // ─── Monthly digest: founder ──────────────────────────────────────────────────
 export async function sendMonthlyFounderDigest({
   founderEmail,
-  founderCompanyName,
   matchingInvestors,
   matchingLenders,
   platformStats,
 }: {
   founderEmail: string
-  founderCompanyName: string
   matchingInvestors: { firm_name: string; partner_name: string }[]
   matchingLenders: { institution_name: string; contact_name: string }[]
   platformStats: PlatformStats
@@ -644,12 +642,10 @@ export async function sendMonthlyFounderDigest({
 // ─── Monthly digest: investor ─────────────────────────────────────────────────
 export async function sendMonthlyInvestorDigest({
   investorEmail,
-  investorName,
   matchingFounders,
   platformStats,
 }: {
   investorEmail: string
-  investorName: string
   matchingFounders: { company_name: string; stage: string; product_categories: string[] }[]
   platformStats: PlatformStats
 }) {
