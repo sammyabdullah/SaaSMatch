@@ -114,6 +114,13 @@ export default async function InvestorDashboard({ userId }: Props) {
     .order('viewed_at', { ascending: false })
     .limit(20) as { data: any[] | null }
 
+  // Profile views this week
+  const { count: profileViewsThisWeek } = await admin
+    .from('investor_profile_views')
+    .select('id', { count: 'exact', head: true })
+    .eq('investor_id', userId)
+    .gte('viewed_at', weekAgo)
+
   // All outgoing flags for activity feed (all statuses)
   const { data: allOutgoingForActivity } = await admin
     .from('flags')
@@ -186,8 +193,9 @@ export default async function InvestorDashboard({ userId }: Props) {
       </div>
 
       {/* Metric cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-10">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-10">
         <MetricCard label="Founders browsed this week" value={browsedThisWeek ?? 0} />
+        <MetricCard label="Profile views this week" value={profileViewsThisWeek ?? 0} />
         <MetricCard label="Connections" value={totalConnections} accent={totalConnections > 0 ? 'green' : 'gray'} />
         <MetricCard
           label="Pending intros"

@@ -322,6 +322,31 @@ export async function logProfileView(founderId: string): Promise<void> {
   }
 }
 
+// ─── Log a founder viewing a lender profile ───────────────────────────────────
+export async function logLenderProfileView(lenderId: string): Promise<void> {
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+
+    if (profile?.role !== 'founder') return
+
+    const admin = createAdminClient()
+    await admin.from('lender_profile_views').insert({
+      founder_id: user.id,
+      lender_id: lenderId,
+    })
+  } catch {
+    // Don't throw on view logging errors
+  }
+}
+
 // ─── Log a founder viewing an investor profile ────────────────────────────────
 export async function logInvestorProfileView(investorId: string): Promise<void> {
   try {

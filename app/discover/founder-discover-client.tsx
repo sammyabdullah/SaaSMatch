@@ -364,7 +364,8 @@ export default function FounderDiscoverClient({
             const lender = item
             const flagState = flagStates[id] ?? (lenderFlaggedIds.has(id) ? 'flagged' : 'idle')
             return (
-              <div key={id} className="border border-gray-200 rounded-lg p-5">
+              <div key={id} onClick={() => router.push(`/discover/${id}`)}
+                className="border border-gray-200 rounded-lg p-5 cursor-pointer hover:border-sky-400 transition-colors">
                 <div className="flex items-start justify-between gap-2 mb-3">
                   <div>
                     <div className="flex items-center gap-2 mb-0.5">
@@ -409,7 +410,7 @@ export default function FounderDiscoverClient({
                   </div>
                 )}
 
-                <div>
+                <div onClick={(e) => e.stopPropagation()}>
                   {flagErrors[id] && <p className="text-xs text-red-500 mb-1">{flagErrors[id]}</p>}
                   {flagState === 'idle' && (
                     <button onClick={() => handleLenderFlag(id)}

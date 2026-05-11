@@ -18,6 +18,8 @@ export type ArrRange = '0-500k' | '500k-2m' | '2m-5m' | '5m-plus'
 export type GtmMotion = 'sales-led' | 'product-led' | 'hybrid'
 export type RevenueModel = 'seat-based' | 'usage-based' | 'platform-fee' | 'other'
 export type FounderStatus = 'pending' | 'active' | 'closed'
+export type InvestorStatus = 'pending' | 'active' | 'closed'
+export type LenderStatus = 'pending' | 'active' | 'closed'
 export type FlagSide = 'founder' | 'investor'
 export type FlagStatus = 'pending' | 'accepted' | 'declined'
 export type LenderFlagSide = 'founder' | 'lender'
@@ -140,6 +142,7 @@ export type Database = {
           arr_sweet_spot_max: number
           thesis_statement: string
           is_approved: boolean
+          status: InvestorStatus
           created_at: string
           updated_at: string
         }
@@ -159,6 +162,7 @@ export type Database = {
           arr_sweet_spot_max: number
           thesis_statement: string
           is_approved?: boolean
+          status?: InvestorStatus
           created_at?: string
           updated_at?: string
         }
@@ -177,6 +181,7 @@ export type Database = {
           arr_sweet_spot_max?: number
           thesis_statement?: string
           is_approved?: boolean
+          status?: InvestorStatus
           updated_at?: string
         }
         Relationships: [
@@ -249,6 +254,7 @@ export type Database = {
           arr_max_sweet_spot: number
           thesis_statement: string
           is_approved: boolean
+          status: LenderStatus
           created_at: string
           updated_at: string
         }
@@ -268,6 +274,7 @@ export type Database = {
           arr_max_sweet_spot: number
           thesis_statement: string
           is_approved?: boolean
+          status?: LenderStatus
           created_at?: string
           updated_at?: string
         }
@@ -286,6 +293,7 @@ export type Database = {
           arr_max_sweet_spot?: number
           thesis_statement?: string
           is_approved?: boolean
+          status?: LenderStatus
           updated_at?: string
         }
         Relationships: [
@@ -310,6 +318,23 @@ export type Database = {
           id?: string
           founder_id: string
           investor_id: string
+          viewed_at?: string
+        }
+        Update: Record<string, never>
+        Relationships: []
+      }
+
+      lender_profile_views: {
+        Row: {
+          id: string
+          founder_id: string
+          lender_id: string
+          viewed_at: string
+        }
+        Insert: {
+          id?: string
+          founder_id: string
+          lender_id: string
           viewed_at?: string
         }
         Update: Record<string, never>
@@ -366,6 +391,8 @@ export type Database = {
       founder_status: FounderStatus
       flag_side: FlagSide
       lender_flag_side: LenderFlagSide
+      investor_status: InvestorStatus
+      lender_status: LenderStatus
     }
 
     CompositeTypes: {
