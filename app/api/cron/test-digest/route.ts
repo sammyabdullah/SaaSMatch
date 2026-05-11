@@ -78,7 +78,6 @@ export async function GET(req: NextRequest) {
     })
     await sendMonthlyFounderDigest({
       founderEmail: email,
-      founderCompanyName: founder.company_name,
       matchingInvestors: matchingInvestors.map((inv) => ({ firm_name: inv.firm_name, partner_name: inv.partner_name })),
       matchingLenders: matchingLenders.map((l) => ({ institution_name: l.institution_name, contact_name: l.contact_name })),
       platformStats,
@@ -95,7 +94,6 @@ export async function GET(req: NextRequest) {
     })
     await sendMonthlyInvestorDigest({
       investorEmail: email,
-      investorName: investor.partner_name,
       matchingFounders: matchingFounders.map((f) => ({ company_name: f.company_name, stage: f.stage as string, product_categories: (f.product_categories ?? []) as string[] })),
       platformStats,
     })

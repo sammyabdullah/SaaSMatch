@@ -114,7 +114,6 @@ export async function GET(req: NextRequest) {
 
     await sendMonthlyFounderDigest({
       founderEmail,
-      founderCompanyName: founder.company_name,
       matchingInvestors: matchingInvestors.map((inv) => ({
         firm_name: inv.firm_name,
         partner_name: inv.partner_name,
@@ -147,7 +146,6 @@ export async function GET(req: NextRequest) {
 
     await sendMonthlyInvestorDigest({
       investorEmail,
-      investorName: investor.partner_name,
       matchingFounders: matchingFounders.map((f) => ({
         company_name: f.company_name,
         stage: f.stage as string,
