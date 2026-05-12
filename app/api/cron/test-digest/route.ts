@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
-import { sendMonthlyFounderDigest, sendMonthlyInvestorDigest } from '@/lib/email'
+import { sendMonthlyFounderDigest, sendMonthlyInvestorDigest, sendMonthlyLenderDigest } from '@/lib/email'
 
 export const dynamic = 'force-dynamic'
 
@@ -78,6 +78,7 @@ export async function GET(req: NextRequest) {
 
   const founder = founders?.[0]
   const investor = investors?.[0]
+  const lender = lenders?.[0]
 
   // Send founder-style test
   if (founder) {
@@ -114,5 +115,18 @@ export async function GET(req: NextRequest) {
     })
   }
 
-  return NextResponse.json({ ok: true, sentFounder: !!founder, sentInvestor: !!investor })
+  // Send lender-style test
+  if (lender) {
+    const matchingFounders = (founders ?? []).filter((f) => {
+      if (lenderPairs.has(`${f.id}:${lender.id}`)) return false
+      return (lender.stages ?? []).includes(f.stage as string)
+    })
+    await sendMonthlyLenderDigest({
+      lenderEmail: email,
+      matchingFounders: matchingFounders.map((f) => ({ company_name: f.company_name, stage: f.stage as string, product_categories: (f.product_categories ?? []) as string[] })),
+      platformStats,
+    })
+  }
+
+  return NextResponse.json({ ok: true, sentFounder: !!founder, sentInvestor: !!investor, sentLender: !!lender })
 }
