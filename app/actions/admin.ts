@@ -47,11 +47,16 @@ export async function approveInvestor(investorId: string) {
   const admin = createAdminClient()
   const { error } = await admin
     .from('investor_profiles')
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .update({ is_approved: true, status: 'active' } as any)
+    .update({ is_approved: true })
     .eq('id', investorId)
 
   if (error) throw new Error(error.message)
+
+  // Best-effort status update (requires migration 00023)
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (admin.from('investor_profiles') as any).update({ status: 'active' }).eq('id', investorId)
+  } catch {}
 
   try {
     const { data: profile } = await admin.from('profiles').select('email').eq('id', investorId).single()
@@ -123,11 +128,16 @@ export async function approveLender(lenderId: string) {
   const admin = createAdminClient()
   const { error } = await admin
     .from('lender_profiles')
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .update({ is_approved: true, status: 'active' } as any)
+    .update({ is_approved: true })
     .eq('id', lenderId)
 
   if (error) throw new Error(error.message)
+
+  // Best-effort status update (requires migration 00023)
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (admin.from('lender_profiles') as any).update({ status: 'active' }).eq('id', lenderId)
+  } catch {}
 
   try {
     const { data: profile } = await admin.from('profiles').select('email').eq('id', lenderId).single()
