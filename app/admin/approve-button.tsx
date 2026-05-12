@@ -7,19 +7,29 @@ import { approveFounder, rejectFounder, approveInvestor, rejectInvestor, deleteF
 export function ApproveButton({ founderId }: { founderId: string }) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
   async function handleApprove() {
     setLoading(true)
-    await approveFounder(founderId)
-    router.refresh()
-    setLoading(false)
+    setError('')
+    try {
+      await approveFounder(founderId)
+      router.refresh()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Approval failed')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
-    <button onClick={handleApprove} disabled={loading}
-      className="px-4 py-2 bg-[#534AB7] text-white text-sm font-medium rounded-md hover:bg-[#4339A0] transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-      {loading ? 'Approving…' : 'Approve'}
-    </button>
+    <div>
+      <button onClick={handleApprove} disabled={loading}
+        className="px-4 py-2 bg-[#534AB7] text-white text-sm font-medium rounded-md hover:bg-[#4339A0] transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+        {loading ? 'Approving…' : 'Approve'}
+      </button>
+      {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
+    </div>
   )
 }
 
@@ -30,9 +40,12 @@ export function RejectButton({ founderId }: { founderId: string }) {
   async function handleReject() {
     if (!confirm('Reject this profile? This will set their status to closed.')) return
     setLoading(true)
-    await rejectFounder(founderId)
-    router.refresh()
-    setLoading(false)
+    try {
+      await rejectFounder(founderId)
+      router.refresh()
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -50,9 +63,12 @@ export function DeleteFounderButton({ founderId }: { founderId: string }) {
   async function handleDelete() {
     if (!confirm('Permanently delete this founder profile? The auth account will remain intact. This cannot be undone.')) return
     setLoading(true)
-    await deleteFounderProfile(founderId)
-    router.refresh()
-    setLoading(false)
+    try {
+      await deleteFounderProfile(founderId)
+      router.refresh()
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -66,19 +82,29 @@ export function DeleteFounderButton({ founderId }: { founderId: string }) {
 export function ApproveInvestorButton({ investorId }: { investorId: string }) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
   async function handleApprove() {
     setLoading(true)
-    await approveInvestor(investorId)
-    router.refresh()
-    setLoading(false)
+    setError('')
+    try {
+      await approveInvestor(investorId)
+      router.refresh()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Approval failed')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
-    <button onClick={handleApprove} disabled={loading}
-      className="px-4 py-2 bg-[#534AB7] text-white text-sm font-medium rounded-md hover:bg-[#4339A0] transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-      {loading ? 'Approving…' : 'Approve'}
-    </button>
+    <div>
+      <button onClick={handleApprove} disabled={loading}
+        className="px-4 py-2 bg-[#534AB7] text-white text-sm font-medium rounded-md hover:bg-[#4339A0] transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+        {loading ? 'Approving…' : 'Approve'}
+      </button>
+      {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
+    </div>
   )
 }
 
@@ -89,9 +115,12 @@ export function RejectInvestorButton({ investorId }: { investorId: string }) {
   async function handleReject() {
     if (!confirm('Remove this investor profile? This cannot be undone.')) return
     setLoading(true)
-    await rejectInvestor(investorId)
-    router.refresh()
-    setLoading(false)
+    try {
+      await rejectInvestor(investorId)
+      router.refresh()
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -109,9 +138,12 @@ export function DeleteInvestorButton({ investorId }: { investorId: string }) {
   async function handleDelete() {
     if (!confirm('Permanently delete this investor profile? The auth account will remain intact. This cannot be undone.')) return
     setLoading(true)
-    await deleteInvestorProfile(investorId)
-    router.refresh()
-    setLoading(false)
+    try {
+      await deleteInvestorProfile(investorId)
+      router.refresh()
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -125,19 +157,29 @@ export function DeleteInvestorButton({ investorId }: { investorId: string }) {
 export function ApproveLenderButton({ lenderId }: { lenderId: string }) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
   async function handleApprove() {
     setLoading(true)
-    await approveLender(lenderId)
-    router.refresh()
-    setLoading(false)
+    setError('')
+    try {
+      await approveLender(lenderId)
+      router.refresh()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Approval failed')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
-    <button onClick={handleApprove} disabled={loading}
-      className="px-4 py-2 bg-[#534AB7] text-white text-sm font-medium rounded-md hover:bg-[#4339A0] transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-      {loading ? 'Approving…' : 'Approve'}
-    </button>
+    <div>
+      <button onClick={handleApprove} disabled={loading}
+        className="px-4 py-2 bg-[#534AB7] text-white text-sm font-medium rounded-md hover:bg-[#4339A0] transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+        {loading ? 'Approving…' : 'Approve'}
+      </button>
+      {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
+    </div>
   )
 }
 
@@ -148,9 +190,12 @@ export function RejectLenderButton({ lenderId }: { lenderId: string }) {
   async function handleReject() {
     if (!confirm('Remove this lender profile? This cannot be undone.')) return
     setLoading(true)
-    await rejectLender(lenderId)
-    router.refresh()
-    setLoading(false)
+    try {
+      await rejectLender(lenderId)
+      router.refresh()
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -168,9 +213,12 @@ export function DeleteLenderButton({ lenderId }: { lenderId: string }) {
   async function handleDelete() {
     if (!confirm('Permanently delete this lender profile? The auth account will remain intact. This cannot be undone.')) return
     setLoading(true)
-    await deleteLenderProfile(lenderId)
-    router.refresh()
-    setLoading(false)
+    try {
+      await deleteLenderProfile(lenderId)
+      router.refresh()
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
