@@ -15,10 +15,15 @@ export default function UnflagFounderFlag({ investorId }: Props) {
 
   async function handleUnflag() {
     setLoading(true)
-    await unflagInvestor(investorId)
-    setDone(true)
-    setLoading(false)
-    router.refresh()
+    try {
+      const result = await unflagInvestor(investorId)
+      if (!result?.error) {
+        setDone(true)
+        router.refresh()
+      }
+    } finally {
+      setLoading(false)
+    }
   }
 
   if (done) {

@@ -15,10 +15,15 @@ export default function UnflagLenderFlag({ founderId }: Props) {
 
   async function handleUnflag() {
     setLoading(true)
-    await unflagFounderAsLender(founderId)
-    setDone(true)
-    setLoading(false)
-    router.refresh()
+    try {
+      const result = await unflagFounderAsLender(founderId)
+      if (!result?.error) {
+        setDone(true)
+        router.refresh()
+      }
+    } finally {
+      setLoading(false)
+    }
   }
 
   if (done) {

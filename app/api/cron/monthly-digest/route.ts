@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/server'
-import { sendMonthlyFounderDigest, sendMonthlyInvestorDigest } from '@/lib/email'
+import { sendMonthlyFounderDigest, sendMonthlyInvestorDigest, sendMonthlyLenderDigest } from '@/lib/email'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 300
@@ -146,6 +146,31 @@ export async function GET(req: NextRequest) {
 
     await sendMonthlyInvestorDigest({
       investorEmail,
+      matchingFounders: matchingFounders.map((f) => ({
+        company_name: f.company_name,
+        stage: f.stage as string,
+        product_categories: (f.product_categories ?? []) as string[],
+      })),
+      platformStats,
+    })
+    emailsSent++
+  }
+
+  // ── Lender digests ───────────────────────────────────────────────────────────
+  for (const lender of lenders ?? []) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const lenderEmail = (lender as any).profiles?.email as string | undefined
+    if (!lenderEmail) continue
+
+    const matchingFounders = (founders ?? []).filter((founder) => {
+      if (lenderPairs.has(`${founder.id}:${lender.id}`)) return false
+      return (lender.stages ?? []).includes(founder.stage as string)
+    })
+
+    if (matchingFounders.length === 0) continue
+
+    await sendMonthlyLenderDigest({
+      lenderEmail,
       matchingFounders: matchingFounders.map((f) => ({
         company_name: f.company_name,
         stage: f.stage as string,
