@@ -186,6 +186,35 @@ export async function deleteLenderProfile(lenderId: string) {
   revalidatePath('/discover')
 }
 
+export async function changeUserEmail(
+  currentEmail: string,
+  newEmail: string
+): Promise<{ error?: string; success?: boolean }> {
+  await requireAdmin()
+
+  const admin = createAdminClient()
+
+  const { data: profile } = await admin
+    .from('profiles')
+    .select('id')
+    .eq('email', currentEmail.trim().toLowerCase())
+    .single()
+
+  if (!profile) return { error: 'No user found with that email' }
+
+  const { error: authError } = await admin.auth.admin.updateUserById(profile.id, {
+    email: newEmail.trim().toLowerCase(),
+  })
+  if (authError) return { error: authError.message }
+
+  await admin
+    .from('profiles')
+    .update({ email: newEmail.trim().toLowerCase() })
+    .eq('id', profile.id)
+
+  return { success: true }
+}
+
 export async function deleteFounderProfile(founderId: string) {
   await requireAdmin()
 

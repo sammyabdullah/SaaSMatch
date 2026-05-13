@@ -4,6 +4,7 @@ export const dynamic = 'force-dynamic'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { ApproveButton, RejectButton, ApproveInvestorButton, RejectInvestorButton, DeleteFounderButton, DeleteInvestorButton, ApproveLenderButton, RejectLenderButton, DeleteLenderButton } from './approve-button'
+import ChangeEmailForm from './change-email-form'
 
 function fmt(value: string) {
   return value.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
@@ -107,6 +108,13 @@ export default async function AdminPage() {
         <h1 className="text-2xl font-semibold text-gray-900">Admin</h1>
         <p className="text-sm text-gray-500 mt-1">Review and approve founder profiles.</p>
       </div>
+
+      {/* User management */}
+      <section className="mb-12 border border-gray-200 rounded-lg p-6">
+        <h2 className="text-base font-semibold text-gray-900 mb-1">Change user email</h2>
+        <p className="text-sm text-gray-500 mb-4">Updates both the auth account and profile record.</p>
+        <ChangeEmailForm />
+      </section>
 
       {/* Platform stats */}
       <div className="grid grid-cols-3 gap-4 mb-12">
