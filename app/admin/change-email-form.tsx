@@ -16,16 +16,20 @@ export default function ChangeEmailForm() {
     setError('')
     setSuccess('')
 
-    const result = await changeUserEmail(currentEmail, newEmail)
-
-    if (result?.error) {
-      setError(result.error)
-    } else {
-      setSuccess(`Email updated: ${currentEmail} → ${newEmail}`)
-      setCurrentEmail('')
-      setNewEmail('')
+    try {
+      const result = await changeUserEmail(currentEmail, newEmail)
+      if (result?.error) {
+        setError(result.error)
+      } else {
+        setSuccess(`Email updated: ${currentEmail} → ${newEmail}`)
+        setCurrentEmail('')
+        setNewEmail('')
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Update failed')
+    } finally {
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   return (

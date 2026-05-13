@@ -36,23 +36,30 @@ export function ApproveButton({ founderId }: { founderId: string }) {
 export function RejectButton({ founderId }: { founderId: string }) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
   async function handleReject() {
     if (!confirm('Reject this profile? This will set their status to closed.')) return
     setLoading(true)
+    setError('')
     try {
       await rejectFounder(founderId)
       router.refresh()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Rejection failed')
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <button onClick={handleReject} disabled={loading}
-      className="px-4 py-2 border border-gray-200 text-gray-600 text-sm font-medium rounded-md hover:border-gray-400 hover:text-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-      {loading ? 'Rejecting…' : 'Reject'}
-    </button>
+    <div>
+      <button onClick={handleReject} disabled={loading}
+        className="px-4 py-2 border border-gray-200 text-gray-600 text-sm font-medium rounded-md hover:border-gray-400 hover:text-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+        {loading ? 'Rejecting…' : 'Reject'}
+      </button>
+      {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
+    </div>
   )
 }
 
@@ -111,23 +118,30 @@ export function ApproveInvestorButton({ investorId }: { investorId: string }) {
 export function RejectInvestorButton({ investorId }: { investorId: string }) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
   async function handleReject() {
     if (!confirm('Remove this investor profile? This cannot be undone.')) return
     setLoading(true)
+    setError('')
     try {
       await rejectInvestor(investorId)
       router.refresh()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Rejection failed')
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <button onClick={handleReject} disabled={loading}
-      className="px-4 py-2 border border-gray-200 text-gray-600 text-sm font-medium rounded-md hover:border-gray-400 hover:text-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-      {loading ? 'Removing…' : 'Reject'}
-    </button>
+    <div>
+      <button onClick={handleReject} disabled={loading}
+        className="px-4 py-2 border border-gray-200 text-gray-600 text-sm font-medium rounded-md hover:border-gray-400 hover:text-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+        {loading ? 'Removing…' : 'Reject'}
+      </button>
+      {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
+    </div>
   )
 }
 
@@ -186,23 +200,30 @@ export function ApproveLenderButton({ lenderId }: { lenderId: string }) {
 export function RejectLenderButton({ lenderId }: { lenderId: string }) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
   async function handleReject() {
     if (!confirm('Remove this lender profile? This cannot be undone.')) return
     setLoading(true)
+    setError('')
     try {
       await rejectLender(lenderId)
       router.refresh()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Rejection failed')
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <button onClick={handleReject} disabled={loading}
-      className="px-4 py-2 border border-gray-200 text-gray-600 text-sm font-medium rounded-md hover:border-gray-400 hover:text-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-      {loading ? 'Removing…' : 'Reject'}
-    </button>
+    <div>
+      <button onClick={handleReject} disabled={loading}
+        className="px-4 py-2 border border-gray-200 text-gray-600 text-sm font-medium rounded-md hover:border-gray-400 hover:text-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+        {loading ? 'Removing…' : 'Reject'}
+      </button>
+      {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
+    </div>
   )
 }
 

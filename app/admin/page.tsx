@@ -481,17 +481,15 @@ function LenderCard({
         </div>
       )}
 
-      {showActions && (
-        <div className="flex gap-3 pt-2">
-          <ApproveLenderButton lenderId={lp.id} />
-          <RejectLenderButton lenderId={lp.id} />
-        </div>
-      )}
-      {!showActions && (
-        <div className="flex gap-3 pt-2">
-          <DeleteLenderButton lenderId={lp.id} />
-        </div>
-      )}
+      <div className="flex gap-3 pt-2">
+        {showActions && (
+          <>
+            <ApproveLenderButton lenderId={lp.id} />
+            <RejectLenderButton lenderId={lp.id} />
+          </>
+        )}
+        <DeleteLenderButton lenderId={lp.id} />
+      </div>
     </div>
   )
 }
