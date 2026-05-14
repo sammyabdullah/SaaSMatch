@@ -383,7 +383,7 @@ export default function InvestorDiscoverClient({
 
                 {f.why_now && (
                   <div className="mb-3">
-                    <p className="text-xs text-gray-400 mb-0.5">In their own words</p>
+                    <p className="text-xs text-gray-400 mb-0.5">In their own words and traction</p>
                     <p className={`text-xs text-gray-600 italic ${isExpanded ? '' : 'line-clamp-2'}`}>
                       &ldquo;{f.why_now}&rdquo;
                     </p>

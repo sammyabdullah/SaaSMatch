@@ -221,7 +221,7 @@ export default function FounderAccountForm({ initialData }: Props) {
 
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
-          In your own words{' '}
+          In your own words and traction{' '}
           <span className="text-gray-400 font-normal">(max 500 characters)</span>
         </label>
         <textarea

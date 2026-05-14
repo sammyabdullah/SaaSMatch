@@ -302,10 +302,10 @@ function FounderCard({
         </div>
       )}
 
-      {/* In their own words */}
+      {/* In their own words and traction */}
       {fp.why_now && (
         <div className="mb-5">
-          <p className="text-xs text-gray-400 mb-1">In their own words</p>
+          <p className="text-xs text-gray-400 mb-1">In their own words and traction</p>
           <p className="text-sm text-gray-700 bg-gray-50 rounded-md px-4 py-3 italic">
             &ldquo;{fp.why_now}&rdquo;
           </p>

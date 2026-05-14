@@ -120,7 +120,7 @@ export default async function ProfileDetailPage({ params }: Props) {
         {fp.why_now && (
           <div className="border border-gray-200 rounded-lg p-6 mb-6">
             <h2 className="text-sm font-semibold text-gray-900 border-b border-gray-100 pb-2 mb-4">
-              In their own words
+              In their own words and traction
             </h2>
             <p className="text-sm text-gray-700 italic">&ldquo;{fp.why_now}&rdquo;</p>
           </div>
@@ -392,7 +392,7 @@ export default async function ProfileDetailPage({ params }: Props) {
 
         {fp.why_now && (
           <div className="border border-gray-200 rounded-lg p-6 mb-6">
-            <h2 className="text-sm font-semibold text-gray-900 border-b border-gray-100 pb-2 mb-4">In their own words</h2>
+            <h2 className="text-sm font-semibold text-gray-900 border-b border-gray-100 pb-2 mb-4">In their own words and traction</h2>
             <p className="text-sm text-gray-700 italic">&ldquo;{fp.why_now}&rdquo;</p>
           </div>
         )}

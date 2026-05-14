@@ -254,7 +254,7 @@ export default async function LenderDashboard({ userId }: Props) {
 
                   {fp?.why_now && (
                     <div className="mb-3">
-                      <p className="text-xs text-gray-400 mb-1">In their own words</p>
+                      <p className="text-xs text-gray-400 mb-1">In their own words and traction</p>
                       <p className="text-sm text-gray-700 bg-white rounded-md px-4 py-3 italic border border-amber-100">
                         &ldquo;{fp.why_now}&rdquo;
                       </p>
