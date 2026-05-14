@@ -136,23 +136,23 @@ export default async function Home() {
 
       {latestConnections.length > 0 && (
         <div className="max-w-4xl mx-auto mt-3">
-          <div className="border border-gray-100 rounded-xl p-5 bg-white shadow-sm">
-          <p className="text-xs text-gray-400 mb-4 uppercase tracking-wide">Last 25 Connections</p>
-          <div className="space-y-3">
+          <div className="border border-gray-100 rounded-xl px-5 py-4 bg-white shadow-sm">
+          <p className="text-xs text-gray-400 mb-3 uppercase tracking-wide">Last 25 Connections</p>
+          <div className="space-y-1.5">
             {latestConnections.map((c, i) => (
-              <div key={i} className={i > 0 ? 'pt-3 border-t border-gray-100' : ''}>
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-1.5 flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-gray-900 truncate">{c.left}</p>
+              <div key={i} className={i > 0 ? 'pt-1.5 border-t border-gray-100' : ''}>
+                <div className="flex items-center justify-center gap-2 flex-wrap">
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-sm font-semibold text-gray-900">{c.left}</p>
                     {c.kind === 'investor' && (
-                      <span className="shrink-0 text-[10px] font-medium bg-green-50 text-green-700 px-1.5 py-0.5 rounded-full">Investor</span>
+                      <span className="text-[10px] font-medium bg-green-50 text-green-700 px-1.5 py-0.5 rounded-full">Investor</span>
                     )}
                     {c.kind === 'lender' && (
-                      <span className="shrink-0 text-[10px] font-medium bg-yellow-50 text-yellow-700 px-1.5 py-0.5 rounded-full">Lender</span>
+                      <span className="text-[10px] font-medium bg-yellow-50 text-yellow-700 px-1.5 py-0.5 rounded-full">Lender</span>
                     )}
                   </div>
-                  <p className="text-xs text-gray-400 shrink-0">and</p>
-                  <p className="text-sm font-semibold text-gray-900 truncate flex-1 text-right">{c.right}</p>
+                  <p className="text-xs text-gray-400">and</p>
+                  <p className="text-sm font-semibold text-gray-900">{c.right}</p>
                 </div>
               </div>
             ))}
