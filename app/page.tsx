@@ -18,8 +18,8 @@ export default async function Home() {
     admin.from('lender_profiles').select('id', { count: 'exact', head: true }).eq('is_approved', true),
     admin.from('investor_profiles').select('firm_name, partner_name').eq('is_approved', true).order('created_at', { ascending: false }).limit(5),
     admin.from('lender_profiles').select('institution_name, contact_name').eq('is_approved', true).order('created_at', { ascending: false }).limit(5),
-    admin.from('flags').select('founder_id, investor_id, responded_at').eq('status', 'accepted').order('responded_at', { ascending: false }).limit(10),
-    admin.from('lender_flags').select('founder_id, lender_id, responded_at').eq('status', 'accepted').order('responded_at', { ascending: false }).limit(10),
+    admin.from('flags').select('founder_id, investor_id, responded_at').eq('status', 'accepted').order('responded_at', { ascending: false }).limit(25),
+    admin.from('lender_flags').select('founder_id, lender_id, responded_at').eq('status', 'accepted').order('responded_at', { ascending: false }).limit(25),
   ])
 
   // Look up names for connections
@@ -54,7 +54,7 @@ export default async function Home() {
     })),
   ]
     .sort((a, b) => b.date.localeCompare(a.date))
-    .slice(0, 10)
+    .slice(0, 25)
 
   return (
     <div className="max-w-2xl mx-auto px-6 py-32 text-center">
@@ -132,7 +132,7 @@ export default async function Home() {
 
       {latestConnections.length > 0 && (
         <div className="border border-gray-100 rounded-xl p-5 bg-white shadow-sm mt-3">
-          <p className="text-xs text-gray-400 mb-4 uppercase tracking-wide">Latest Connections</p>
+          <p className="text-xs text-gray-400 mb-4 uppercase tracking-wide">Last 25 Connections</p>
           <div className="space-y-3">
             {latestConnections.map((c, i) => (
               <div key={i} className={i > 0 ? 'pt-3 border-t border-gray-100' : ''}>
