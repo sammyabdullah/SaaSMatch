@@ -141,18 +141,18 @@ export default async function Home() {
           <div className="space-y-1.5">
             {latestConnections.map((c, i) => (
               <div key={i} className={i > 0 ? 'pt-1.5 border-t border-gray-100' : ''}>
-                <div className="flex items-center justify-center gap-2 flex-wrap">
-                  <div className="flex items-center gap-1.5">
+                <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-x-3">
+                  <div className="flex items-center gap-1.5 justify-start min-w-0">
                     <p className="text-sm font-semibold text-gray-900">{c.left}</p>
                     {c.kind === 'investor' && (
-                      <span className="text-[10px] font-medium bg-green-50 text-green-700 px-1.5 py-0.5 rounded-full">Investor</span>
+                      <span className="shrink-0 text-[10px] font-medium bg-green-50 text-green-700 px-1.5 py-0.5 rounded-full">Investor</span>
                     )}
                     {c.kind === 'lender' && (
-                      <span className="text-[10px] font-medium bg-yellow-50 text-yellow-700 px-1.5 py-0.5 rounded-full">Lender</span>
+                      <span className="shrink-0 text-[10px] font-medium bg-yellow-50 text-yellow-700 px-1.5 py-0.5 rounded-full">Lender</span>
                     )}
                   </div>
-                  <p className="text-xs text-gray-400">and</p>
-                  <p className="text-sm font-semibold text-gray-900">{c.right}</p>
+                  <p className="text-xs text-gray-400 text-center">and</p>
+                  <p className="text-sm font-semibold text-gray-900 text-right">{c.right}</p>
                 </div>
               </div>
             ))}
