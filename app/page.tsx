@@ -151,7 +151,7 @@ export default async function Home() {
                       <span className="shrink-0 text-[10px] font-medium bg-yellow-50 text-yellow-700 px-1.5 py-0.5 rounded-full">Lender</span>
                     )}
                   </div>
-                  <p className="text-xs text-gray-400 shrink-0">just connected with</p>
+                  <p className="text-xs text-gray-400 shrink-0">and</p>
                   <p className="text-sm font-semibold text-gray-900 truncate flex-1 text-right">{c.right}</p>
                 </div>
               </div>
