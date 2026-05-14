@@ -213,6 +213,32 @@ export async function changeUserEmail(
   return { success: true }
 }
 
+export async function setUserPassword(
+  email: string,
+  newPassword: string
+): Promise<{ error?: string; success?: boolean }> {
+  await requireAdmin()
+
+  if (newPassword.length < 8) return { error: 'Password must be at least 8 characters' }
+
+  const admin = createAdminClient()
+
+  const { data: profile } = await admin
+    .from('profiles')
+    .select('id')
+    .eq('email', email.trim().toLowerCase())
+    .single()
+
+  if (!profile) return { error: 'No user found with that email' }
+
+  const { error: authError } = await admin.auth.admin.updateUserById(profile.id, {
+    password: newPassword,
+  })
+  if (authError) return { error: authError.message }
+
+  return { success: true }
+}
+
 export async function deleteFounderProfile(founderId: string) {
   await requireAdmin()
 
