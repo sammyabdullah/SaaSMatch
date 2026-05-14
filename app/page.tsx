@@ -40,17 +40,19 @@ export default async function Home() {
   const investorMap = Object.fromEntries((investorNames ?? []).map((i) => [i.id, i.firm_name]))
   const lenderMap = Object.fromEntries((lenderNames ?? []).map((l) => [l.id, l.institution_name]))
 
-  type Connection = { date: string; left: string; right: string }
+  type Connection = { date: string; left: string; right: string; kind: 'investor' | 'lender' }
   const latestConnections: Connection[] = [
     ...(investorConnections ?? []).map((c) => ({
       date: c.responded_at ?? '',
       left: investorMap[c.investor_id] ?? 'An investor',
       right: founderMap[c.founder_id] ?? 'A founder',
+      kind: 'investor' as const,
     })),
     ...(lenderConnections ?? []).map((c) => ({
       date: c.responded_at ?? '',
       left: lenderMap[c.lender_id] ?? 'A lender',
       right: founderMap[c.founder_id] ?? 'A founder',
+      kind: 'lender' as const,
     })),
   ]
     .sort((a, b) => b.date.localeCompare(a.date))
@@ -137,7 +139,15 @@ export default async function Home() {
             {latestConnections.map((c, i) => (
               <div key={i} className={i > 0 ? 'pt-3 border-t border-gray-100' : ''}>
                 <div className="flex items-center justify-between gap-3">
-                  <p className="text-sm font-semibold text-gray-900 truncate w-[38%]">{c.left}</p>
+                  <div className="flex items-center gap-1.5 w-[38%] min-w-0">
+                    <p className="text-sm font-semibold text-gray-900 truncate">{c.left}</p>
+                    {c.kind === 'investor' && (
+                      <span className="shrink-0 text-[10px] font-medium bg-green-50 text-green-700 px-1.5 py-0.5 rounded-full">Investor</span>
+                    )}
+                    {c.kind === 'lender' && (
+                      <span className="shrink-0 text-[10px] font-medium bg-yellow-50 text-yellow-700 px-1.5 py-0.5 rounded-full">Lender</span>
+                    )}
+                  </div>
                   <p className="text-xs text-gray-400 shrink-0">just connected with</p>
                   <p className="text-sm font-semibold text-gray-900 truncate w-[38%] text-right">{c.right}</p>
                 </div>
