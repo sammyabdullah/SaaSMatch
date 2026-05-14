@@ -104,7 +104,7 @@ export default async function FounderDashboard({ userId }: Props) {
   // Incoming investor interest — investor flagged this founder, pending acceptance
   const { data: incomingFlags } = await admin
     .from('flags')
-    .select('*, investor_profiles(firm_name, partner_name, website, location, check_size_min_usd, check_size_max_usd, stages, thesis_statement)')
+    .select('*, investor_profiles(firm_name, partner_name, website, location, check_size_min_usd, check_size_max_usd, arr_sweet_spot_min, arr_sweet_spot_max, stages, geography_focus, leads_rounds, saas_subcategories, thesis_statement)')
     .eq('founder_id', userId)
     .eq('flagged_by', 'investor')
     .eq('status', 'pending')
@@ -122,7 +122,7 @@ export default async function FounderDashboard({ userId }: Props) {
   // Incoming lender interest — lender flagged this founder, pending acceptance
   const { data: incomingLenderFlags } = await admin
     .from('lender_flags')
-    .select('*, lender_profiles(institution_name, contact_name, website, location, loan_size_min_usd, loan_size_max_usd, stages, thesis_statement)')
+    .select('*, lender_profiles(institution_name, contact_name, website, location, loan_size_min_usd, loan_size_max_usd, arr_min_requirement, arr_max_sweet_spot, stages, geography_focus, loan_types, saas_subcategories, thesis_statement)')
     .eq('founder_id', userId)
     .eq('flagged_by', 'lender')
     .eq('status', 'pending')
@@ -276,31 +276,67 @@ export default async function FounderDashboard({ userId }: Props) {
           <p className="text-sm text-gray-500 mb-4">
             These investors have expressed interest in your company. Accept to reveal contact details.
           </p>
-          <div className="space-y-3">
+          <div className="space-y-4">
             {incomingFlags.map((flag) => {
               const ip = flag.investor_profiles
               return (
-                <div key={flag.id} className="border border-amber-200 bg-amber-50/30 rounded-lg p-4">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1">
+                <div key={flag.id} className="border border-amber-200 bg-amber-50/30 rounded-lg p-5">
+                  <div className="flex items-start justify-between gap-4 mb-4">
+                    <div>
                       <InvestorNameLink name={ip?.firm_name ?? '—'} website={ip?.website} />
-                      <p className="text-xs text-gray-500">{ip?.partner_name ?? ''}</p>
-                      {ip?.location && <p className="text-xs text-gray-400">{ip.location}</p>}
-                      {ip?.check_size_min_usd && (
-                        <p className="text-xs text-gray-600 mt-1">
-                          {fmtUsd(ip.check_size_min_usd)} – {fmtUsd(ip.check_size_max_usd)}
-                          {ip.stages?.length > 0 && ` · ${ip.stages.map(fmtStage).join(', ')}`}
-                        </p>
-                      )}
-                      {ip?.thesis_statement && (
-                        <p className="text-xs text-gray-500 italic mt-1 line-clamp-2">
-                          &ldquo;{ip.thesis_statement}&rdquo;
-                        </p>
-                      )}
-                      <p className="text-xs text-gray-400 mt-1">Expressed interest {fmtDate(flag.created_at)}</p>
+                      {ip?.partner_name && <p className="text-xs text-gray-600 mt-0.5">{ip.partner_name}</p>}
+                      {ip?.location && <p className="text-xs text-gray-400 mt-0.5">{ip.location}</p>}
                     </div>
                     <AcceptDeclineFlag flagId={flag.id} />
                   </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-3 mb-4 text-sm">
+                    {ip?.check_size_min_usd && (
+                      <div><p className="text-xs text-gray-400">Check size</p><p className="text-gray-800 font-medium">{fmtUsd(ip.check_size_min_usd)} – {fmtUsd(ip.check_size_max_usd)}</p></div>
+                    )}
+                    {ip?.arr_sweet_spot_min && (
+                      <div><p className="text-xs text-gray-400">ARR sweet spot</p><p className="text-gray-800 font-medium">{fmtUsd(ip.arr_sweet_spot_min)} – {fmtUsd(ip.arr_sweet_spot_max)}</p></div>
+                    )}
+                    {ip?.leads_rounds != null && (
+                      <div><p className="text-xs text-gray-400">Leads rounds</p><p className="text-gray-800 font-medium">{ip.leads_rounds ? 'Yes' : 'No'}</p></div>
+                    )}
+                    {ip?.geography_focus && (
+                      <div><p className="text-xs text-gray-400">Geography</p><p className="text-gray-800 font-medium">{ip.geography_focus}</p></div>
+                    )}
+                  </div>
+
+                  {ip?.stages?.length > 0 && (
+                    <div className="mb-4">
+                      <p className="text-xs text-gray-400 mb-1.5">Stages</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {ip.stages.map((s: string) => (
+                          <span key={s} className="text-xs bg-purple-50 text-[#534AB7] px-2.5 py-1 rounded-full">{fmtStage(s)}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {ip?.saas_subcategories?.length > 0 && (
+                    <div className="mb-4">
+                      <p className="text-xs text-gray-400 mb-1.5">SaaS focus areas</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {ip.saas_subcategories.map((c: string) => (
+                          <span key={c} className="text-xs bg-gray-100 text-gray-600 px-2.5 py-1 rounded-full">{c}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {ip?.thesis_statement && (
+                    <div className="mb-3">
+                      <p className="text-xs text-gray-400 mb-1">Thesis</p>
+                      <p className="text-sm text-gray-700 bg-white rounded-md px-4 py-3 italic border border-amber-100">
+                        &ldquo;{ip.thesis_statement}&rdquo;
+                      </p>
+                    </div>
+                  )}
+
+                  <p className="text-xs text-gray-400">Expressed interest {fmtDate(flag.created_at)}</p>
                 </div>
               )
             })}
@@ -320,31 +356,78 @@ export default async function FounderDashboard({ userId }: Props) {
           <p className="text-sm text-gray-500 mb-4">
             These lenders have expressed interest in your company. Accept to reveal contact details.
           </p>
-          <div className="space-y-3">
+          <div className="space-y-4">
             {incomingLenderFlags.map((flag) => {
               const lp = flag.lender_profiles
               return (
-                <div key={flag.id} className="border border-amber-200 bg-amber-50/30 rounded-lg p-4">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1">
+                <div key={flag.id} className="border border-amber-200 bg-amber-50/30 rounded-lg p-5">
+                  <div className="flex items-start justify-between gap-4 mb-4">
+                    <div>
                       <InvestorNameLink name={lp?.institution_name ?? '—'} website={lp?.website} />
-                      <p className="text-xs text-gray-500">{lp?.contact_name ?? ''}</p>
-                      {lp?.location && <p className="text-xs text-gray-400">{lp.location}</p>}
-                      {lp?.loan_size_min_usd && (
-                        <p className="text-xs text-gray-600 mt-1">
-                          {fmtUsd(lp.loan_size_min_usd)} – {fmtUsd(lp.loan_size_max_usd)}
-                          {lp.stages?.length > 0 && ` · ${lp.stages.map(fmtStage).join(', ')}`}
-                        </p>
-                      )}
-                      {lp?.thesis_statement && (
-                        <p className="text-xs text-gray-500 italic mt-1 line-clamp-2">
-                          &ldquo;{lp.thesis_statement}&rdquo;
-                        </p>
-                      )}
-                      <p className="text-xs text-gray-400 mt-1">Expressed interest {fmtDate(flag.created_at)}</p>
+                      {lp?.contact_name && <p className="text-xs text-gray-600 mt-0.5">{lp.contact_name}</p>}
+                      {lp?.location && <p className="text-xs text-gray-400 mt-0.5">{lp.location}</p>}
                     </div>
                     <AcceptDeclineLenderFlag flagId={flag.id} />
                   </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-3 mb-4 text-sm">
+                    {lp?.loan_size_min_usd && (
+                      <div><p className="text-xs text-gray-400">Loan size</p><p className="text-gray-800 font-medium">{fmtUsd(lp.loan_size_min_usd)} – {fmtUsd(lp.loan_size_max_usd)}</p></div>
+                    )}
+                    {lp?.arr_min_requirement > 0 && (
+                      <div><p className="text-xs text-gray-400">Min ARR required</p><p className="text-gray-800 font-medium">{fmtUsd(lp.arr_min_requirement)}</p></div>
+                    )}
+                    {lp?.arr_max_sweet_spot > 0 && (
+                      <div><p className="text-xs text-gray-400">ARR sweet spot</p><p className="text-gray-800 font-medium">up to {fmtUsd(lp.arr_max_sweet_spot)}</p></div>
+                    )}
+                    {lp?.geography_focus && (
+                      <div><p className="text-xs text-gray-400">Geography</p><p className="text-gray-800 font-medium">{lp.geography_focus}</p></div>
+                    )}
+                  </div>
+
+                  {lp?.stages?.length > 0 && (
+                    <div className="mb-4">
+                      <p className="text-xs text-gray-400 mb-1.5">Stages</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {lp.stages.map((s: string) => (
+                          <span key={s} className="text-xs bg-purple-50 text-[#534AB7] px-2.5 py-1 rounded-full">{fmtStage(s)}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {lp?.loan_types?.length > 0 && (
+                    <div className="mb-4">
+                      <p className="text-xs text-gray-400 mb-1.5">Loan types</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {lp.loan_types.map((t: string) => (
+                          <span key={t} className="text-xs bg-gray-100 text-gray-600 px-2.5 py-1 rounded-full">{t}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {lp?.saas_subcategories?.length > 0 && (
+                    <div className="mb-4">
+                      <p className="text-xs text-gray-400 mb-1.5">SaaS focus areas</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {lp.saas_subcategories.map((c: string) => (
+                          <span key={c} className="text-xs bg-gray-100 text-gray-600 px-2.5 py-1 rounded-full">{c}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {lp?.thesis_statement && (
+                    <div className="mb-3">
+                      <p className="text-xs text-gray-400 mb-1">Thesis</p>
+                      <p className="text-sm text-gray-700 bg-white rounded-md px-4 py-3 italic border border-amber-100">
+                        &ldquo;{lp.thesis_statement}&rdquo;
+                      </p>
+                    </div>
+                  )}
+
+                  <p className="text-xs text-gray-400">Expressed interest {fmtDate(flag.created_at)}</p>
                 </div>
               )
             })}

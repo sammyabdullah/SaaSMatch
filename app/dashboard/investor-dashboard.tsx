@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { createAdminClient } from '@/lib/supabase/server'
-import { fmtDate, fmtArrRange, fmtStage } from '@/lib/format'
+import { fmtDate, fmtArrRange, fmtStage, fmtUsd } from '@/lib/format'
 import UnflagInvestorFlag from './unflag-investor-flag'
 import AcceptDeclineFlag from './accept-decline-flag'
 
@@ -65,7 +65,7 @@ export default async function InvestorDashboard({ userId }: Props) {
   // Incoming introductions: founders who flagged this investor, pending response
   const { data: incomingFlags } = await admin
     .from('flags')
-    .select('*, founder_profiles(company_name, website, product_categories, location, arr_range, stage, mom_growth_pct, raising_amount_usd, why_now)')
+    .select('*, founder_profiles(company_name, website, product_categories, location, arr_range, stage, mom_growth_pct, raising_amount_usd, why_now, founded_year, gtm_motion, revenue_model)')
     .eq('investor_id', userId)
     .eq('flagged_by', 'founder')
     .eq('status', 'pending')
@@ -216,36 +216,66 @@ export default async function InvestorDashboard({ userId }: Props) {
           <p className="text-sm text-gray-500 mb-4">
             These founders have expressed interest in connecting with you. Accept to reveal their contact details.
           </p>
-          <div className="space-y-3">
+          <div className="space-y-4">
             {incomingFlags.map((flag) => {
               const fp = flag.founder_profiles
+              const gtmLabel = fp?.gtm_motion?.replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())
+              const revenueLabel = fp?.revenue_model?.replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())
               return (
-                <div key={flag.id} className="border border-amber-200 bg-amber-50/30 rounded-lg p-4">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1">
+                <div key={flag.id} className="border border-amber-200 bg-amber-50/30 rounded-lg p-5">
+                  <div className="flex items-start justify-between gap-4 mb-4">
+                    <div>
                       <FounderNameLink name={fp?.company_name ?? 'Unknown company'} website={fp?.website} />
-                      {fp?.location && (
-                        <p className="text-xs text-gray-500 mt-0.5">{fp.location}</p>
-                      )}
-                      <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1">
-                        {fp?.stage && <span className="text-xs text-gray-600">{fmtStage(fp.stage)}</span>}
-                        {fp?.arr_range && <span className="text-xs text-gray-500">{fmtArrRange(fp.arr_range)}</span>}
-                        {fp?.mom_growth_pct != null && (
-                          <span className="text-xs text-gray-500">{fp.mom_growth_pct}% YOY</span>
-                        )}
-                      </div>
-                      {fp?.product_categories?.length > 0 && (
-                        <p className="text-xs text-gray-400 mt-1">{fp.product_categories.join(' · ')}</p>
-                      )}
-                      {fp?.why_now && (
-                        <p className="text-xs text-gray-500 italic mt-1 line-clamp-2">
-                          &ldquo;{fp.why_now}&rdquo;
-                        </p>
-                      )}
-                      <p className="text-xs text-gray-400 mt-1">Expressed interest {fmtDate(flag.created_at)}</p>
+                      {fp?.location && <p className="text-xs text-gray-500 mt-0.5">{fp.location}</p>}
                     </div>
                     <AcceptDeclineFlag flagId={flag.id} />
                   </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-3 mb-4 text-sm">
+                    {fp?.stage && (
+                      <div><p className="text-xs text-gray-400">Stage</p><p className="text-gray-800 font-medium">{fmtStage(fp.stage)}</p></div>
+                    )}
+                    {fp?.arr_range && (
+                      <div><p className="text-xs text-gray-400">ARR</p><p className="text-gray-800 font-medium">{fmtArrRange(fp.arr_range)}</p></div>
+                    )}
+                    {fp?.mom_growth_pct != null && (
+                      <div><p className="text-xs text-gray-400">YOY growth</p><p className="text-gray-800 font-medium">{fp.mom_growth_pct}%</p></div>
+                    )}
+                    {fp?.raising_amount_usd > 0 && (
+                      <div><p className="text-xs text-gray-400">Total raise</p><p className="text-gray-800 font-medium">{fmtUsd(fp.raising_amount_usd)}</p></div>
+                    )}
+                    {fp?.founded_year && (
+                      <div><p className="text-xs text-gray-400">Founded</p><p className="text-gray-800 font-medium">{fp.founded_year}</p></div>
+                    )}
+                    {gtmLabel && (
+                      <div><p className="text-xs text-gray-400">GTM motion</p><p className="text-gray-800 font-medium">{gtmLabel}</p></div>
+                    )}
+                    {revenueLabel && (
+                      <div><p className="text-xs text-gray-400">Revenue model</p><p className="text-gray-800 font-medium">{revenueLabel}</p></div>
+                    )}
+                  </div>
+
+                  {fp?.product_categories?.length > 0 && (
+                    <div className="mb-4">
+                      <p className="text-xs text-gray-400 mb-1.5">Product categories</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {fp.product_categories.map((c: string) => (
+                          <span key={c} className="text-xs bg-gray-100 text-gray-600 px-2.5 py-1 rounded-full">{c}</span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {fp?.why_now && (
+                    <div className="mb-3">
+                      <p className="text-xs text-gray-400 mb-1">In their own words</p>
+                      <p className="text-sm text-gray-700 bg-white rounded-md px-4 py-3 italic border border-amber-100">
+                        &ldquo;{fp.why_now}&rdquo;
+                      </p>
+                    </div>
+                  )}
+
+                  <p className="text-xs text-gray-400">Expressed interest {fmtDate(flag.created_at)}</p>
                 </div>
               )
             })}
