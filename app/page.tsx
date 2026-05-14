@@ -135,13 +135,13 @@ export default async function Home() {
       </div>
 
       {latestConnections.length > 0 && (
-        <div className="max-w-4xl mx-auto mt-3">
+        <div className="max-w-2xl mx-auto mt-3">
           <div className="border border-gray-100 rounded-xl px-5 py-4 bg-white shadow-sm">
           <p className="text-xs text-gray-400 mb-3 uppercase tracking-wide">Last 25 Connections</p>
           <div className="space-y-1.5">
             {latestConnections.map((c, i) => (
               <div key={i} className={i > 0 ? 'pt-1.5 border-t border-gray-100' : ''}>
-                <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-x-3">
+                <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-x-2">
                   <div className="flex items-center gap-1.5 justify-start min-w-0">
                     <p className="text-sm font-semibold text-gray-900">{c.left}</p>
                     {c.kind === 'investor' && (
