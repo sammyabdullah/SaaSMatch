@@ -59,7 +59,8 @@ export default async function Home() {
     .slice(0, 25)
 
   return (
-    <div className="max-w-2xl mx-auto px-6 py-32 text-center">
+    <div className="px-6 py-32 text-center">
+      <div className="max-w-2xl mx-auto">
       <p className="text-gray-500 text-base mb-1">
         UnlockedVC connects SaaS founders with investors and lenders. It&apos;s free and simple: build a profile in 15 seconds, browse the other side, and flag interest. Contact details are shared only when both parties opt in.
       </p>
@@ -131,26 +132,31 @@ export default async function Home() {
           )}
         </div>
       </div>
+      </div>
 
       {latestConnections.length > 0 && (
-        <div className="border border-gray-100 rounded-xl p-5 bg-white shadow-sm mt-3">
+        <div className="max-w-4xl mx-auto mt-3">
+          <div className="border border-gray-100 rounded-xl p-5 bg-white shadow-sm">
           <p className="text-xs text-gray-400 mb-4 uppercase tracking-wide">Last 25 Connections</p>
           <div className="space-y-3">
             {latestConnections.map((c, i) => (
-              <div key={i} className={`text-center${i > 0 ? ' pt-3 border-t border-gray-100' : ''}`}>
-                <div className="flex items-center justify-center gap-1.5">
-                  <p className="text-sm font-semibold text-gray-900">{c.left}</p>
-                  {c.kind === 'investor' && (
-                    <span className="shrink-0 text-[10px] font-medium bg-green-50 text-green-700 px-1.5 py-0.5 rounded-full">Investor</span>
-                  )}
-                  {c.kind === 'lender' && (
-                    <span className="shrink-0 text-[10px] font-medium bg-yellow-50 text-yellow-700 px-1.5 py-0.5 rounded-full">Lender</span>
-                  )}
+              <div key={i} className={i > 0 ? 'pt-3 border-t border-gray-100' : ''}>
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-gray-900 truncate">{c.left}</p>
+                    {c.kind === 'investor' && (
+                      <span className="shrink-0 text-[10px] font-medium bg-green-50 text-green-700 px-1.5 py-0.5 rounded-full">Investor</span>
+                    )}
+                    {c.kind === 'lender' && (
+                      <span className="shrink-0 text-[10px] font-medium bg-yellow-50 text-yellow-700 px-1.5 py-0.5 rounded-full">Lender</span>
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-400 shrink-0">just connected with</p>
+                  <p className="text-sm font-semibold text-gray-900 truncate flex-1 text-right">{c.right}</p>
                 </div>
-                <p className="text-xs text-gray-400 my-0.5">just connected with</p>
-                <p className="text-sm font-semibold text-gray-900">{c.right}</p>
               </div>
             ))}
+          </div>
           </div>
         </div>
       )}
