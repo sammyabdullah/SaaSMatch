@@ -137,20 +137,18 @@ export default async function Home() {
           <p className="text-xs text-gray-400 mb-4 uppercase tracking-wide">Last 25 Connections</p>
           <div className="space-y-3">
             {latestConnections.map((c, i) => (
-              <div key={i} className={i > 0 ? 'pt-3 border-t border-gray-100' : ''}>
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-1.5 w-[38%] min-w-0">
-                    <p className="text-sm font-semibold text-gray-900 truncate">{c.left}</p>
-                    {c.kind === 'investor' && (
-                      <span className="shrink-0 text-[10px] font-medium bg-green-50 text-green-700 px-1.5 py-0.5 rounded-full">Investor</span>
-                    )}
-                    {c.kind === 'lender' && (
-                      <span className="shrink-0 text-[10px] font-medium bg-yellow-50 text-yellow-700 px-1.5 py-0.5 rounded-full">Lender</span>
-                    )}
-                  </div>
-                  <p className="text-xs text-gray-400 shrink-0">just connected with</p>
-                  <p className="text-sm font-semibold text-gray-900 truncate w-[38%] text-right">{c.right}</p>
+              <div key={i} className={`text-center${i > 0 ? ' pt-3 border-t border-gray-100' : ''}`}>
+                <div className="flex items-center justify-center gap-1.5">
+                  <p className="text-sm font-semibold text-gray-900">{c.left}</p>
+                  {c.kind === 'investor' && (
+                    <span className="shrink-0 text-[10px] font-medium bg-green-50 text-green-700 px-1.5 py-0.5 rounded-full">Investor</span>
+                  )}
+                  {c.kind === 'lender' && (
+                    <span className="shrink-0 text-[10px] font-medium bg-yellow-50 text-yellow-700 px-1.5 py-0.5 rounded-full">Lender</span>
+                  )}
                 </div>
+                <p className="text-xs text-gray-400 my-0.5">just connected with</p>
+                <p className="text-sm font-semibold text-gray-900">{c.right}</p>
               </div>
             ))}
           </div>
