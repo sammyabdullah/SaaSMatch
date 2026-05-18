@@ -139,9 +139,9 @@ export async function sendConnectionAcceptedFounderEmail({
   await resend.emails.send({
     from: FROM,
     to: founderEmail,
-    subject: `${investorFirmName} accepted your connection request`,
+    subject: 'Connection request confirmed',
     html: `
-      <p>Great news! ${firmLink} (${investorPartnerName}) has accepted your introduction request on UnlockedVC.</p>
+      <p>You're now connected with ${firmLink} (${investorPartnerName}) on UnlockedVC.</p>
 
       <table style="border-collapse:collapse;margin:16px 0">
         ${investorLocation ? `<tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Location</td><td style="font-size:13px">${investorLocation}</td></tr>` : ''}
@@ -197,11 +197,9 @@ export async function sendConnectionAcceptedInvestorEmail({
   await resend.emails.send({
     from: FROM,
     to: investorEmail,
-    subject: 'A founder accepted your connection request',
+    subject: 'Connection request confirmed',
     html: `
-      <p>Hi ${investorName},</p>
-
-      <p>${companyLink} has accepted your introduction request on UnlockedVC.</p>
+      <p>You're now connected with ${companyLink} on UnlockedVC.</p>
 
       <table style="border-collapse:collapse;margin:16px 0">
         ${founderLocation ? `<tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Location</td><td style="font-size:13px">${founderLocation}</td></tr>` : ''}
