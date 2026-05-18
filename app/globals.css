@@ -2,6 +2,16 @@
 @tailwind components;
 @tailwind utilities;
 
+@keyframes progress-bar {
+  0% { transform: translateX(-100%); }
+  60% { transform: translateX(-10%); }
+  100% { transform: translateX(0%); }
+}
+
+.animate-progress-bar {
+  animation: progress-bar 1.5s ease-out forwards;
+}
+
 :root {
   --background: #ffffff;
   --foreground: #171717;

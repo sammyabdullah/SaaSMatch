@@ -2,22 +2,19 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { flagInvestor, unflagInvestor, flagFounder, unflagFounder } from '@/app/actions/discover'
+import { flagInvestor, unflagInvestor, flagFounder, unflagFounder, flagFounderAsLender, unflagFounderAsLender, flagLenderAsFounder, unflagLenderAsFounder } from '@/app/actions/discover'
 
 interface Props {
   targetId: string
-  mode: 'founder-flagging-investor' | 'investor-flagging-founder'
+  mode: 'founder-flagging-investor' | 'founder-flagging-lender' | 'investor-flagging-founder' | 'lender-flagging-founder'
   isAlreadyFlagged: boolean
-  flagCount: number
 }
 
-export default function FlagActionButton({ targetId, mode, isAlreadyFlagged, flagCount }: Props) {
+export default function FlagActionButton({ targetId, mode, isAlreadyFlagged }: Props) {
   const router = useRouter()
   const [flagged, setFlagged] = useState(isAlreadyFlagged)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-
-  const atLimit = mode === 'founder-flagging-investor' && flagCount >= 10 && !flagged
 
   async function handleFlag() {
     setLoading(true)
@@ -25,6 +22,10 @@ export default function FlagActionButton({ targetId, mode, isAlreadyFlagged, fla
     let result
     if (mode === 'founder-flagging-investor') {
       result = await flagInvestor(targetId)
+    } else if (mode === 'founder-flagging-lender') {
+      result = await flagLenderAsFounder(targetId)
+    } else if (mode === 'lender-flagging-founder') {
+      result = await flagFounderAsLender(targetId)
     } else {
       result = await flagFounder(targetId)
     }
@@ -43,6 +44,10 @@ export default function FlagActionButton({ targetId, mode, isAlreadyFlagged, fla
     let result
     if (mode === 'founder-flagging-investor') {
       result = await unflagInvestor(targetId)
+    } else if (mode === 'founder-flagging-lender') {
+      result = await unflagLenderAsFounder(targetId)
+    } else if (mode === 'lender-flagging-founder') {
+      result = await unflagFounderAsLender(targetId)
     } else {
       result = await unflagFounder(targetId)
     }
@@ -60,7 +65,7 @@ export default function FlagActionButton({ targetId, mode, isAlreadyFlagged, fla
       {flagged ? (
         <div className="flex items-center gap-3">
           <span className="text-sm text-green-600 font-medium">
-            {mode === 'founder-flagging-investor' ? 'Interest flagged ✓' : 'Interest expressed ✓'}
+            {mode === 'founder-flagging-investor' ? 'Connection request sent ✓' : mode === 'founder-flagging-lender' ? 'Interest expressed ✓' : 'Interest expressed ✓'}
           </span>
           <button
             onClick={handleUnflag}
@@ -73,19 +78,15 @@ export default function FlagActionButton({ targetId, mode, isAlreadyFlagged, fla
       ) : (
         <button
           onClick={handleFlag}
-          disabled={loading || atLimit}
-          className={`px-6 py-2.5 rounded-md text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-            atLimit
-              ? 'bg-gray-100 text-gray-400'
-              : 'bg-[#534AB7] text-white hover:bg-[#4339A0]'
-          }`}
+          disabled={loading}
+          className="px-6 py-2.5 rounded-md text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed bg-[#534AB7] text-white hover:bg-[#4339A0]"
         >
           {loading
             ? 'Processing…'
-            : atLimit
-            ? 'Flag limit reached (10 max)'
             : mode === 'founder-flagging-investor'
-            ? 'Flag interest'
+            ? 'Send connection request'
+            : mode === 'founder-flagging-lender'
+            ? 'Express interest'
             : 'Express interest'}
         </button>
       )}

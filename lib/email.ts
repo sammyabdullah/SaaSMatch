@@ -1,6 +1,8 @@
 import { Resend } from 'resend'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+function getResend() {
+  return new Resend(process.env.RESEND_API_KEY)
+}
 
 const FROM = 'UnlockedVC <noreply@unlockedvc.com>'
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? 'sammy@blossomstreetventures.com'
@@ -26,7 +28,7 @@ export async function sendFounderFlaggedInvestorEmail({
   const categoryList = founder.product_categories.join(', ')
   const raise = formatUsd(founder.raising_amount_usd)
 
-  await resend.emails.send({
+  await getResend().emails.send({
     from: FROM,
     to: investorEmail,
     subject: 'UnlockedVC request',
@@ -73,7 +75,7 @@ export async function sendInvestorFlaggedFounderEmail({
   const checkRange = `${formatUsd(investor.check_size_min_usd)} – ${formatUsd(investor.check_size_max_usd)}`
   const stages = investor.stages.map(fmtStage).join(', ')
 
-  await resend.emails.send({
+  await getResend().emails.send({
     from: FROM,
     to: founderEmail,
     subject: 'UnlockedVC request',
@@ -136,7 +138,7 @@ export async function sendConnectionAcceptedFounderEmail({
     ? investorStages.map(fmtStage).join(', ')
     : null
 
-  await resend.emails.send({
+  await getResend().emails.send({
     from: FROM,
     to: founderEmail,
     subject: 'Connection request confirmed',
@@ -194,7 +196,7 @@ export async function sendConnectionAcceptedInvestorEmail({
       ? `<strong>${founderCompanyName}</strong>`
       : 'A founder'
 
-  await resend.emails.send({
+  await getResend().emails.send({
     from: FROM,
     to: investorEmail,
     subject: 'Connection request confirmed',
@@ -232,7 +234,7 @@ export async function sendAdminConnectionEmail({
   investorEmail: string
   initiatedBy: 'founder' | 'investor'
 }) {
-  await resend.emails.send({
+  await getResend().emails.send({
     from: FROM,
     to: ADMIN_EMAIL,
     subject: `New connection: ${founderEmail} ↔ ${investorFirmName}`,
@@ -261,7 +263,7 @@ export async function sendAdminNewFounderEmail({
   arr_range: string
   raising_amount_usd: number
 }) {
-  await resend.emails.send({
+  await getResend().emails.send({
     from: FROM,
     to: ADMIN_EMAIL,
     subject: `New founder signup: ${company_name}`,
@@ -296,7 +298,7 @@ export async function sendAdminNewInvestorEmail({
   check_size_min_usd: number
   check_size_max_usd: number
 }) {
-  await resend.emails.send({
+  await getResend().emails.send({
     from: FROM,
     to: ADMIN_EMAIL,
     subject: `New investor signup: ${firm_name}`,
@@ -316,7 +318,7 @@ export async function sendAdminNewInvestorEmail({
 
 // ─── Welcome: founder approved ───────────────────────────────────────────────
 export async function sendWelcomeFounderEmail({ email }: { email: string }) {
-  await resend.emails.send({
+  await getResend().emails.send({
     from: FROM,
     to: email,
     subject: 'You\'re approved — welcome to UnlockedVC',
@@ -332,7 +334,7 @@ export async function sendWelcomeFounderEmail({ email }: { email: string }) {
 
 // ─── Welcome: investor approved ──────────────────────────────────────────────
 export async function sendWelcomeInvestorEmail({ email }: { email: string }) {
-  await resend.emails.send({
+  await getResend().emails.send({
     from: FROM,
     to: email,
     subject: 'You\'re approved — welcome to UnlockedVC',
@@ -344,6 +346,496 @@ export async function sendWelcomeInvestorEmail({ email }: { email: string }) {
       <p><a href="${APP_URL}/discover" style="background:#534AB7;color:white;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block">Browse founders</a></p>
     `,
   })
+}
+
+// ─── Admin: new lender signup ─────────────────────────────────────────────────
+export async function sendAdminNewLenderEmail({
+  email,
+  institution_name,
+  contact_name,
+  location,
+  loan_size_min_usd,
+  loan_size_max_usd,
+}: {
+  email: string
+  institution_name: string
+  contact_name: string
+  location: string
+  loan_size_min_usd: number
+  loan_size_max_usd: number
+}) {
+  await getResend().emails.send({
+    from: FROM,
+    to: ADMIN_EMAIL,
+    subject: `New lender signup: ${institution_name}`,
+    html: `
+      <p>A new lender has submitted a profile on UnlockedVC and is awaiting approval.</p>
+      <table style="border-collapse:collapse;margin:16px 0">
+        <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Email</td><td style="font-size:13px">${email}</td></tr>
+        <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Institution</td><td style="font-size:13px">${institution_name}</td></tr>
+        <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Contact</td><td style="font-size:13px">${contact_name}</td></tr>
+        <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Location</td><td style="font-size:13px">${location}</td></tr>
+        <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Loan size</td><td style="font-size:13px">${formatUsd(loan_size_min_usd)} – ${formatUsd(loan_size_max_usd)}</td></tr>
+      </table>
+      <p><a href="${APP_URL}/admin" style="background:#534AB7;color:white;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block">Review in Admin</a></p>
+    `,
+  })
+}
+
+// ─── Welcome: lender approved ─────────────────────────────────────────────────
+export async function sendWelcomeLenderEmail({ email }: { email: string }) {
+  await getResend().emails.send({
+    from: FROM,
+    to: email,
+    subject: 'You\'re approved — welcome to UnlockedVC',
+    html: `
+      <p>Your lender profile is approved. You now have full access to UnlockedVC.</p>
+
+      <p>Browse active founder profiles in Discover and express interest in companies that fit your lending criteria.</p>
+
+      <p><a href="${APP_URL}/discover" style="background:#534AB7;color:white;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block">Browse founders</a></p>
+    `,
+  })
+}
+
+// ─── Founder flagged a lender ─────────────────────────────────────────────────
+// Email goes to the lender with the founder's profile summary.
+export async function sendFounderFlaggedLenderEmail({
+  lenderEmail,
+  founder,
+}: {
+  lenderEmail: string
+  founder: {
+    stage: string
+    arr_range: string
+    raising_amount_usd: number
+    product_categories: string[]
+    mom_growth_pct: number | null
+    why_now: string
+    location: string
+  }
+}) {
+  const categoryList = founder.product_categories.join(', ')
+  const raise = formatUsd(founder.raising_amount_usd)
+
+  await getResend().emails.send({
+    from: FROM,
+    to: lenderEmail,
+    subject: 'UnlockedVC request',
+    html: `
+      <p>A founder in the UnlockedVC network has expressed interest in connecting with you.</p>
+
+      <table style="border-collapse:collapse;margin:16px 0">
+        <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Stage</td><td style="font-size:13px">${fmtStage(founder.stage)}</td></tr>
+        <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">ARR range</td><td style="font-size:13px">${fmtArr(founder.arr_range)}</td></tr>
+        <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Raising</td><td style="font-size:13px">${raise}</td></tr>
+        ${founder.mom_growth_pct != null ? `<tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">YOY growth</td><td style="font-size:13px">${founder.mom_growth_pct}%</td></tr>` : ''}
+        <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Categories</td><td style="font-size:13px">${categoryList}</td></tr>
+        <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Location</td><td style="font-size:13px">${founder.location}</td></tr>
+      </table>
+
+      ${founder.why_now ? `<p style="font-style:italic;color:#444">"${founder.why_now}"</p>` : ''}
+
+      <p>Log in to your dashboard to accept or decline this introduction.</p>
+
+      <p><a href="${APP_URL}/dashboard" style="background:#534AB7;color:white;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block">View in Dashboard</a></p>
+
+      <p style="color:#999;font-size:12px">You're receiving this because you have an approved lender profile on UnlockedVC.</p>
+    `,
+  })
+}
+
+// ─── Lender flagged a founder ─────────────────────────────────────────────────
+export async function sendLenderFlaggedFounderEmail({
+  founderEmail,
+  lender,
+}: {
+  founderEmail: string
+  lender: {
+    institution_name: string
+    contact_name: string
+    loan_size_min_usd: number
+    loan_size_max_usd: number
+    stages: string[]
+    geography_focus: string
+    thesis_statement: string
+  }
+}) {
+  const loanRange = `${formatUsd(lender.loan_size_min_usd)} – ${formatUsd(lender.loan_size_max_usd)}`
+  const stages = lender.stages.map(fmtStage).join(', ')
+
+  await getResend().emails.send({
+    from: FROM,
+    to: founderEmail,
+    subject: 'UnlockedVC request',
+    html: `
+      <p><strong>${lender.institution_name}</strong> (${lender.contact_name}) has expressed interest in your company on UnlockedVC.</p>
+
+      <table style="border-collapse:collapse;margin:16px 0">
+        <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Institution</td><td style="font-size:13px">${lender.institution_name}</td></tr>
+        <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Contact</td><td style="font-size:13px">${lender.contact_name}</td></tr>
+        <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Loan size</td><td style="font-size:13px">${loanRange}</td></tr>
+        <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Stages</td><td style="font-size:13px">${stages}</td></tr>
+        <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Geography</td><td style="font-size:13px">${lender.geography_focus}</td></tr>
+      </table>
+
+      ${lender.thesis_statement ? `<p style="font-style:italic;color:#444">"${lender.thesis_statement}"</p>` : ''}
+
+      <p>Log in to your dashboard to accept or decline this introduction.</p>
+
+      <p><a href="${APP_URL}/dashboard" style="background:#534AB7;color:white;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block">View in Dashboard</a></p>
+
+      <p style="color:#999;font-size:12px">You're receiving this because you have an approved founder profile on UnlockedVC.</p>
+    `,
+  })
+}
+
+// ─── Connection accepted — notify lender (founder accepted lender's flag) ─────
+export async function sendConnectionAcceptedLenderEmail({
+  lenderEmail,
+  lenderName,
+  founderEmail,
+  founderCompanyName,
+  founderWebsite,
+  founderLocation,
+  founderStage,
+  founderArrRange,
+  founderCategories,
+  founderMomGrowthPct,
+  founderRaisingAmount,
+  founderWhyNow,
+}: {
+  lenderEmail: string
+  lenderName: string
+  founderEmail: string
+  founderCompanyName?: string | null
+  founderWebsite?: string | null
+  founderLocation?: string | null
+  founderStage: string
+  founderArrRange?: string | null
+  founderCategories: string[]
+  founderMomGrowthPct?: number | null
+  founderRaisingAmount?: number | null
+  founderWhyNow?: string | null
+}) {
+  const companyLink = founderWebsite
+    ? `<a href="${founderWebsite}" style="color:#534AB7;text-decoration:none">${founderCompanyName ?? 'the company'}</a>`
+    : founderCompanyName
+      ? `<strong>${founderCompanyName}</strong>`
+      : 'A founder'
+
+  await getResend().emails.send({
+    from: FROM,
+    to: lenderEmail,
+    subject: 'A founder accepted your connection request',
+    html: `
+      <p>Hi ${lenderName},</p>
+
+      <p>${companyLink} has accepted your introduction request on UnlockedVC.</p>
+
+      <table style="border-collapse:collapse;margin:16px 0">
+        ${founderLocation ? `<tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Location</td><td style="font-size:13px">${founderLocation}</td></tr>` : ''}
+        <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Stage</td><td style="font-size:13px">${fmtStage(founderStage)}</td></tr>
+        ${founderArrRange ? `<tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">ARR range</td><td style="font-size:13px">${fmtArr(founderArrRange)}</td></tr>` : ''}
+        ${founderMomGrowthPct != null ? `<tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">YOY growth</td><td style="font-size:13px">${founderMomGrowthPct}%</td></tr>` : ''}
+        ${founderRaisingAmount ? `<tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Raising</td><td style="font-size:13px">${formatUsd(founderRaisingAmount)}</td></tr>` : ''}
+        ${founderCategories.length > 0 ? `<tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Categories</td><td style="font-size:13px">${founderCategories.join(', ')}</td></tr>` : ''}
+      </table>
+
+      ${founderWhyNow ? `<p style="font-style:italic;color:#444;font-size:13px">"${founderWhyNow}"</p>` : ''}
+
+      <p>You can now reach them directly:</p>
+      <p style="font-size:16px"><strong>${founderEmail}</strong></p>
+
+      <p><a href="${APP_URL}/dashboard" style="background:#534AB7;color:white;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block">View in Dashboard</a></p>
+    `,
+  })
+}
+
+// ─── Connection accepted — notify founder (lender accepted founder's flag) ────
+export async function sendConnectionAcceptedFounderFromLenderEmail({
+  founderEmail,
+  lenderInstitutionName,
+  lenderContactName,
+  lenderWebsite,
+  lenderLocation,
+  lenderLoanSizeMin,
+  lenderLoanSizeMax,
+  lenderStages,
+  lenderGeography,
+  lenderThesis,
+  lenderEmail,
+}: {
+  founderEmail: string
+  lenderInstitutionName: string
+  lenderContactName: string
+  lenderWebsite?: string | null
+  lenderLocation?: string | null
+  lenderLoanSizeMin?: number | null
+  lenderLoanSizeMax?: number | null
+  lenderStages?: string[]
+  lenderGeography?: string | null
+  lenderThesis?: string | null
+  lenderEmail: string
+}) {
+  const institutionLink = lenderWebsite
+    ? `<a href="${lenderWebsite}" style="color:#534AB7;text-decoration:none">${lenderInstitutionName}</a>`
+    : `<strong>${lenderInstitutionName}</strong>`
+
+  const loanRange = lenderLoanSizeMin && lenderLoanSizeMax
+    ? `${formatUsd(lenderLoanSizeMin)} – ${formatUsd(lenderLoanSizeMax)}`
+    : null
+  const stages = lenderStages && lenderStages.length > 0
+    ? lenderStages.map(fmtStage).join(', ')
+    : null
+
+  await getResend().emails.send({
+    from: FROM,
+    to: founderEmail,
+    subject: `${lenderInstitutionName} accepted your connection request`,
+    html: `
+      <p>Great news! ${institutionLink} (${lenderContactName}) has accepted your introduction request on UnlockedVC.</p>
+
+      <table style="border-collapse:collapse;margin:16px 0">
+        ${lenderLocation ? `<tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Location</td><td style="font-size:13px">${lenderLocation}</td></tr>` : ''}
+        ${loanRange ? `<tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Loan size</td><td style="font-size:13px">${loanRange}</td></tr>` : ''}
+        ${stages ? `<tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Stages</td><td style="font-size:13px">${stages}</td></tr>` : ''}
+        ${lenderGeography ? `<tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Geography</td><td style="font-size:13px">${lenderGeography}</td></tr>` : ''}
+      </table>
+
+      ${lenderThesis ? `<p style="font-style:italic;color:#444;font-size:13px">"${lenderThesis}"</p>` : ''}
+
+      <p>You can now reach them directly:</p>
+      <p style="font-size:16px"><strong>${lenderEmail}</strong></p>
+
+      <p><a href="${APP_URL}/dashboard" style="background:#534AB7;color:white;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block">View in Dashboard</a></p>
+    `,
+  })
+}
+
+// ─── Admin notification for lender connection ─────────────────────────────────
+export async function sendAdminLenderConnectionEmail({
+  founderEmail,
+  lenderInstitutionName,
+  lenderEmail,
+  initiatedBy,
+}: {
+  founderEmail: string
+  lenderInstitutionName: string
+  lenderEmail: string
+  initiatedBy: 'founder' | 'lender'
+}) {
+  await getResend().emails.send({
+    from: FROM,
+    to: ADMIN_EMAIL,
+    subject: `New lender connection: ${founderEmail} ↔ ${lenderInstitutionName}`,
+    html: `
+      <p>A new lender connection was made on UnlockedVC.</p>
+      <p><strong>Founder:</strong> ${founderEmail}<br>
+      <strong>Lender:</strong> ${lenderInstitutionName} (${lenderEmail})<br>
+      <strong>Initiated by:</strong> ${initiatedBy}</p>
+    `,
+  })
+}
+
+// ─── Monthly digest: founder ──────────────────────────────────────────────────
+export async function sendMonthlyFounderDigest({
+  founderEmail,
+  matchingInvestors,
+  matchingLenders,
+  platformStats,
+}: {
+  founderEmail: string
+  matchingInvestors: { firm_name: string; partner_name: string }[]
+  matchingLenders: { institution_name: string; contact_name: string }[]
+  platformStats: PlatformStats
+}) {
+  const investorRows = matchingInvestors.map(inv =>
+    `<tr><td style="padding:2px 16px 2px 0;font-size:13px;width:200px"><strong>${inv.firm_name}</strong></td><td style="padding:2px 0;font-size:13px;color:#555">${inv.partner_name}</td></tr>`
+  ).join('')
+
+  const lenderRows = matchingLenders.map(l =>
+    `<tr><td style="padding:2px 16px 2px 0;font-size:13px;width:200px"><strong>${l.institution_name}</strong></td><td style="padding:2px 0;font-size:13px;color:#555">${l.contact_name}</td></tr>`
+  ).join('')
+
+  await getResend().emails.send({
+    from: FROM,
+    to: founderEmail,
+    subject: 'Unlocked matches',
+    html: `
+      <p>Here are investors and lenders on UnlockedVC that match your profile.</p>
+
+      ${matchingInvestors.length > 0 ? `
+        <p style="font-weight:600;margin:20px 0 6px">Matching investors (${matchingInvestors.length})</p>
+        <table style="border-collapse:collapse">${investorRows}</table>
+      ` : ''}
+
+      ${matchingLenders.length > 0 ? `
+        <p style="font-weight:600;margin:20px 0 6px">Matching lenders (${matchingLenders.length})</p>
+        <table style="border-collapse:collapse">${lenderRows}</table>
+      ` : ''}
+
+      <p style="margin-top:28px"><a href="${APP_URL}/login" style="background:#534AB7;color:white;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block">Log In</a></p>
+
+      ${buildPlatformStatsHtml(platformStats)}
+
+      <p style="color:#999;font-size:12px;margin-top:24px">You're receiving this digest because you have an active founder profile on UnlockedVC.</p>
+    `,
+  })
+}
+
+// ─── Monthly digest: investor ─────────────────────────────────────────────────
+export async function sendMonthlyInvestorDigest({
+  investorEmail,
+  matchingFounders,
+  platformStats,
+}: {
+  investorEmail: string
+  matchingFounders: { company_name: string; stage: string; product_categories: string[] }[]
+  platformStats: PlatformStats
+}) {
+  const founderRows = matchingFounders.map(f =>
+    `<tr>
+      <td style="padding:2px 16px 2px 0;font-size:13px;width:200px"><strong>${f.company_name}</strong></td>
+      <td style="padding:2px 16px 2px 0;font-size:13px;color:#555">${fmtStage(f.stage)}</td>
+      <td style="padding:2px 0;font-size:13px;color:#888">${f.product_categories.join(', ')}</td>
+    </tr>`
+  ).join('')
+
+  await getResend().emails.send({
+    from: FROM,
+    to: investorEmail,
+    subject: 'Unlocked matches',
+    html: `
+      <p>Here are active founders on UnlockedVC that match your thesis this month.</p>
+
+      <table style="border-collapse:collapse;margin:8px 0">${founderRows}</table>
+
+      <p style="margin-top:28px"><a href="${APP_URL}/login" style="background:#534AB7;color:white;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block">Log In</a></p>
+
+      ${buildPlatformStatsHtml(platformStats)}
+
+      <p style="color:#999;font-size:12px;margin-top:24px">You're receiving this digest because you have an approved investor profile on UnlockedVC.</p>
+    `,
+  })
+}
+
+// ─── Monthly digest: lender ──────────────────────────────────────────────────
+export async function sendMonthlyLenderDigest({
+  lenderEmail,
+  matchingFounders,
+  platformStats,
+}: {
+  lenderEmail: string
+  matchingFounders: { company_name: string; stage: string; product_categories: string[] }[]
+  platformStats: PlatformStats
+}) {
+  const founderRows = matchingFounders.map(f =>
+    `<tr>
+      <td style="padding:2px 16px 2px 0;font-size:13px;width:200px"><strong>${f.company_name}</strong></td>
+      <td style="padding:2px 16px 2px 0;font-size:13px;color:#555">${fmtStage(f.stage)}</td>
+      <td style="padding:2px 0;font-size:13px;color:#888">${f.product_categories.join(', ')}</td>
+    </tr>`
+  ).join('')
+
+  await getResend().emails.send({
+    from: FROM,
+    to: lenderEmail,
+    subject: 'Unlocked matches',
+    html: `
+      <p>Here are active founders on UnlockedVC that match your lending criteria this month.</p>
+
+      <table style="border-collapse:collapse;margin:8px 0">${founderRows}</table>
+
+      <p style="margin-top:28px"><a href="${APP_URL}/login" style="background:#534AB7;color:white;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block">Log In</a></p>
+
+      ${buildPlatformStatsHtml(platformStats)}
+
+      <p style="color:#999;font-size:12px;margin-top:24px">You're receiving this digest because you have an approved lender profile on UnlockedVC.</p>
+    `,
+  })
+}
+
+// ─── Platform stats type & HTML builder ──────────────────────────────────────
+type PlatformStats = {
+  investorCount: number
+  lenderCount: number
+  latestInvestors: { firm_name: string; partner_name: string }[]
+  latestLenders: { institution_name: string; contact_name: string }[]
+  latestConnections: { left: string; right: string }[]
+}
+
+function buildPlatformStatsHtml(s: PlatformStats): string {
+  const invItems = s.latestInvestors.map((inv, i) => `
+    <div style="${i > 0 ? 'border-top:1px solid #f3f4f6;padding-top:10px;margin-top:10px' : ''}">
+      <p style="font-size:13px;font-weight:600;color:#111827;margin:0">${inv.firm_name}</p>
+      <p style="font-size:12px;color:#6b7280;margin:2px 0 0">${inv.partner_name}</p>
+    </div>`).join('')
+
+  const lenItems = s.latestLenders.map((l, i) => `
+    <div style="${i > 0 ? 'border-top:1px solid #f3f4f6;padding-top:10px;margin-top:10px' : ''}">
+      <p style="font-size:13px;font-weight:600;color:#111827;margin:0">${l.institution_name}</p>
+      <p style="font-size:12px;color:#6b7280;margin:2px 0 0">${l.contact_name}</p>
+    </div>`).join('')
+
+  const connRows = s.latestConnections.map((c, i) => `
+    <div style="${i > 0 ? 'border-top:1px solid #f3f4f6;padding-top:10px;margin-top:10px' : ''}">
+      <table width="100%" cellpadding="0" cellspacing="0">
+        <tr>
+          <td style="font-size:13px;font-weight:600;color:#111827;width:38%">${c.left}</td>
+          <td style="font-size:12px;color:#9ca3af;text-align:center">just connected with</td>
+          <td style="font-size:13px;font-weight:600;color:#111827;text-align:right;width:38%">${c.right}</td>
+        </tr>
+      </table>
+    </div>`).join('')
+
+  return `
+    <div style="margin-top:36px;border-top:1px solid #e5e7eb;padding-top:24px">
+      <p style="font-size:11px;color:#9ca3af;letter-spacing:0.05em;text-transform:uppercase;margin:0 0 16px">Platform activity</p>
+
+      <!-- Live counts -->
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:12px">
+        <tr>
+          <td width="50%" style="padding-right:6px">
+            <div style="border:1px solid #e5e7eb;border-radius:10px;padding:14px;text-align:center">
+              <p style="font-size:10px;color:#9ca3af;letter-spacing:0.05em;text-transform:uppercase;margin:0 0 4px">Live Investors on Unlocked</p>
+              <p style="font-size:28px;font-weight:700;color:#534AB7;margin:0">${s.investorCount}</p>
+            </div>
+          </td>
+          <td width="50%" style="padding-left:6px">
+            <div style="border:1px solid #e5e7eb;border-radius:10px;padding:14px;text-align:center">
+              <p style="font-size:10px;color:#9ca3af;letter-spacing:0.05em;text-transform:uppercase;margin:0 0 4px">Live Lenders on Unlocked</p>
+              <p style="font-size:28px;font-weight:700;color:#534AB7;margin:0">${s.lenderCount}</p>
+            </div>
+          </td>
+        </tr>
+      </table>
+
+      <!-- Latest to join -->
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:12px">
+        <tr>
+          <td width="50%" valign="top" style="padding-right:6px">
+            <div style="border:1px solid #e5e7eb;border-radius:10px;padding:14px">
+              <p style="font-size:10px;color:#9ca3af;letter-spacing:0.05em;text-transform:uppercase;margin:0 0 12px">Latest Investors to Join</p>
+              ${invItems}
+            </div>
+          </td>
+          <td width="50%" valign="top" style="padding-left:6px">
+            <div style="border:1px solid #e5e7eb;border-radius:10px;padding:14px">
+              <p style="font-size:10px;color:#9ca3af;letter-spacing:0.05em;text-transform:uppercase;margin:0 0 12px">Latest Lenders to Join</p>
+              ${lenItems}
+            </div>
+          </td>
+        </tr>
+      </table>
+
+      <!-- Latest connections -->
+      ${s.latestConnections.length > 0 ? `
+      <div style="border:1px solid #e5e7eb;border-radius:10px;padding:14px">
+        <p style="font-size:10px;color:#9ca3af;letter-spacing:0.05em;text-transform:uppercase;margin:0 0 12px;text-align:center">Latest Connections</p>
+        ${connRows}
+      </div>` : ''}
+    </div>`
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -359,6 +851,7 @@ function fmtStage(s: string): string {
     seed: 'Seed',
     'series-a': 'Series A',
     'series-b': 'Series B',
+    'series-c': 'Series C',
   }
   return map[s] ?? s
 }

@@ -3,7 +3,7 @@
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
-import type { FounderProfileInput, InvestorProfileInput } from '@/app/actions/onboarding'
+import type { FounderProfileInput, InvestorProfileInput, LenderProfileInput } from '@/app/actions/onboarding'
 
 export async function updateFounderProfile(
   data: FounderProfileInput
@@ -12,26 +12,10 @@ export async function updateFounderProfile(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
 
-  // Check if expired and approved — if so, reactivate
-  const { data: existing } = await supabase
-    .from('founder_profiles')
-    .select('status, is_approved')
-    .eq('id', user.id)
-    .single()
-
-  const extraFields: Record<string, string> = {}
-  if (existing?.status === 'expired' && existing?.is_approved === true) {
-    const expiresAt = new Date()
-    expiresAt.setDate(expiresAt.getDate() + 180)
-    extraFields.status = 'active'
-    extraFields.profile_expires_at = expiresAt.toISOString()
-  }
-
   const { error } = await supabase
     .from('founder_profiles')
     .update({
       ...data,
-      ...extraFields,
       updated_at: new Date().toISOString(),
     })
     .eq('id', user.id)
@@ -75,25 +59,39 @@ export async function updateInvestorProfile(
   return { success: true }
 }
 
-export async function restartFounderClock(): Promise<{ error?: string; success?: boolean }> {
+export async function updateLenderProfile(
+  data: LenderProfileInput
+): Promise<{ error?: string; success?: boolean }> {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
 
-  const admin = createAdminClient()
-  const expiresAt = new Date()
-  expiresAt.setDate(expiresAt.getDate() + 180)
-
-  const { error } = await admin
-    .from('founder_profiles')
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .update({ profile_expires_at: expiresAt.toISOString(), status: 'active', updated_at: new Date().toISOString() } as any)
+  const { error } = await supabase
+    .from('lender_profiles')
+    .update({
+      institution_name: data.institution_name,
+      contact_name: data.contact_name,
+      website: data.website ?? null,
+      location: data.location,
+      loan_size_min_usd: data.loan_size_min_usd,
+      loan_size_max_usd: data.loan_size_max_usd,
+      loan_types: data.loan_types,
+      stages: data.stages,
+      geography_focus: data.geography_focus,
+      saas_subcategories: data.saas_subcategories,
+      arr_min_requirement: data.arr_min_requirement,
+      arr_max_sweet_spot: data.arr_max_sweet_spot,
+      thesis_statement: data.thesis_statement,
+      updated_at: new Date().toISOString(),
+    })
     .eq('id', user.id)
 
   if (error) return { error: error.message }
+  revalidatePath('/account')
   revalidatePath('/dashboard')
   return { success: true }
 }
+
 
 export async function changePassword(
   password: string
@@ -124,10 +122,12 @@ export async function pauseProfile(): Promise<{ error?: string; success?: boolea
       .eq('id', user.id)
     if (error) return { error: error.message }
   } else if (profile.role === 'investor') {
-    const { error } = await supabase
-      .from('investor_profiles')
-      .update({ is_approved: false })
-      .eq('id', user.id)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await supabase.from('investor_profiles').update({ is_approved: false, status: 'pending' } as any).eq('id', user.id)
+    if (error) return { error: error.message }
+  } else if (profile.role === 'lender') {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await supabase.from('lender_profiles').update({ is_approved: false, status: 'pending' } as any).eq('id', user.id)
     if (error) return { error: error.message }
   }
 
@@ -149,9 +149,15 @@ export async function deleteAccount(): Promise<void> {
     .single()
 
   if (profile?.role === 'founder') {
+    await admin.from('flags').delete().eq('founder_id', user.id)
+    await admin.from('lender_flags').delete().eq('founder_id', user.id)
     await admin.from('founder_profiles').delete().eq('id', user.id)
   } else if (profile?.role === 'investor') {
+    await admin.from('flags').delete().eq('investor_id', user.id)
     await admin.from('investor_profiles').delete().eq('id', user.id)
+  } else if (profile?.role === 'lender') {
+    await admin.from('lender_flags').delete().eq('lender_id', user.id)
+    await admin.from('lender_profiles').delete().eq('id', user.id)
   }
 
   await admin.from('profiles').delete().eq('id', user.id)

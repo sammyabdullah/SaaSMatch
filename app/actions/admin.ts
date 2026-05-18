@@ -3,7 +3,7 @@
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
-import { sendWelcomeFounderEmail, sendWelcomeInvestorEmail } from '@/lib/email'
+import { sendWelcomeFounderEmail, sendWelcomeInvestorEmail, sendWelcomeLenderEmail } from '@/lib/email'
 
 async function requireAdmin() {
   const supabase = await createClient()
@@ -25,7 +25,8 @@ export async function approveFounder(founderId: string) {
   const admin = createAdminClient()
   const { error } = await admin
     .from('founder_profiles')
-    .update({ is_approved: true, status: 'active' })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    .update({ is_approved: true, status: 'active', approved_at: new Date().toISOString() } as any)
     .eq('id', founderId)
 
   if (error) throw new Error(error.message)
@@ -51,6 +52,12 @@ export async function approveInvestor(investorId: string) {
 
   if (error) throw new Error(error.message)
 
+  // Best-effort status update (requires migration 00023)
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (admin.from('investor_profiles') as any).update({ status: 'active' }).eq('id', investorId)
+  } catch {}
+
   try {
     const { data: profile } = await admin.from('profiles').select('email').eq('id', investorId).single()
     if (profile?.email) await sendWelcomeInvestorEmail({ email: profile.email })
@@ -65,6 +72,8 @@ export async function rejectInvestor(investorId: string) {
   await requireAdmin()
 
   const admin = createAdminClient()
+  await admin.from('flags').delete().eq('investor_id', investorId)
+
   const { error } = await admin
     .from('investor_profiles')
     .delete()
@@ -73,12 +82,34 @@ export async function rejectInvestor(investorId: string) {
   if (error) throw new Error(error.message)
 
   revalidatePath('/admin')
+  revalidatePath('/discover')
+}
+
+export async function deleteInvestorProfile(investorId: string) {
+  await requireAdmin()
+
+  const admin = createAdminClient()
+  await admin.from('flags').delete().eq('investor_id', investorId)
+
+  const { error } = await admin
+    .from('investor_profiles')
+    .delete()
+    .eq('id', investorId)
+
+  if (error) throw new Error(error.message)
+
+  revalidatePath('/admin')
+  revalidatePath('/discover')
 }
 
 export async function rejectFounder(founderId: string) {
   await requireAdmin()
 
   const admin = createAdminClient()
+
+  await admin.from('flags').delete().eq('founder_id', founderId)
+  await admin.from('lender_flags').delete().eq('founder_id', founderId)
+
   const { error } = await admin
     .from('founder_profiles')
     .update({ status: 'closed' })
@@ -87,4 +118,143 @@ export async function rejectFounder(founderId: string) {
   if (error) throw new Error(error.message)
 
   revalidatePath('/admin')
+  revalidatePath('/discover')
+  revalidatePath('/dashboard')
+}
+
+export async function approveLender(lenderId: string) {
+  await requireAdmin()
+
+  const admin = createAdminClient()
+  const { error } = await admin
+    .from('lender_profiles')
+    .update({ is_approved: true })
+    .eq('id', lenderId)
+
+  if (error) throw new Error(error.message)
+
+  // Best-effort status update (requires migration 00023)
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (admin.from('lender_profiles') as any).update({ status: 'active' }).eq('id', lenderId)
+  } catch {}
+
+  try {
+    const { data: profile } = await admin.from('profiles').select('email').eq('id', lenderId).single()
+    if (profile?.email) await sendWelcomeLenderEmail({ email: profile.email })
+  } catch {
+    // Email errors are non-fatal
+  }
+
+  revalidatePath('/admin')
+}
+
+export async function rejectLender(lenderId: string) {
+  await requireAdmin()
+
+  const admin = createAdminClient()
+  await admin.from('lender_flags').delete().eq('lender_id', lenderId)
+
+  const { error } = await admin
+    .from('lender_profiles')
+    .delete()
+    .eq('id', lenderId)
+
+  if (error) throw new Error(error.message)
+
+  revalidatePath('/admin')
+  revalidatePath('/discover')
+}
+
+export async function deleteLenderProfile(lenderId: string) {
+  await requireAdmin()
+
+  const admin = createAdminClient()
+
+  await admin.from('lender_flags').delete().eq('lender_id', lenderId)
+
+  const { error } = await admin
+    .from('lender_profiles')
+    .delete()
+    .eq('id', lenderId)
+
+  if (error) throw new Error(error.message)
+
+  revalidatePath('/admin')
+  revalidatePath('/discover')
+}
+
+export async function changeUserEmail(
+  currentEmail: string,
+  newEmail: string
+): Promise<{ error?: string; success?: boolean }> {
+  await requireAdmin()
+
+  const admin = createAdminClient()
+
+  const { data: profile } = await admin
+    .from('profiles')
+    .select('id')
+    .eq('email', currentEmail.trim().toLowerCase())
+    .single()
+
+  if (!profile) return { error: 'No user found with that email' }
+
+  const { error: authError } = await admin.auth.admin.updateUserById(profile.id, {
+    email: newEmail.trim().toLowerCase(),
+  })
+  if (authError) return { error: authError.message }
+
+  await admin
+    .from('profiles')
+    .update({ email: newEmail.trim().toLowerCase() })
+    .eq('id', profile.id)
+
+  return { success: true }
+}
+
+export async function setUserPassword(
+  email: string,
+  newPassword: string
+): Promise<{ error?: string; success?: boolean }> {
+  await requireAdmin()
+
+  if (newPassword.length < 8) return { error: 'Password must be at least 8 characters' }
+
+  const admin = createAdminClient()
+
+  const { data: profile } = await admin
+    .from('profiles')
+    .select('id')
+    .eq('email', email.trim().toLowerCase())
+    .single()
+
+  if (!profile) return { error: 'No user found with that email' }
+
+  const { error: authError } = await admin.auth.admin.updateUserById(profile.id, {
+    password: newPassword,
+  })
+  if (authError) return { error: authError.message }
+
+  return { success: true }
+}
+
+export async function deleteFounderProfile(founderId: string) {
+  await requireAdmin()
+
+  const admin = createAdminClient()
+
+  // Delete related flags first to avoid FK constraint errors
+  await admin.from('flags').delete().eq('founder_id', founderId)
+  await admin.from('lender_flags').delete().eq('founder_id', founderId)
+
+  const { error } = await admin
+    .from('founder_profiles')
+    .delete()
+    .eq('id', founderId)
+
+  if (error) throw new Error(error.message)
+
+  revalidatePath('/admin')
+  revalidatePath('/discover')
 }

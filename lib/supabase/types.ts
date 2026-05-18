@@ -12,14 +12,17 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
-export type UserRole = 'founder' | 'investor' | 'admin'
-export type FounderStage = 'pre-seed' | 'seed' | 'series-a' | 'series-b'
+export type UserRole = 'founder' | 'investor' | 'lender' | 'admin'
+export type FounderStage = 'pre-seed' | 'seed' | 'series-a' | 'series-b' | 'series-c'
 export type ArrRange = '0-500k' | '500k-2m' | '2m-5m' | '5m-plus'
 export type GtmMotion = 'sales-led' | 'product-led' | 'hybrid'
 export type RevenueModel = 'seat-based' | 'usage-based' | 'platform-fee' | 'other'
-export type FounderStatus = 'pending' | 'active' | 'expired' | 'closed'
+export type FounderStatus = 'pending' | 'active' | 'closed'
+export type InvestorStatus = 'pending' | 'active' | 'closed'
+export type LenderStatus = 'pending' | 'active' | 'closed'
 export type FlagSide = 'founder' | 'investor'
 export type FlagStatus = 'pending' | 'accepted' | 'declined'
+export type LenderFlagSide = 'founder' | 'lender'
 
 export type Database = {
   public: {
@@ -63,8 +66,8 @@ export type Database = {
           why_now: string
           product_categories: string[]
           status: FounderStatus
-          profile_expires_at: string | null
           is_approved: boolean
+          approved_at: string | null
           created_at: string
           updated_at: string
         }
@@ -86,8 +89,8 @@ export type Database = {
           website?: string | null
           product_categories?: string[]
           status?: FounderStatus
-          profile_expires_at?: string | null
           is_approved?: boolean
+          approved_at?: string | null
           created_at?: string
           updated_at?: string
         }
@@ -107,8 +110,8 @@ export type Database = {
           why_now?: string
           product_categories?: string[]
           status?: FounderStatus
-          profile_expires_at?: string | null
           is_approved?: boolean
+          approved_at?: string | null
           updated_at?: string
         }
         Relationships: [
@@ -139,6 +142,7 @@ export type Database = {
           arr_sweet_spot_max: number
           thesis_statement: string
           is_approved: boolean
+          status: InvestorStatus
           created_at: string
           updated_at: string
         }
@@ -158,6 +162,7 @@ export type Database = {
           arr_sweet_spot_max: number
           thesis_statement: string
           is_approved?: boolean
+          status?: InvestorStatus
           created_at?: string
           updated_at?: string
         }
@@ -176,6 +181,7 @@ export type Database = {
           arr_sweet_spot_max?: number
           thesis_statement?: string
           is_approved?: boolean
+          status?: InvestorStatus
           updated_at?: string
         }
         Relationships: [
@@ -230,6 +236,135 @@ export type Database = {
         Update: Record<string, never>
         Relationships: []
       }
+
+      lender_profiles: {
+        Row: {
+          id: string
+          institution_name: string
+          contact_name: string
+          website: string | null
+          location: string
+          loan_size_min_usd: number
+          loan_size_max_usd: number
+          loan_types: string[]
+          stages: string[]
+          geography_focus: string
+          saas_subcategories: string[]
+          arr_min_requirement: number
+          arr_max_sweet_spot: number
+          thesis_statement: string
+          is_approved: boolean
+          status: LenderStatus
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id: string
+          institution_name: string
+          contact_name: string
+          website?: string | null
+          location: string
+          loan_size_min_usd: number
+          loan_size_max_usd: number
+          loan_types?: string[]
+          stages?: string[]
+          geography_focus: string
+          saas_subcategories?: string[]
+          arr_min_requirement: number
+          arr_max_sweet_spot: number
+          thesis_statement: string
+          is_approved?: boolean
+          status?: LenderStatus
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          institution_name?: string
+          contact_name?: string
+          website?: string | null
+          location?: string
+          loan_size_min_usd?: number
+          loan_size_max_usd?: number
+          loan_types?: string[]
+          stages?: string[]
+          geography_focus?: string
+          saas_subcategories?: string[]
+          arr_min_requirement?: number
+          arr_max_sweet_spot?: number
+          thesis_statement?: string
+          is_approved?: boolean
+          status?: LenderStatus
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'lender_profiles_id_fkey'
+            columns: ['id']
+            isOneToOne: true
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
+          }
+        ]
+      }
+
+      investor_profile_views: {
+        Row: {
+          id: string
+          founder_id: string
+          investor_id: string
+          viewed_at: string
+        }
+        Insert: {
+          id?: string
+          founder_id: string
+          investor_id: string
+          viewed_at?: string
+        }
+        Update: Record<string, never>
+        Relationships: []
+      }
+
+      lender_profile_views: {
+        Row: {
+          id: string
+          founder_id: string
+          lender_id: string
+          viewed_at: string
+        }
+        Insert: {
+          id?: string
+          founder_id: string
+          lender_id: string
+          viewed_at?: string
+        }
+        Update: Record<string, never>
+        Relationships: []
+      }
+
+      lender_flags: {
+        Row: {
+          id: string
+          founder_id: string
+          lender_id: string
+          flagged_by: LenderFlagSide
+          status: FlagStatus
+          responded_at: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          founder_id: string
+          lender_id: string
+          flagged_by: LenderFlagSide
+          status?: FlagStatus
+          created_at?: string
+        }
+        Update: {
+          status?: FlagStatus
+          responded_at?: string | null
+        }
+        Relationships: []
+      }
     }
 
     Views: {
@@ -255,6 +390,9 @@ export type Database = {
       revenue_model: RevenueModel
       founder_status: FounderStatus
       flag_side: FlagSide
+      lender_flag_side: LenderFlagSide
+      investor_status: InvestorStatus
+      lender_status: LenderStatus
     }
 
     CompositeTypes: {

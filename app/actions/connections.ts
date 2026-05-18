@@ -66,7 +66,7 @@ export async function acceptFlag(flagId: string): Promise<{ error?: string; succ
     const ip = investorProfile.data
 
     if (flag.flagged_by === 'founder') {
-      // Investor accepted a founder's flag → notify the founder
+      // Investor accepted a founder's flag → notify both parties
       await Promise.allSettled([
         sendConnectionAcceptedFounderEmail({
           founderEmail,
@@ -81,16 +81,6 @@ export async function acceptFlag(flagId: string): Promise<{ error?: string; succ
           investorThesis: ip?.thesis_statement ?? null,
           investorEmail,
         }),
-        sendAdminConnectionEmail({
-          founderEmail,
-          investorFirmName: ip?.firm_name ?? '',
-          investorEmail,
-          initiatedBy: 'founder',
-        }),
-      ])
-    } else {
-      // Founder accepted an investor's flag → notify the investor
-      await Promise.allSettled([
         sendConnectionAcceptedInvestorEmail({
           investorEmail,
           investorName: ip?.partner_name ?? '',
@@ -109,6 +99,43 @@ export async function acceptFlag(flagId: string): Promise<{ error?: string; succ
           founderEmail,
           investorFirmName: ip?.firm_name ?? '',
           investorEmail,
+          initiatedBy: 'founder',
+        }),
+      ])
+    } else {
+      // Founder accepted an investor's flag → notify both parties
+      await Promise.allSettled([
+        sendConnectionAcceptedInvestorEmail({
+          investorEmail,
+          investorName: ip?.partner_name ?? '',
+          founderEmail,
+          founderCompanyName: fp?.company_name ?? null,
+          founderWebsite: fp?.website ?? null,
+          founderLocation: fp?.location ?? null,
+          founderStage: fp?.stage ?? '',
+          founderArrRange: fp?.arr_range ?? null,
+          founderCategories: fp?.product_categories ?? [],
+          founderMomGrowthPct: fp?.mom_growth_pct ?? null,
+          founderRaisingAmount: fp?.raising_amount_usd ?? null,
+          founderWhyNow: fp?.why_now ?? null,
+        }),
+        sendConnectionAcceptedFounderEmail({
+          founderEmail,
+          investorFirmName: ip?.firm_name ?? '',
+          investorPartnerName: ip?.partner_name ?? '',
+          investorWebsite: ip?.website ?? null,
+          investorLocation: ip?.location ?? null,
+          investorCheckSizeMin: ip?.check_size_min_usd ?? null,
+          investorCheckSizeMax: ip?.check_size_max_usd ?? null,
+          investorStages: ip?.stages ?? [],
+          investorGeography: ip?.geography_focus ?? null,
+          investorThesis: ip?.thesis_statement ?? null,
+          investorEmail,
+        }),
+        sendAdminConnectionEmail({
+          founderEmail,
+          investorFirmName: ip?.firm_name ?? '',
+          investorEmail,
           initiatedBy: 'investor',
         }),
       ])
@@ -118,6 +145,7 @@ export async function acceptFlag(flagId: string): Promise<{ error?: string; succ
   }
 
   revalidatePath('/dashboard')
+  revalidatePath('/discover')
   return { success: true }
 }
 

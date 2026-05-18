@@ -7,7 +7,8 @@ import { signUp } from '@/app/actions/auth'
 
 export default function SignupForm() {
   const searchParams = useSearchParams()
-  const role = searchParams.get('role') === 'investor' ? 'investor' : 'founder'
+  const roleParam = searchParams.get('role')
+  const role = roleParam === 'investor' ? 'investor' : roleParam === 'lender' ? 'lender' : 'founder'
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -43,7 +44,7 @@ export default function SignupForm() {
         <p className="text-sm text-gray-500 mb-1">
           Signing up as a{' '}
           <span className="text-[#534AB7] font-medium">
-            {role === 'founder' ? 'founder' : 'investor'}
+            {role === 'founder' ? 'founder' : role === 'lender' ? 'lender' : 'investor'}
           </span>
         </p>
         <h1 className="text-2xl font-semibold text-gray-900">

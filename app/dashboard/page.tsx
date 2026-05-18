@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import FounderDashboard from './founder-dashboard'
 import InvestorDashboard from './investor-dashboard'
+import LenderDashboard from './lender-dashboard'
 
 export const dynamic = 'force-dynamic'
 
@@ -24,6 +25,10 @@ export default async function DashboardPage() {
 
   if (profile.role === 'investor') {
     return <InvestorDashboard userId={user.id} />
+  }
+
+  if (profile.role === 'lender') {
+    return <LenderDashboard userId={user.id} />
   }
 
   // Admin or unknown — redirect to admin or home

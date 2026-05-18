@@ -2,6 +2,7 @@ import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import FounderAccountForm from './founder-account-form'
 import InvestorAccountForm from './investor-account-form'
+import LenderAccountForm from './lender-account-form'
 import PasswordForm from './password-form'
 import DangerZone from './danger-zone'
 
@@ -24,6 +25,7 @@ export default async function AccountPage() {
 
   let founderData = null
   let investorData = null
+  let lenderData = null
 
   if (profile.role === 'founder') {
     const { data } = await admin
@@ -39,6 +41,13 @@ export default async function AccountPage() {
       .eq('id', user.id)
       .single()
     investorData = data
+  } else if (profile.role === 'lender') {
+    const { data } = await admin
+      .from('lender_profiles')
+      .select('*')
+      .eq('id', user.id)
+      .single()
+    lenderData = data
   }
 
   return (
@@ -59,7 +68,11 @@ export default async function AccountPage() {
         {profile.role === 'investor' && investorData && (
           <InvestorAccountForm initialData={investorData} />
         )}
-        {!founderData && !investorData && (
+        {profile.role === 'lender' && lenderData && (
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          <LenderAccountForm initialData={lenderData as any} />
+        )}
+        {!founderData && !investorData && !lenderData && (
           <p className="text-sm text-gray-500">
             No profile found. Please complete onboarding first.
           </p>

@@ -3,6 +3,8 @@ import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { fmtUsd, fmtArrRange, fmtStage, fmtDate } from '@/lib/format'
 import { ViewLogger } from './view-logger'
+import { InvestorViewLogger } from './investor-view-logger'
+import { LenderViewLogger } from './lender-view-logger'
 import FlagActionButton from './flag-action-button'
 
 interface Props {
@@ -63,13 +65,6 @@ export default async function ProfileDetailPage({ params }: Props) {
       .eq('flagged_by', 'investor')
       .maybeSingle()
 
-    // Count investor's existing flags to check limit
-    const { count: flagCount } = await admin
-      .from('flags')
-      .select('id', { count: 'exact', head: true })
-      .eq('investor_id', user.id)
-      .eq('flagged_by', 'investor')
-
     const isAlreadyFlagged = !!existingFlag
     const displayName = `${fp.product_categories?.[0] ?? 'SaaS'} Company — ${fp.location}`
 
@@ -125,7 +120,7 @@ export default async function ProfileDetailPage({ params }: Props) {
         {fp.why_now && (
           <div className="border border-gray-200 rounded-lg p-6 mb-6">
             <h2 className="text-sm font-semibold text-gray-900 border-b border-gray-100 pb-2 mb-4">
-              In their own words
+              In their own words and traction
             </h2>
             <p className="text-sm text-gray-700 italic">&ldquo;{fp.why_now}&rdquo;</p>
           </div>
@@ -139,14 +134,13 @@ export default async function ProfileDetailPage({ params }: Props) {
           targetId={id}
           mode="investor-flagging-founder"
           isAlreadyFlagged={isAlreadyFlagged}
-          flagCount={flagCount ?? 0}
         />
       </div>
     )
   }
 
   if (profile.role === 'founder') {
-    // Founder viewing an investor profile
+    // Try investor profile first
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: ip } = await admin
       .from('investor_profiles')
@@ -155,14 +149,94 @@ export default async function ProfileDetailPage({ params }: Props) {
       .single() as { data: any }
 
     if (!ip) {
+      // Try lender profile
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: lp } = await admin
+        .from('lender_profiles')
+        .select('*, profiles(email)')
+        .eq('id', id)
+        .single() as { data: any }
+
+      if (!lp) {
+        return (
+          <div className="max-w-3xl mx-auto px-6 py-12">
+            <p className="text-sm text-gray-500">Profile not found.</p>
+          </div>
+        )
+      }
+
+      const { data: existingLenderFlag } = await admin
+        .from('lender_flags')
+        .select('id')
+        .eq('founder_id', user.id)
+        .eq('lender_id', id)
+        .eq('flagged_by', 'founder')
+        .maybeSingle()
+
       return (
         <div className="max-w-3xl mx-auto px-6 py-12">
-          <p className="text-sm text-gray-500">Profile not found.</p>
+          <LenderViewLogger lenderId={id} />
+          <BackButton />
+
+          <div className="mb-8">
+            <div className="flex items-center gap-2 mb-1">
+              <h1 className="text-2xl font-semibold text-gray-900">{lp.institution_name}</h1>
+              <span className="text-xs font-medium bg-sky-50 text-sky-600 border border-sky-200 px-2 py-0.5 rounded-full">Lender</span>
+            </div>
+            <p className="text-sm text-gray-600 mt-0.5">{lp.contact_name}</p>
+            <p className="text-sm text-gray-400">{lp.location}</p>
+          </div>
+
+          <div className="border border-gray-200 rounded-lg p-6 mb-6">
+            <h2 className="text-sm font-semibold text-gray-900 border-b border-gray-100 pb-2 mb-4">Lending parameters</h2>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-4">
+              <Field label="Loan size" value={`${fmtUsd(lp.loan_size_min_usd)} – ${fmtUsd(lp.loan_size_max_usd)}`} />
+              <Field label="Geography focus" value={lp.geography_focus} />
+              {lp.arr_min_requirement > 0 && <Field label="Min ARR requirement" value={fmtUsd(lp.arr_min_requirement)} />}
+              {lp.arr_max_sweet_spot > 0 && <Field label="ARR sweet spot" value={`up to ${fmtUsd(lp.arr_max_sweet_spot)}`} />}
+              {lp.website && <Field label="Website" value={lp.website} />}
+            </div>
+          </div>
+
+          {lp.stages?.length > 0 && (
+            <div className="border border-gray-200 rounded-lg p-6 mb-6">
+              <h2 className="text-sm font-semibold text-gray-900 border-b border-gray-100 pb-2 mb-4">Stages</h2>
+              <div className="flex flex-wrap gap-2">
+                {lp.stages.map((s: string) => (
+                  <span key={s} className="text-xs bg-purple-50 text-[#534AB7] px-2.5 py-1 rounded-full">{fmtStage(s)}</span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {lp.saas_subcategories?.length > 0 && (
+            <div className="border border-gray-200 rounded-lg p-6 mb-6">
+              <h2 className="text-sm font-semibold text-gray-900 border-b border-gray-100 pb-2 mb-4">SaaS focus areas</h2>
+              <div className="flex flex-wrap gap-2">
+                {lp.saas_subcategories.map((c: string) => (
+                  <span key={c} className="text-xs bg-gray-100 text-gray-600 px-2.5 py-1 rounded-full">{c}</span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {lp.thesis_statement && (
+            <div className="border border-gray-200 rounded-lg p-6 mb-6">
+              <h2 className="text-sm font-semibold text-gray-900 border-b border-gray-100 pb-2 mb-4">Thesis</h2>
+              <p className="text-sm text-gray-700 italic">&ldquo;{lp.thesis_statement}&rdquo;</p>
+            </div>
+          )}
+
+          <div className="flex items-center justify-between text-xs text-gray-400 mb-8">
+            <span>Listed {fmtDate(lp.created_at)}</span>
+          </div>
+
+          <FlagActionButton targetId={id} mode="founder-flagging-lender" isAlreadyFlagged={!!existingLenderFlag} />
         </div>
       )
     }
 
-    // Check if already flagged
+    // Investor profile — check if already flagged
     const { data: existingFlag } = await admin
       .from('flags')
       .select('id')
@@ -171,16 +245,11 @@ export default async function ProfileDetailPage({ params }: Props) {
       .eq('flagged_by', 'founder')
       .maybeSingle()
 
-    const { count: flagCount } = await admin
-      .from('flags')
-      .select('id', { count: 'exact', head: true })
-      .eq('founder_id', user.id)
-      .eq('flagged_by', 'founder')
-
     const isAlreadyFlagged = !!existingFlag
 
     return (
       <div className="max-w-3xl mx-auto px-6 py-12">
+        <InvestorViewLogger investorId={id} />
         <BackButton />
 
         <div className="mb-8">
@@ -254,7 +323,88 @@ export default async function ProfileDetailPage({ params }: Props) {
           targetId={id}
           mode="founder-flagging-investor"
           isAlreadyFlagged={isAlreadyFlagged}
-          flagCount={flagCount ?? 0}
+        />
+      </div>
+    )
+  }
+
+  if (profile.role === 'lender') {
+    // Lender viewing a founder profile
+    const { data: fp } = await admin
+      .from('founder_profiles')
+      .select('*, profiles(email)')
+      .eq('id', id)
+      .single() as { data: any }
+
+    if (!fp) {
+      return (
+        <div className="max-w-3xl mx-auto px-6 py-12">
+          <p className="text-sm text-gray-500">Profile not found.</p>
+        </div>
+      )
+    }
+
+    const { data: existingFlag } = await admin
+      .from('lender_flags')
+      .select('id')
+      .eq('lender_id', user.id)
+      .eq('founder_id', id)
+      .eq('flagged_by', 'lender')
+      .maybeSingle()
+
+    const isAlreadyFlagged = !!existingFlag
+    const displayName = `${fp.product_categories?.[0] ?? 'SaaS'} Company — ${fp.location}`
+
+    return (
+      <div className="max-w-3xl mx-auto px-6 py-12">
+        <BackButton />
+
+        <div className="mb-8">
+          <h1 className="text-2xl font-semibold text-gray-900">{displayName}</h1>
+          <p className="text-sm text-gray-400 mt-1">Profile ID: {id}</p>
+        </div>
+
+        <div className="border border-gray-200 rounded-lg p-6 mb-6">
+          <h2 className="text-sm font-semibold text-gray-900 border-b border-gray-100 pb-2 mb-4">Company details</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-4">
+            <Field label="Location" value={fp.location} />
+            <Field label="Founded" value={String(fp.founded_year)} />
+            <Field label="Stage" value={fmtStage(fp.stage)} />
+            <Field label="ARR range" value={fmtArrRange(fp.arr_range)} />
+            {fp.mom_growth_pct != null && <Field label="YOY growth" value={`${fp.mom_growth_pct}%`} />}
+            <Field label="GTM motion" value={fp.gtm_motion.replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())} />
+            <Field label="Revenue model" value={fp.revenue_model.replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase())} />
+            <Field label="Total raise" value={fmtUsd(fp.raising_amount_usd)} />
+            {fp.website && <Field label="Website" value={fp.website} />}
+          </div>
+        </div>
+
+        {fp.product_categories?.length > 0 && (
+          <div className="border border-gray-200 rounded-lg p-6 mb-6">
+            <h2 className="text-sm font-semibold text-gray-900 border-b border-gray-100 pb-2 mb-4">Product categories</h2>
+            <div className="flex flex-wrap gap-2">
+              {fp.product_categories.map((c: string) => (
+                <span key={c} className="text-xs bg-gray-100 text-gray-600 px-2.5 py-1 rounded-full">{c}</span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {fp.why_now && (
+          <div className="border border-gray-200 rounded-lg p-6 mb-6">
+            <h2 className="text-sm font-semibold text-gray-900 border-b border-gray-100 pb-2 mb-4">In their own words and traction</h2>
+            <p className="text-sm text-gray-700 italic">&ldquo;{fp.why_now}&rdquo;</p>
+          </div>
+        )}
+
+        <div className="flex items-center justify-between text-xs text-gray-400 mb-8">
+          <span>Listed {fmtDate(fp.created_at)}</span>
+        </div>
+
+        <FlagActionButton
+          targetId={id}
+          mode="lender-flagging-founder"
+          isAlreadyFlagged={isAlreadyFlagged}
         />
       </div>
     )

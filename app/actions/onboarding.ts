@@ -2,7 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { sendAdminNewFounderEmail, sendAdminNewInvestorEmail } from '@/lib/email'
+import { sendAdminNewFounderEmail, sendAdminNewInvestorEmail, sendAdminNewLenderEmail } from '@/lib/email'
 import type {
   FounderStage,
   ArrRange,
@@ -108,6 +108,57 @@ export async function submitInvestorProfile(data: InvestorProfileInput) {
       location: data.location,
       check_size_min_usd: data.check_size_min_usd,
       check_size_max_usd: data.check_size_max_usd,
+    })
+  } catch {
+    // Email errors are non-fatal
+  }
+
+  return { success: true }
+}
+
+export interface LenderProfileInput {
+  institution_name: string
+  contact_name: string
+  website?: string | null
+  location: string
+  loan_size_min_usd: number
+  loan_size_max_usd: number
+  loan_types: string[]
+  stages: FounderStage[]
+  geography_focus: string
+  saas_subcategories: string[]
+  arr_min_requirement: number
+  arr_max_sweet_spot: number
+  thesis_statement: string
+}
+
+export async function submitLenderProfile(data: LenderProfileInput) {
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) redirect('/login')
+
+  const { error } = await supabase.from('lender_profiles').insert({
+    id: user.id,
+    ...data,
+    is_approved: false,
+  })
+
+  if (error) {
+    return { error: error.message }
+  }
+
+  try {
+    await sendAdminNewLenderEmail({
+      email: user.email ?? '',
+      institution_name: data.institution_name,
+      contact_name: data.contact_name,
+      location: data.location,
+      loan_size_min_usd: data.loan_size_min_usd,
+      loan_size_max_usd: data.loan_size_max_usd,
     })
   } catch {
     // Email errors are non-fatal

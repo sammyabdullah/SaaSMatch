@@ -2,13 +2,13 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { unflagInvestor } from '@/app/actions/discover'
+import { unflagFounderAsLender } from '@/app/actions/discover'
 
 interface Props {
-  investorId: string
+  founderId: string
 }
 
-export default function UnflagFounderFlag({ investorId }: Props) {
+export default function UnflagLenderFlag({ founderId }: Props) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [done, setDone] = useState(false)
@@ -18,7 +18,7 @@ export default function UnflagFounderFlag({ investorId }: Props) {
     setLoading(true)
     setError('')
     try {
-      const result = await unflagInvestor(investorId)
+      const result = await unflagFounderAsLender(founderId)
       if (result?.error) {
         setError(result.error)
       } else {
@@ -40,8 +40,9 @@ export default function UnflagFounderFlag({ investorId }: Props) {
         onClick={handleUnflag}
         disabled={loading}
         className="text-xs text-red-500 hover:text-red-700 border border-red-200 px-2.5 py-1 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        aria-label="Remove flag"
       >
-        {loading ? 'Removing…' : 'Unflag'}
+        {loading ? '…' : '✕'}
       </button>
       {error && <p className="text-xs text-red-500">{error}</p>}
     </div>
