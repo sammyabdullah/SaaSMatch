@@ -19,15 +19,22 @@ async function sendInBatches<T>(items: T[], fn: (item: T) => Promise<void>): Pro
 
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get('authorization')
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  const isAdminKey = authHeader === `Bearer ${process.env.ADMIN_API_KEY}`
+  const isCronSecret = authHeader === `Bearer ${process.env.CRON_SECRET}`
+
+  if (!isCronSecret && !isAdminKey) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  // Only run on the 2nd Wednesday of the month (day 8–14)
-  const today = new Date()
-  const dayOfMonth = today.getUTCDate()
-  if (dayOfMonth < 8 || dayOfMonth > 14) {
-    return NextResponse.json({ ok: true, skipped: true, reason: 'Not the 2nd Wednesday' })
+  const force = req.nextUrl.searchParams.get('force') === 'true' && isAdminKey
+
+  // Only run on the 2nd Wednesday of the month (day 8–14), unless forced
+  if (!force) {
+    const today = new Date()
+    const dayOfMonth = today.getUTCDate()
+    if (dayOfMonth < 8 || dayOfMonth > 14) {
+      return NextResponse.json({ ok: true, skipped: true, reason: 'Not the 2nd Wednesday' })
+    }
   }
 
   const admin = createAdminClient()
