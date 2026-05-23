@@ -3,7 +3,19 @@ import { createAdminClient } from '@/lib/supabase/server'
 import { sendMonthlyFounderDigest, sendMonthlyInvestorDigest, sendMonthlyLenderDigest } from '@/lib/email'
 
 export const dynamic = 'force-dynamic'
-export const maxDuration = 300
+export const maxDuration = 60
+
+const BATCH_SIZE = 10
+
+async function sendInBatches<T>(items: T[], fn: (item: T) => Promise<void>): Promise<number> {
+  let sent = 0
+  for (let i = 0; i < items.length; i += BATCH_SIZE) {
+    const batch = items.slice(i, i + BATCH_SIZE)
+    const results = await Promise.allSettled(batch.map(fn))
+    sent += results.filter((r) => r.status === 'fulfilled').length
+  }
+  return sent
+}
 
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get('authorization')
@@ -88,13 +100,11 @@ export async function GET(req: NextRequest) {
     latestConnections,
   }
 
-  let emailsSent = 0
-
-  // ── Founder digests ─────────────────────────────────────────────────────────
-  for (const founder of founders ?? []) {
+  // ── Founder digests ──────────────────────────────────────────────────────────
+  const founderJobs = (founders ?? []).flatMap((founder) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const founderEmail = (founder as any).profiles?.email as string | undefined
-    if (!founderEmail) continue
+    if (!founderEmail) return []
 
     const matchingInvestors = (investors ?? []).filter((inv) => {
       if (investorPairs.has(`${founder.id}:${inv.id}`)) return false
@@ -110,28 +120,21 @@ export async function GET(req: NextRequest) {
       return (lender.stages ?? []).includes(founder.stage as string)
     })
 
-    if (matchingInvestors.length === 0 && matchingLenders.length === 0) continue
+    if (matchingInvestors.length === 0 && matchingLenders.length === 0) return []
 
-    await sendMonthlyFounderDigest({
+    return [() => sendMonthlyFounderDigest({
       founderEmail,
-      matchingInvestors: matchingInvestors.map((inv) => ({
-        firm_name: inv.firm_name,
-        partner_name: inv.partner_name,
-      })),
-      matchingLenders: matchingLenders.map((l) => ({
-        institution_name: l.institution_name,
-        contact_name: l.contact_name,
-      })),
+      matchingInvestors: matchingInvestors.map((inv) => ({ firm_name: inv.firm_name, partner_name: inv.partner_name })),
+      matchingLenders: matchingLenders.map((l) => ({ institution_name: l.institution_name, contact_name: l.contact_name })),
       platformStats,
-    })
-    emailsSent++
-  }
+    })]
+  })
 
   // ── Investor digests ─────────────────────────────────────────────────────────
-  for (const investor of investors ?? []) {
+  const investorJobs = (investors ?? []).flatMap((investor) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const investorEmail = (investor as any).profiles?.email as string | undefined
-    if (!investorEmail) continue
+    if (!investorEmail) return []
 
     const matchingFounders = (founders ?? []).filter((founder) => {
       if (investorPairs.has(`${founder.id}:${investor.id}`)) return false
@@ -142,9 +145,9 @@ export async function GET(req: NextRequest) {
       return stageMatch && categoryOverlap
     })
 
-    if (matchingFounders.length === 0) continue
+    if (matchingFounders.length === 0) return []
 
-    await sendMonthlyInvestorDigest({
+    return [() => sendMonthlyInvestorDigest({
       investorEmail,
       matchingFounders: matchingFounders.map((f) => ({
         company_name: f.company_name,
@@ -152,24 +155,23 @@ export async function GET(req: NextRequest) {
         product_categories: (f.product_categories ?? []) as string[],
       })),
       platformStats,
-    })
-    emailsSent++
-  }
+    })]
+  })
 
   // ── Lender digests ───────────────────────────────────────────────────────────
-  for (const lender of lenders ?? []) {
+  const lenderJobs = (lenders ?? []).flatMap((lender) => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const lenderEmail = (lender as any).profiles?.email as string | undefined
-    if (!lenderEmail) continue
+    if (!lenderEmail) return []
 
     const matchingFounders = (founders ?? []).filter((founder) => {
       if (lenderPairs.has(`${founder.id}:${lender.id}`)) return false
       return (lender.stages ?? []).includes(founder.stage as string)
     })
 
-    if (matchingFounders.length === 0) continue
+    if (matchingFounders.length === 0) return []
 
-    await sendMonthlyLenderDigest({
+    return [() => sendMonthlyLenderDigest({
       lenderEmail,
       matchingFounders: matchingFounders.map((f) => ({
         company_name: f.company_name,
@@ -177,9 +179,12 @@ export async function GET(req: NextRequest) {
         product_categories: (f.product_categories ?? []) as string[],
       })),
       platformStats,
-    })
-    emailsSent++
-  }
+    })]
+  })
 
-  return NextResponse.json({ ok: true, emailsSent })
+  // Run all jobs in batches of 10
+  const allJobs = [...founderJobs, ...investorJobs, ...lenderJobs]
+  const emailsSent = await sendInBatches(allJobs, (fn) => fn())
+
+  return NextResponse.json({ ok: true, emailsSent, total: allJobs.length })
 }
