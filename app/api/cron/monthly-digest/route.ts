@@ -7,14 +7,22 @@ export const maxDuration = 60
 
 const BATCH_SIZE = 10
 
-async function sendInBatches<T>(items: T[], fn: (item: T) => Promise<void>): Promise<number> {
+async function sendInBatches<T>(items: T[], fn: (item: T) => Promise<void>): Promise<{ sent: number; failed: number }> {
   let sent = 0
+  let failed = 0
   for (let i = 0; i < items.length; i += BATCH_SIZE) {
     const batch = items.slice(i, i + BATCH_SIZE)
     const results = await Promise.allSettled(batch.map(fn))
-    sent += results.filter((r) => r.status === 'fulfilled').length
+    for (const result of results) {
+      if (result.status === 'fulfilled') {
+        sent++
+      } else {
+        failed++
+        console.error('[cron/monthly-digest] email send failed:', result.reason)
+      }
+    }
   }
-  return sent
+  return { sent, failed }
 }
 
 export async function GET(req: NextRequest) {
@@ -34,9 +42,9 @@ export async function GET(req: NextRequest) {
 
   // Fetch all data in parallel
   const [
-    { data: founders },
-    { data: investors },
-    { data: lenders },
+    { data: founders, error: foundersError },
+    { data: investors, error: investorsError },
+    { data: lenders, error: lendersError },
     { data: investorFlags },
     { data: lenderFlags },
     { count: investorCount },
@@ -65,6 +73,12 @@ export async function GET(req: NextRequest) {
     admin.from('flags').select('founder_id, investor_id, responded_at').eq('status', 'accepted').order('responded_at', { ascending: false }).limit(10),
     admin.from('lender_flags').select('founder_id, lender_id, responded_at').eq('status', 'accepted').order('responded_at', { ascending: false }).limit(10),
   ])
+
+  const dbError = foundersError ?? investorsError ?? lendersError
+  if (dbError) {
+    console.error('[cron/monthly-digest] Supabase query failed:', dbError)
+    return NextResponse.json({ error: 'Database query failed', detail: dbError.message }, { status: 500 })
+  }
 
   // Build existing-connection lookup sets
   const investorPairs = new Set((investorFlags ?? []).map((f) => `${f.founder_id}:${f.investor_id}`))
@@ -184,7 +198,8 @@ export async function GET(req: NextRequest) {
 
   // Run all jobs in batches of 10
   const allJobs = [...founderJobs, ...investorJobs, ...lenderJobs]
-  const emailsSent = await sendInBatches(allJobs, (fn) => fn())
+  const { sent, failed } = await sendInBatches(allJobs, (fn) => fn())
 
-  return NextResponse.json({ ok: true, emailsSent, total: allJobs.length })
+  if (failed > 0) console.error(`[cron/monthly-digest] ${failed}/${allJobs.length} emails failed — check RESEND_API_KEY`)
+  return NextResponse.json({ ok: true, emailsSent: sent, failed, total: allJobs.length })
 }

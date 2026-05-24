@@ -80,52 +80,57 @@ export async function GET(req: NextRequest) {
   const investor = investors?.[0]
   const lender = lenders?.[0]
 
-  // Send founder-style test
-  if (founder) {
-    const matchingInvestors = (investors ?? []).filter((inv) => {
-      if (investorPairs.has(`${founder.id}:${inv.id}`)) return false
-      const stageMatch = (inv.stages as string[] ?? []).includes(founder.stage as string)
-      const categoryOverlap = (inv.saas_subcategories ?? []).some((s: string) => (founder.product_categories ?? []).includes(s))
-      return stageMatch && categoryOverlap
-    })
-    const matchingLenders = (lenders ?? []).filter((l) => {
-      if (lenderPairs.has(`${founder.id}:${l.id}`)) return false
-      return (l.stages ?? []).includes(founder.stage as string)
-    })
-    await sendMonthlyFounderDigest({
-      founderEmail: email,
-      matchingInvestors: matchingInvestors.map((inv) => ({ firm_name: inv.firm_name, partner_name: inv.partner_name })),
-      matchingLenders: matchingLenders.map((l) => ({ institution_name: l.institution_name, contact_name: l.contact_name })),
-      platformStats,
-    })
-  }
+  try {
+    // Send founder-style test
+    if (founder) {
+      const matchingInvestors = (investors ?? []).filter((inv) => {
+        if (investorPairs.has(`${founder.id}:${inv.id}`)) return false
+        const stageMatch = (inv.stages as string[] ?? []).includes(founder.stage as string)
+        const categoryOverlap = (inv.saas_subcategories ?? []).some((s: string) => (founder.product_categories ?? []).includes(s))
+        return stageMatch && categoryOverlap
+      })
+      const matchingLenders = (lenders ?? []).filter((l) => {
+        if (lenderPairs.has(`${founder.id}:${l.id}`)) return false
+        return (l.stages ?? []).includes(founder.stage as string)
+      })
+      await sendMonthlyFounderDigest({
+        founderEmail: email,
+        matchingInvestors: matchingInvestors.map((inv) => ({ firm_name: inv.firm_name, partner_name: inv.partner_name })),
+        matchingLenders: matchingLenders.map((l) => ({ institution_name: l.institution_name, contact_name: l.contact_name })),
+        platformStats,
+      })
+    }
 
-  // Send investor-style test
-  if (investor) {
-    const matchingFounders = (founders ?? []).filter((f) => {
-      if (investorPairs.has(`${f.id}:${investor.id}`)) return false
-      const stageMatch = (investor.stages as string[] ?? []).includes(f.stage as string)
-      const categoryOverlap = (investor.saas_subcategories ?? []).some((s: string) => (f.product_categories ?? []).includes(s))
-      return stageMatch && categoryOverlap
-    })
-    await sendMonthlyInvestorDigest({
-      investorEmail: email,
-      matchingFounders: matchingFounders.map((f) => ({ company_name: f.company_name, stage: f.stage as string, product_categories: (f.product_categories ?? []) as string[] })),
-      platformStats,
-    })
-  }
+    // Send investor-style test
+    if (investor) {
+      const matchingFounders = (founders ?? []).filter((f) => {
+        if (investorPairs.has(`${f.id}:${investor.id}`)) return false
+        const stageMatch = (investor.stages as string[] ?? []).includes(f.stage as string)
+        const categoryOverlap = (investor.saas_subcategories ?? []).some((s: string) => (f.product_categories ?? []).includes(s))
+        return stageMatch && categoryOverlap
+      })
+      await sendMonthlyInvestorDigest({
+        investorEmail: email,
+        matchingFounders: matchingFounders.map((f) => ({ company_name: f.company_name, stage: f.stage as string, product_categories: (f.product_categories ?? []) as string[] })),
+        platformStats,
+      })
+    }
 
-  // Send lender-style test
-  if (lender) {
-    const matchingFounders = (founders ?? []).filter((f) => {
-      if (lenderPairs.has(`${f.id}:${lender.id}`)) return false
-      return (lender.stages ?? []).includes(f.stage as string)
-    })
-    await sendMonthlyLenderDigest({
-      lenderEmail: email,
-      matchingFounders: matchingFounders.map((f) => ({ company_name: f.company_name, stage: f.stage as string, product_categories: (f.product_categories ?? []) as string[] })),
-      platformStats,
-    })
+    // Send lender-style test
+    if (lender) {
+      const matchingFounders = (founders ?? []).filter((f) => {
+        if (lenderPairs.has(`${f.id}:${lender.id}`)) return false
+        return (lender.stages ?? []).includes(f.stage as string)
+      })
+      await sendMonthlyLenderDigest({
+        lenderEmail: email,
+        matchingFounders: matchingFounders.map((f) => ({ company_name: f.company_name, stage: f.stage as string, product_categories: (f.product_categories ?? []) as string[] })),
+        platformStats,
+      })
+    }
+  } catch (err) {
+    console.error('[cron/test-digest] send failed:', err)
+    return NextResponse.json({ error: 'Email send failed', detail: String(err) }, { status: 500 })
   }
 
   return NextResponse.json({ ok: true, sentFounder: !!founder, sentInvestor: !!investor, sentLender: !!lender })
