@@ -23,13 +23,6 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  // Only run on the 2nd Wednesday of the month (day 8–14)
-  const today = new Date()
-  const dayOfMonth = today.getUTCDate()
-  if (dayOfMonth < 8 || dayOfMonth > 14) {
-    return NextResponse.json({ ok: true, skipped: true, reason: 'Not the 2nd Wednesday' })
-  }
-
   const admin = createAdminClient()
 
   // Fetch all data in parallel
@@ -120,8 +113,6 @@ export async function GET(req: NextRequest) {
       return (lender.stages ?? []).includes(founder.stage as string)
     })
 
-    if (matchingInvestors.length === 0 && matchingLenders.length === 0) return []
-
     return [() => sendMonthlyFounderDigest({
       founderEmail,
       matchingInvestors: matchingInvestors.map((inv) => ({ firm_name: inv.firm_name, partner_name: inv.partner_name })),
@@ -145,8 +136,6 @@ export async function GET(req: NextRequest) {
       return stageMatch && categoryOverlap
     })
 
-    if (matchingFounders.length === 0) return []
-
     return [() => sendMonthlyInvestorDigest({
       investorEmail,
       matchingFounders: matchingFounders.map((f) => ({
@@ -168,8 +157,6 @@ export async function GET(req: NextRequest) {
       if (lenderPairs.has(`${founder.id}:${lender.id}`)) return false
       return (lender.stages ?? []).includes(founder.stage as string)
     })
-
-    if (matchingFounders.length === 0) return []
 
     return [() => sendMonthlyLenderDigest({
       lenderEmail,

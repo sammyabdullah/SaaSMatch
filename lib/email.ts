@@ -658,22 +658,28 @@ export async function sendMonthlyFounderDigest({
     `<tr><td style="padding:2px 16px 2px 0;font-size:13px;width:200px"><strong>${l.institution_name}</strong></td><td style="padding:2px 0;font-size:13px;color:#555">${l.contact_name}</td></tr>`
   ).join('')
 
+  const hasMatches = matchingInvestors.length > 0 || matchingLenders.length > 0
+
   await getResend().emails.send({
     from: FROM,
     to: founderEmail,
-    subject: 'Unlocked matches',
+    subject: 'Your monthly update from UnlockedVC',
     html: `
-      <p>Here are investors and lenders on UnlockedVC that match your profile.</p>
+      <p>Here's your monthly update from UnlockedVC.</p>
 
-      ${matchingInvestors.length > 0 ? `
-        <p style="font-weight:600;margin:20px 0 6px">Matching investors (${matchingInvestors.length})</p>
-        <table style="border-collapse:collapse">${investorRows}</table>
-      ` : ''}
+      ${hasMatches ? `
+        ${matchingInvestors.length > 0 ? `
+          <p style="font-weight:600;margin:20px 0 6px">Matching investors (${matchingInvestors.length})</p>
+          <table style="border-collapse:collapse">${investorRows}</table>
+        ` : ''}
 
-      ${matchingLenders.length > 0 ? `
-        <p style="font-weight:600;margin:20px 0 6px">Matching lenders (${matchingLenders.length})</p>
-        <table style="border-collapse:collapse">${lenderRows}</table>
-      ` : ''}
+        ${matchingLenders.length > 0 ? `
+          <p style="font-weight:600;margin:20px 0 6px">Matching lenders (${matchingLenders.length})</p>
+          <table style="border-collapse:collapse">${lenderRows}</table>
+        ` : ''}
+      ` : `
+        <p style="color:#6b7280;margin:20px 0">No new investor or lender matches this month — check back next month as new profiles are added.</p>
+      `}
 
       <p style="margin-top:28px"><a href="${APP_URL}/login" style="background:#534AB7;color:white;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block">Log In</a></p>
 
@@ -705,11 +711,16 @@ export async function sendMonthlyInvestorDigest({
   await getResend().emails.send({
     from: FROM,
     to: investorEmail,
-    subject: 'Unlocked matches',
+    subject: 'Your monthly update from UnlockedVC',
     html: `
-      <p>Here are active founders on UnlockedVC that match your thesis this month.</p>
+      <p>Here's your monthly update from UnlockedVC.</p>
 
-      <table style="border-collapse:collapse;margin:8px 0">${founderRows}</table>
+      ${matchingFounders.length > 0 ? `
+        <p style="font-weight:600;margin:20px 0 6px">Matching founders (${matchingFounders.length})</p>
+        <table style="border-collapse:collapse;margin:8px 0">${founderRows}</table>
+      ` : `
+        <p style="color:#6b7280;margin:20px 0">No new founder matches this month — check back next month as new profiles are added.</p>
+      `}
 
       <p style="margin-top:28px"><a href="${APP_URL}/login" style="background:#534AB7;color:white;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block">Log In</a></p>
 
@@ -741,11 +752,16 @@ export async function sendMonthlyLenderDigest({
   await getResend().emails.send({
     from: FROM,
     to: lenderEmail,
-    subject: 'Unlocked matches',
+    subject: 'Your monthly update from UnlockedVC',
     html: `
-      <p>Here are active founders on UnlockedVC that match your lending criteria this month.</p>
+      <p>Here's your monthly update from UnlockedVC.</p>
 
-      <table style="border-collapse:collapse;margin:8px 0">${founderRows}</table>
+      ${matchingFounders.length > 0 ? `
+        <p style="font-weight:600;margin:20px 0 6px">Matching founders (${matchingFounders.length})</p>
+        <table style="border-collapse:collapse;margin:8px 0">${founderRows}</table>
+      ` : `
+        <p style="color:#6b7280;margin:20px 0">No new founder matches this month — check back next month as new profiles are added.</p>
+      `}
 
       <p style="margin-top:28px"><a href="${APP_URL}/login" style="background:#534AB7;color:white;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block">Log In</a></p>
 
