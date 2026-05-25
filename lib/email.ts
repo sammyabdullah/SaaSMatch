@@ -661,7 +661,7 @@ export async function sendMonthlyFounderDigest({
   await getResend().emails.send({
     from: FROM,
     to: founderEmail,
-    subject: 'Unlocked matches',
+    subject: 'UnlockedVC update',
     html: `
       <p>Here are investors and lenders on UnlockedVC that match your profile.</p>
 
@@ -705,7 +705,7 @@ export async function sendMonthlyInvestorDigest({
   await getResend().emails.send({
     from: FROM,
     to: investorEmail,
-    subject: 'Unlocked matches',
+    subject: 'UnlockedVC update',
     html: `
       <p>Here are active founders on UnlockedVC that match your thesis this month.</p>
 
@@ -741,7 +741,7 @@ export async function sendMonthlyLenderDigest({
   await getResend().emails.send({
     from: FROM,
     to: lenderEmail,
-    subject: 'Unlocked matches',
+    subject: 'UnlockedVC update',
     html: `
       <p>Here are active founders on UnlockedVC that match your lending criteria this month.</p>
 

@@ -162,7 +162,7 @@ async function sendFounderSample() {
   const r1 = await resend.emails.send({
     from: FROM,
     to: TO_EMAIL,
-    subject: 'Unlocked matches (founder sample)',
+    subject: 'UnlockedVC update (founder sample)',
     html: `
       <p>Here are investors and lenders on UnlockedVC that match your profile.</p>
 
@@ -202,7 +202,7 @@ async function sendInvestorSample() {
   const r2 = await resend.emails.send({
     from: FROM,
     to: TO_EMAIL,
-    subject: 'Unlocked matches (investor sample)',
+    subject: 'UnlockedVC update (investor sample)',
     html: `
       <p>Here are active founders on UnlockedVC that match your thesis this month.</p>
 
@@ -237,7 +237,7 @@ async function sendLenderSample() {
   const r3 = await resend.emails.send({
     from: FROM,
     to: TO_EMAIL,
-    subject: 'Unlocked matches (lender sample)',
+    subject: 'UnlockedVC update (lender sample)',
     html: `
       <p>Here are active founders on UnlockedVC that match your lending criteria this month.</p>
 
