@@ -23,11 +23,12 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  // Only run on the 2nd Wednesday of the month (day 8–14)
+  // Run on May 27 2026 (one-time kickoff), then 2nd Wednesday of each month (day 8–14)
   const today = new Date()
-  const dayOfMonth = today.getUTCDate()
-  if (dayOfMonth < 8 || dayOfMonth > 14) {
-    return NextResponse.json({ ok: true, skipped: true, reason: 'Not the 2nd Wednesday' })
+  const isKickoff = today.getUTCFullYear() === 2026 && today.getUTCMonth() === 4 && today.getUTCDate() === 27
+  const is2ndWednesday = today.getUTCDate() >= 8 && today.getUTCDate() <= 14
+  if (!isKickoff && !is2ndWednesday) {
+    return NextResponse.json({ ok: true, skipped: true, reason: 'Not a scheduled send day' })
   }
 
   const admin = createAdminClient()
