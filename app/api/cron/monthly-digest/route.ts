@@ -23,10 +23,10 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  // Run on May 27 2026 (one-time kickoff), then 2nd Wednesday of each month (day 8–14)
+  // Run on May 27 2026 (one-time kickoff), then 2nd Wednesday of each month (day 8–14, must be Wednesday)
   const today = new Date()
   const isKickoff = today.getUTCFullYear() === 2026 && today.getUTCMonth() === 4 && today.getUTCDate() === 27
-  const is2ndWednesday = today.getUTCDate() >= 8 && today.getUTCDate() <= 14
+  const is2ndWednesday = today.getUTCDay() === 3 && today.getUTCDate() >= 8 && today.getUTCDate() <= 14
   if (!isKickoff && !is2ndWednesday) {
     return NextResponse.json({ ok: true, skipped: true, reason: 'Not a scheduled send day' })
   }

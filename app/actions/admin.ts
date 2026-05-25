@@ -205,10 +205,12 @@ export async function changeUserEmail(
   })
   if (authError) return { error: authError.message }
 
-  await admin
+  const { error: profileError } = await admin
     .from('profiles')
     .update({ email: newEmail.trim().toLowerCase() })
     .eq('id', profile.id)
+
+  if (profileError) return { error: profileError.message }
 
   return { success: true }
 }

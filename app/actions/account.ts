@@ -148,14 +148,16 @@ export async function deleteAccount(): Promise<void> {
     .eq('id', user.id)
     .single()
 
-  if (profile?.role === 'founder') {
+  if (!profile) redirect('/')
+
+  if (profile.role === 'founder') {
     await admin.from('flags').delete().eq('founder_id', user.id)
     await admin.from('lender_flags').delete().eq('founder_id', user.id)
     await admin.from('founder_profiles').delete().eq('id', user.id)
-  } else if (profile?.role === 'investor') {
+  } else if (profile.role === 'investor') {
     await admin.from('flags').delete().eq('investor_id', user.id)
     await admin.from('investor_profiles').delete().eq('id', user.id)
-  } else if (profile?.role === 'lender') {
+  } else if (profile.role === 'lender') {
     await admin.from('lender_flags').delete().eq('lender_id', user.id)
     await admin.from('lender_profiles').delete().eq('id', user.id)
   }

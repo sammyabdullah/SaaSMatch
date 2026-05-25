@@ -64,19 +64,50 @@ export default function LenderAccountForm({ initialData }: Props) {
     setError('')
     setSuccess(false)
 
+    const minVal = Number(loan_size_min_usd)
+    const maxVal = Number(loan_size_max_usd)
+    const arrMin = Number(arr_min_requirement)
+    const arrMax = Number(arr_max_sweet_spot)
+
+    if (!loan_size_min_usd || isNaN(minVal) || minVal < 0) {
+      setError('Loan size min must be a valid number')
+      setLoading(false)
+      return
+    }
+    if (!loan_size_max_usd || isNaN(maxVal) || maxVal < 0) {
+      setError('Loan size max must be a valid number')
+      setLoading(false)
+      return
+    }
+    if (maxVal < minVal) {
+      setError('Loan size max must be greater than or equal to min')
+      setLoading(false)
+      return
+    }
+    if (arr_min_requirement && (isNaN(arrMin) || arrMin < 0)) {
+      setError('ARR minimum must be a valid number')
+      setLoading(false)
+      return
+    }
+    if (arr_max_sweet_spot && (isNaN(arrMax) || arrMax < 0)) {
+      setError('ARR sweet spot max must be a valid number')
+      setLoading(false)
+      return
+    }
+
     const result = await updateLenderProfile({
       institution_name,
       contact_name,
       website: website ? normalizeUrl(website) : null,
       location,
-      loan_size_min_usd: Number(loan_size_min_usd),
-      loan_size_max_usd: Number(loan_size_max_usd),
+      loan_size_min_usd: minVal,
+      loan_size_max_usd: maxVal,
       loan_types,
       stages,
       geography_focus,
       saas_subcategories,
-      arr_min_requirement: Number(arr_min_requirement),
-      arr_max_sweet_spot: Number(arr_max_sweet_spot),
+      arr_min_requirement: arr_min_requirement ? arrMin : 0,
+      arr_max_sweet_spot: arr_max_sweet_spot ? arrMax : 0,
       thesis_statement,
     })
 

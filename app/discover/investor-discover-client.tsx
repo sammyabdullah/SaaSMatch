@@ -161,7 +161,12 @@ export default function InvestorDiscoverClient({
     setFlaggedIds((prev) => new Set(Array.from(prev).concat(founderId)))
     setFlagStates((prev) => ({ ...prev, [founderId]: 'pending_undo' }))
 
-    await flagFounder(founderId)
+    const result = await flagFounder(founderId)
+    if (result?.error) {
+      setFlaggedIds((prev) => { const next = new Set(prev); next.delete(founderId); return next })
+      setFlagStates((prev) => ({ ...prev, [founderId]: 'idle' }))
+      return
+    }
 
     const t = setTimeout(() => {
       setFlagStates((prev) => ({ ...prev, [founderId]: 'flagged' }))

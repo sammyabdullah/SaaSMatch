@@ -29,6 +29,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid webhook signature' }, { status: 400 })
   }
 
+  if (!event) {
+    return NextResponse.json({ error: 'Invalid webhook payload' }, { status: 400 })
+  }
+
   if (event.type === 'email.bounced' || event.type === 'email.failed') {
     const data = event.data as {
       to?: string[]

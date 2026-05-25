@@ -138,7 +138,12 @@ export default function LenderDiscoverClient({
     setFlaggedIds((prev) => new Set(Array.from(prev).concat(founderId)))
     setFlagStates((prev) => ({ ...prev, [founderId]: 'pending_undo' }))
 
-    await flagFounderAsLender(founderId)
+    const result = await flagFounderAsLender(founderId)
+    if (result?.error) {
+      setFlaggedIds((prev) => { const next = new Set(prev); next.delete(founderId); return next })
+      setFlagStates((prev) => ({ ...prev, [founderId]: 'idle' }))
+      return
+    }
 
     const t = setTimeout(() => {
       setFlagStates((prev) => ({ ...prev, [founderId]: 'flagged' }))
