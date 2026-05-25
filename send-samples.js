@@ -159,7 +159,7 @@ async function sendFounderSample() {
     `<tr><td style="padding:2px 16px 2px 0;font-size:13px;width:200px"><strong>${l.institution_name}</strong></td><td style="padding:2px 0;font-size:13px;color:#555">${l.contact_name}</td></tr>`
   ).join('')
 
-  await resend.emails.send({
+  const r1 = await resend.emails.send({
     from: FROM,
     to: TO_EMAIL,
     subject: 'Unlocked matches (founder sample)',
@@ -179,6 +179,7 @@ async function sendFounderSample() {
       <p style="color:#999;font-size:12px;margin-top:24px">You're receiving this digest because you have an active founder profile on UnlockedVC.</p>
     `,
   })
+  if (r1.error) throw new Error(`Founder: ${r1.error.message}`)
   console.log('✓ Founder digest sent')
 }
 
@@ -198,7 +199,7 @@ async function sendInvestorSample() {
     </tr>`
   ).join('')
 
-  await resend.emails.send({
+  const r2 = await resend.emails.send({
     from: FROM,
     to: TO_EMAIL,
     subject: 'Unlocked matches (investor sample)',
@@ -214,6 +215,7 @@ async function sendInvestorSample() {
       <p style="color:#999;font-size:12px;margin-top:24px">You're receiving this digest because you have an approved investor profile on UnlockedVC.</p>
     `,
   })
+  if (r2.error) throw new Error(`Investor: ${r2.error.message}`)
   console.log('✓ Investor digest sent')
 }
 
@@ -232,7 +234,7 @@ async function sendLenderSample() {
     </tr>`
   ).join('')
 
-  await resend.emails.send({
+  const r3 = await resend.emails.send({
     from: FROM,
     to: TO_EMAIL,
     subject: 'Unlocked matches (lender sample)',
@@ -248,6 +250,7 @@ async function sendLenderSample() {
       <p style="color:#999;font-size:12px;margin-top:24px">You're receiving this digest because you have an approved lender profile on UnlockedVC.</p>
     `,
   })
+  if (r3.error) throw new Error(`Lender: ${r3.error.message}`)
   console.log('✓ Lender digest sent')
 }
 
