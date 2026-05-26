@@ -106,9 +106,11 @@ export async function GET(req: NextRequest) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const founderEmail = (founder as any).profiles?.email as string | undefined
     if (!founderEmail) return []
+    if (!(founder.product_categories ?? []).length) return []
 
     const matchingInvestors = (investors ?? []).filter((inv) => {
       if (investorPairs.has(`${founder.id}:${inv.id}`)) return false
+      if (!(inv.stages as string[] ?? []).length) return false
       const stageMatch = (inv.stages as string[] ?? []).includes(founder.stage as string)
       const categoryOverlap = (inv.saas_subcategories ?? []).some((s: string) =>
         (founder.product_categories ?? []).includes(s)
@@ -118,6 +120,7 @@ export async function GET(req: NextRequest) {
 
     const matchingLenders = (lenders ?? []).filter((lender) => {
       if (lenderPairs.has(`${founder.id}:${lender.id}`)) return false
+      if (!(lender.stages ?? []).length) return false
       return (lender.stages ?? []).includes(founder.stage as string)
     })
 
@@ -136,9 +139,12 @@ export async function GET(req: NextRequest) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const investorEmail = (investor as any).profiles?.email as string | undefined
     if (!investorEmail) return []
+    if (!(investor.stages as string[] ?? []).length) return []
+    if (!(investor.saas_subcategories ?? []).length) return []
 
     const matchingFounders = (founders ?? []).filter((founder) => {
       if (investorPairs.has(`${founder.id}:${investor.id}`)) return false
+      if (!(founder.product_categories ?? []).length) return false
       const stageMatch = (investor.stages as string[] ?? []).includes(founder.stage as string)
       const categoryOverlap = (investor.saas_subcategories ?? []).some((s: string) =>
         (founder.product_categories ?? []).includes(s)
@@ -164,9 +170,11 @@ export async function GET(req: NextRequest) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const lenderEmail = (lender as any).profiles?.email as string | undefined
     if (!lenderEmail) return []
+    if (!(lender.stages ?? []).length) return []
 
     const matchingFounders = (founders ?? []).filter((founder) => {
       if (lenderPairs.has(`${founder.id}:${lender.id}`)) return false
+      if (!(founder.product_categories ?? []).length) return false
       return (lender.stages ?? []).includes(founder.stage as string)
     })
 
