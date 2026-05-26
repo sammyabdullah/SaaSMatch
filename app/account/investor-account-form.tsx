@@ -193,7 +193,7 @@ export default function InvestorAccountForm({ initialData }: Props) {
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
           SaaS subcategories{' '}
-          <span className="text-gray-400 font-normal">(minimum 3 required)</span>
+          <span className="text-gray-400 font-normal">(select at least 1)</span>
         </label>
         <MultiSelect
           options={SAAS_SUBCATEGORIES}

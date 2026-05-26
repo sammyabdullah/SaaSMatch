@@ -116,7 +116,7 @@ export default function ChangeEmailForm() {
             <div>
               <label className="block text-xs text-gray-500 mb-1">New password</label>
               <input
-                type="text"
+                type="password"
                 required
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}

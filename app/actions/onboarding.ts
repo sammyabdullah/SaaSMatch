@@ -50,6 +50,9 @@ export async function submitFounderProfile(data: FounderProfileInput) {
 
   if (!user) redirect('/login')
 
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+  if (profile?.role !== 'founder') return { error: 'Unauthorized' }
+
   const { error } = await supabase.from('founder_profiles').insert({
     id: user.id,
     ...data,
@@ -89,6 +92,9 @@ export async function submitInvestorProfile(data: InvestorProfileInput) {
   } = await supabase.auth.getUser()
 
   if (!user) redirect('/login')
+
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+  if (profile?.role !== 'investor') return { error: 'Unauthorized' }
 
   const { error } = await supabase.from('investor_profiles').insert({
     id: user.id,
@@ -140,6 +146,9 @@ export async function submitLenderProfile(data: LenderProfileInput) {
   } = await supabase.auth.getUser()
 
   if (!user) redirect('/login')
+
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+  if (profile?.role !== 'lender') return { error: 'Unauthorized' }
 
   const { error } = await supabase.from('lender_profiles').insert({
     id: user.id,
