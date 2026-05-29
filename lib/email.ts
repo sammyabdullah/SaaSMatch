@@ -658,7 +658,7 @@ export async function sendMonthlyFounderDigest({
     `<tr><td style="padding:2px 16px 2px 0;font-size:13px;width:200px"><strong>${l.institution_name}</strong></td><td style="padding:2px 0;font-size:13px;color:#555">${l.contact_name}</td></tr>`
   ).join('')
 
-  await getResend().emails.send({
+  const { error: sendError } = await getResend().emails.send({
     from: FROM,
     to: founderEmail,
     subject: 'UnlockedVC update',
@@ -685,6 +685,7 @@ export async function sendMonthlyFounderDigest({
       <p style="color:#999;font-size:12px;margin-top:24px">You're receiving this digest because you have an active founder profile on UnlockedVC.</p>
     `,
   })
+  if (sendError) throw new Error(sendError.message)
 }
 
 // ─── Monthly digest: investor ─────────────────────────────────────────────────
@@ -705,7 +706,7 @@ export async function sendMonthlyInvestorDigest({
     </tr>`
   ).join('')
 
-  await getResend().emails.send({
+  const { error: sendError } = await getResend().emails.send({
     from: FROM,
     to: investorEmail,
     subject: 'UnlockedVC update',
@@ -724,6 +725,7 @@ export async function sendMonthlyInvestorDigest({
       <p style="color:#999;font-size:12px;margin-top:24px">You're receiving this digest because you have an approved investor profile on UnlockedVC.</p>
     `,
   })
+  if (sendError) throw new Error(sendError.message)
 }
 
 // ─── Monthly digest: lender ──────────────────────────────────────────────────
@@ -744,7 +746,7 @@ export async function sendMonthlyLenderDigest({
     </tr>`
   ).join('')
 
-  await getResend().emails.send({
+  const { error: sendError } = await getResend().emails.send({
     from: FROM,
     to: lenderEmail,
     subject: 'UnlockedVC update',
@@ -763,6 +765,7 @@ export async function sendMonthlyLenderDigest({
       <p style="color:#999;font-size:12px;margin-top:24px">You're receiving this digest because you have an approved lender profile on UnlockedVC.</p>
     `,
   })
+  if (sendError) throw new Error(sendError.message)
 }
 
 // ─── Platform stats type & HTML builder ──────────────────────────────────────
