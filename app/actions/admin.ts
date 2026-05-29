@@ -3,7 +3,7 @@
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
-import { sendWelcomeFounderEmail, sendWelcomeInvestorEmail, sendWelcomeLenderEmail } from '@/lib/email'
+import { sendWelcomeFounderEmail, sendWelcomeInvestorEmail, sendWelcomeLenderEmail, sendMonthlyFounderDigest, sendMonthlyInvestorDigest, sendMonthlyLenderDigest } from '@/lib/email'
 
 async function requireAdmin() {
   const supabase = await createClient()
@@ -259,4 +259,115 @@ export async function deleteFounderProfile(founderId: string) {
 
   revalidatePath('/admin')
   revalidatePath('/discover')
+}
+
+export async function triggerMonthlyDigest(): Promise<{ emailsSent?: number; total?: number; error?: string }> {
+  await requireAdmin()
+
+  const admin = createAdminClient()
+
+  const [
+    { data: founders },
+    { data: investors },
+    { data: lenders },
+    { data: investorFlags },
+    { data: lenderFlags },
+    { count: investorCount },
+    { count: lenderCount },
+    { data: latestInvestors },
+    { data: latestLenders },
+    { data: acceptedInvConn },
+    { data: acceptedLenConn },
+  ] = await Promise.all([
+    admin.from('founder_profiles').select('id, stage, product_categories, company_name, profiles(email)').eq('is_approved', true).eq('status', 'active'),
+    admin.from('investor_profiles').select('id, firm_name, partner_name, stages, saas_subcategories, profiles(email)').eq('is_approved', true),
+    admin.from('lender_profiles').select('id, institution_name, contact_name, stages, profiles(email)').eq('is_approved', true),
+    admin.from('flags').select('founder_id, investor_id').in('status', ['pending', 'accepted']),
+    admin.from('lender_flags').select('founder_id, lender_id').in('status', ['pending', 'accepted']),
+    admin.from('investor_profiles').select('id', { count: 'exact', head: true }).eq('is_approved', true),
+    admin.from('lender_profiles').select('id', { count: 'exact', head: true }).eq('is_approved', true),
+    admin.from('investor_profiles').select('firm_name, partner_name').eq('is_approved', true).order('created_at', { ascending: false }).limit(5),
+    admin.from('lender_profiles').select('institution_name, contact_name').eq('is_approved', true).order('created_at', { ascending: false }).limit(5),
+    admin.from('flags').select('founder_id, investor_id, responded_at').eq('status', 'accepted').order('responded_at', { ascending: false }).limit(10),
+    admin.from('lender_flags').select('founder_id, lender_id, responded_at').eq('status', 'accepted').order('responded_at', { ascending: false }).limit(10),
+  ])
+
+  const investorPairs = new Set((investorFlags ?? []).map((f) => `${f.founder_id}:${f.investor_id}`))
+  const lenderPairs = new Set((lenderFlags ?? []).map((f) => `${f.founder_id}:${f.lender_id}`))
+  const investorNameMap = Object.fromEntries((investors ?? []).map((i) => [i.id, i.firm_name]))
+  const lenderNameMap = Object.fromEntries((lenders ?? []).map((l) => [l.id, l.institution_name]))
+  const founderNameMap = Object.fromEntries((founders ?? []).map((f) => [f.id, f.company_name]))
+
+  type ConnRow = { date: string; left: string; right: string }
+  const latestConnections = [
+    ...(acceptedInvConn ?? []).map((c): ConnRow => ({ date: c.responded_at ?? '', left: investorNameMap[c.investor_id] ?? 'An investor', right: founderNameMap[c.founder_id] ?? 'A founder' })),
+    ...(acceptedLenConn ?? []).map((c): ConnRow => ({ date: c.responded_at ?? '', left: lenderNameMap[c.lender_id] ?? 'A lender', right: founderNameMap[c.founder_id] ?? 'A founder' })),
+  ].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 10).map(({ left, right }) => ({ left, right }))
+
+  const platformStats = {
+    investorCount: investorCount ?? 0,
+    lenderCount: lenderCount ?? 0,
+    latestInvestors: (latestInvestors ?? []) as { firm_name: string; partner_name: string }[],
+    latestLenders: (latestLenders ?? []) as { institution_name: string; contact_name: string }[],
+    latestConnections,
+  }
+
+  const BATCH_SIZE = 10
+  async function sendInBatches<T>(items: T[], fn: (item: T) => Promise<void>): Promise<number> {
+    let sent = 0
+    for (let i = 0; i < items.length; i += BATCH_SIZE) {
+      const batch = items.slice(i, i + BATCH_SIZE)
+      const results = await Promise.allSettled(batch.map(fn))
+      sent += results.filter((r) => r.status === 'fulfilled').length
+    }
+    return sent
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const founderJobs = (founders ?? []).flatMap((founder: any) => {
+    const founderEmail = founder.profiles?.email as string | undefined
+    if (!founderEmail || !(founder.product_categories ?? []).length) return []
+    const matchingInvestors = (investors ?? []).filter((inv) => {
+      if (investorPairs.has(`${founder.id}:${inv.id}`)) return false
+      if (!(inv.stages as string[] ?? []).length) return false
+      return (inv.stages as string[] ?? []).includes(founder.stage) && (inv.saas_subcategories ?? []).some((s: string) => (founder.product_categories ?? []).includes(s))
+    })
+    const matchingLenders = (lenders ?? []).filter((lender) => {
+      if (lenderPairs.has(`${founder.id}:${lender.id}`)) return false
+      if (!(lender.stages ?? []).length) return false
+      return (lender.stages ?? []).includes(founder.stage)
+    })
+    if (matchingInvestors.length === 0 && matchingLenders.length === 0) return []
+    return [() => sendMonthlyFounderDigest({ founderEmail, matchingInvestors: matchingInvestors.map((inv) => ({ firm_name: inv.firm_name, partner_name: inv.partner_name })), matchingLenders: matchingLenders.map((l) => ({ institution_name: l.institution_name, contact_name: l.contact_name })), platformStats })]
+  })
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const investorJobs = (investors ?? []).flatMap((investor: any) => {
+    const investorEmail = investor.profiles?.email as string | undefined
+    if (!investorEmail || !(investor.stages ?? []).length || !(investor.saas_subcategories ?? []).length) return []
+    const matchingFounders = (founders ?? []).filter((founder) => {
+      if (investorPairs.has(`${founder.id}:${investor.id}`)) return false
+      if (!(founder.product_categories ?? []).length) return false
+      return (investor.stages ?? []).includes(founder.stage) && (investor.saas_subcategories ?? []).some((s: string) => (founder.product_categories ?? []).includes(s))
+    })
+    if (matchingFounders.length === 0) return []
+    return [() => sendMonthlyInvestorDigest({ investorEmail, matchingFounders: matchingFounders.map((f) => ({ company_name: f.company_name, stage: f.stage as string, product_categories: (f.product_categories ?? []) as string[] })), platformStats })]
+  })
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const lenderJobs = (lenders ?? []).flatMap((lender: any) => {
+    const lenderEmail = lender.profiles?.email as string | undefined
+    if (!lenderEmail || !(lender.stages ?? []).length) return []
+    const matchingFounders = (founders ?? []).filter((founder) => {
+      if (lenderPairs.has(`${founder.id}:${lender.id}`)) return false
+      if (!(founder.product_categories ?? []).length) return false
+      return (lender.stages ?? []).includes(founder.stage)
+    })
+    if (matchingFounders.length === 0) return []
+    return [() => sendMonthlyLenderDigest({ lenderEmail, matchingFounders: matchingFounders.map((f) => ({ company_name: f.company_name, stage: f.stage as string, product_categories: (f.product_categories ?? []) as string[] })), platformStats })]
+  })
+
+  const allJobs = [...founderJobs, ...investorJobs, ...lenderJobs]
+  const emailsSent = await sendInBatches(allJobs, (fn) => fn())
+  return { emailsSent, total: allJobs.length }
 }

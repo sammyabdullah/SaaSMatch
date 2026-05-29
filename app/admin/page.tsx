@@ -5,6 +5,7 @@ import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { ApproveButton, RejectButton, ApproveInvestorButton, RejectInvestorButton, DeleteFounderButton, DeleteInvestorButton, ApproveLenderButton, RejectLenderButton, DeleteLenderButton } from './approve-button'
 import ChangeEmailForm from './change-email-form'
+import SendDigestButton from './send-digest-button'
 
 function fmt(value: string) {
   return value.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
@@ -221,6 +222,13 @@ export default async function AdminPage() {
             ))}
           </div>
         )}
+      </section>
+
+      {/* Monthly digest */}
+      <section className="mb-14">
+        <h2 className="text-base font-semibold text-gray-900 mb-2">Monthly digest</h2>
+        <p className="text-sm text-gray-500 mb-4">Sends matched emails to all active founders, investors, and lenders right now.</p>
+        <SendDigestButton />
       </section>
 
       {/* Approved Lenders */}
