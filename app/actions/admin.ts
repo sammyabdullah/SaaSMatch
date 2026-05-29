@@ -261,7 +261,7 @@ export async function deleteFounderProfile(founderId: string) {
   revalidatePath('/discover')
 }
 
-export async function triggerMonthlyDigest(): Promise<{ emailsSent?: number; total?: number; error?: string }> {
+export async function triggerMonthlyDigest(): Promise<{ emailsSent?: number; total?: number; skipped?: number; error?: string }> {
   await requireAdmin()
 
   const admin = createAdminClient()
@@ -279,9 +279,9 @@ export async function triggerMonthlyDigest(): Promise<{ emailsSent?: number; tot
     { data: acceptedInvConn },
     { data: acceptedLenConn },
   ] = await Promise.all([
-    admin.from('founder_profiles').select('id, stage, product_categories, company_name, profiles(email)').eq('is_approved', true).eq('status', 'active'),
-    admin.from('investor_profiles').select('id, firm_name, partner_name, stages, saas_subcategories, profiles(email)').eq('is_approved', true),
-    admin.from('lender_profiles').select('id, institution_name, contact_name, stages, profiles(email)').eq('is_approved', true),
+    admin.from('founder_profiles').select('id, stage, product_categories, company_name').eq('is_approved', true).eq('status', 'active'),
+    admin.from('investor_profiles').select('id, firm_name, partner_name, stages, saas_subcategories').eq('is_approved', true),
+    admin.from('lender_profiles').select('id, institution_name, contact_name, stages').eq('is_approved', true),
     admin.from('flags').select('founder_id, investor_id').in('status', ['pending', 'accepted']),
     admin.from('lender_flags').select('founder_id, lender_id').in('status', ['pending', 'accepted']),
     admin.from('investor_profiles').select('id', { count: 'exact', head: true }).eq('is_approved', true),
@@ -291,6 +291,15 @@ export async function triggerMonthlyDigest(): Promise<{ emailsSent?: number; tot
     admin.from('flags').select('founder_id, investor_id, responded_at').eq('status', 'accepted').order('responded_at', { ascending: false }).limit(10),
     admin.from('lender_flags').select('founder_id, lender_id, responded_at').eq('status', 'accepted').order('responded_at', { ascending: false }).limit(10),
   ])
+
+  // Fetch emails directly — more reliable than FK join which can silently return null
+  const allProfileIds = [
+    ...(founders ?? []).map((f) => f.id),
+    ...(investors ?? []).map((i) => i.id),
+    ...(lenders ?? []).map((l) => l.id),
+  ]
+  const { data: profileRows } = await admin.from('profiles').select('id, email').in('id', allProfileIds)
+  const emailMap = Object.fromEntries((profileRows ?? []).map((p) => [p.id, p.email as string]))
 
   const investorPairs = new Set((investorFlags ?? []).map((f) => `${f.founder_id}:${f.investor_id}`))
   const lenderPairs = new Set((lenderFlags ?? []).map((f) => `${f.founder_id}:${f.lender_id}`))
@@ -323,10 +332,13 @@ export async function triggerMonthlyDigest(): Promise<{ emailsSent?: number; tot
     return sent
   }
 
+  let skipped = 0
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const founderJobs = (founders ?? []).flatMap((founder: any) => {
-    const founderEmail = founder.profiles?.email as string | undefined
-    if (!founderEmail || !(founder.product_categories ?? []).length) return []
+    const founderEmail = emailMap[founder.id]
+    if (!founderEmail) { skipped++; return [] }
+    if (!(founder.product_categories ?? []).length) return []
     const matchingInvestors = (investors ?? []).filter((inv) => {
       if (investorPairs.has(`${founder.id}:${inv.id}`)) return false
       if (!(inv.stages as string[] ?? []).length) return false
@@ -343,8 +355,9 @@ export async function triggerMonthlyDigest(): Promise<{ emailsSent?: number; tot
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const investorJobs = (investors ?? []).flatMap((investor: any) => {
-    const investorEmail = investor.profiles?.email as string | undefined
-    if (!investorEmail || !(investor.stages ?? []).length || !(investor.saas_subcategories ?? []).length) return []
+    const investorEmail = emailMap[investor.id]
+    if (!investorEmail) { skipped++; return [] }
+    if (!(investor.stages ?? []).length || !(investor.saas_subcategories ?? []).length) return []
     const matchingFounders = (founders ?? []).filter((founder) => {
       if (investorPairs.has(`${founder.id}:${investor.id}`)) return false
       if (!(founder.product_categories ?? []).length) return false
@@ -356,8 +369,9 @@ export async function triggerMonthlyDigest(): Promise<{ emailsSent?: number; tot
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const lenderJobs = (lenders ?? []).flatMap((lender: any) => {
-    const lenderEmail = lender.profiles?.email as string | undefined
-    if (!lenderEmail || !(lender.stages ?? []).length) return []
+    const lenderEmail = emailMap[lender.id]
+    if (!lenderEmail) { skipped++; return [] }
+    if (!(lender.stages ?? []).length) return []
     const matchingFounders = (founders ?? []).filter((founder) => {
       if (lenderPairs.has(`${founder.id}:${lender.id}`)) return false
       if (!(founder.product_categories ?? []).length) return false
@@ -369,10 +383,10 @@ export async function triggerMonthlyDigest(): Promise<{ emailsSent?: number; tot
 
   const allJobs = [...founderJobs, ...investorJobs, ...lenderJobs]
   const emailsSent = await sendInBatches(allJobs, (fn) => fn())
-  return { emailsSent, total: allJobs.length }
+  return { emailsSent, total: allJobs.length, skipped }
 }
 
-export async function triggerUnmatchedDigest(): Promise<{ emailsSent?: number; total?: number; error?: string }> {
+export async function triggerUnmatchedDigest(): Promise<{ emailsSent?: number; total?: number; skipped?: number; error?: string }> {
   await requireAdmin()
 
   const admin = createAdminClient()
@@ -390,9 +404,9 @@ export async function triggerUnmatchedDigest(): Promise<{ emailsSent?: number; t
     { data: acceptedInvConn },
     { data: acceptedLenConn },
   ] = await Promise.all([
-    admin.from('founder_profiles').select('id, stage, product_categories, company_name, profiles(email)').eq('is_approved', true).eq('status', 'active'),
-    admin.from('investor_profiles').select('id, firm_name, partner_name, stages, saas_subcategories, profiles(email)').eq('is_approved', true),
-    admin.from('lender_profiles').select('id, institution_name, contact_name, stages, profiles(email)').eq('is_approved', true),
+    admin.from('founder_profiles').select('id, stage, product_categories, company_name').eq('is_approved', true).eq('status', 'active'),
+    admin.from('investor_profiles').select('id, firm_name, partner_name, stages, saas_subcategories').eq('is_approved', true),
+    admin.from('lender_profiles').select('id, institution_name, contact_name, stages').eq('is_approved', true),
     admin.from('flags').select('founder_id, investor_id').in('status', ['pending', 'accepted']),
     admin.from('lender_flags').select('founder_id, lender_id').in('status', ['pending', 'accepted']),
     admin.from('investor_profiles').select('id', { count: 'exact', head: true }).eq('is_approved', true),
@@ -402,6 +416,15 @@ export async function triggerUnmatchedDigest(): Promise<{ emailsSent?: number; t
     admin.from('flags').select('founder_id, investor_id, responded_at').eq('status', 'accepted').order('responded_at', { ascending: false }).limit(10),
     admin.from('lender_flags').select('founder_id, lender_id, responded_at').eq('status', 'accepted').order('responded_at', { ascending: false }).limit(10),
   ])
+
+  // Fetch emails directly — more reliable than FK join which can silently return null
+  const allProfileIds = [
+    ...(founders ?? []).map((f) => f.id),
+    ...(investors ?? []).map((i) => i.id),
+    ...(lenders ?? []).map((l) => l.id),
+  ]
+  const { data: profileRows } = await admin.from('profiles').select('id, email').in('id', allProfileIds)
+  const emailMap = Object.fromEntries((profileRows ?? []).map((p) => [p.id, p.email as string]))
 
   const investorPairs = new Set((investorFlags ?? []).map((f) => `${f.founder_id}:${f.investor_id}`))
   const lenderPairs = new Set((lenderFlags ?? []).map((f) => `${f.founder_id}:${f.lender_id}`))
@@ -434,10 +457,12 @@ export async function triggerUnmatchedDigest(): Promise<{ emailsSent?: number; t
     return sent
   }
 
+  let skipped = 0
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const founderJobs = (founders ?? []).flatMap((founder: any) => {
-    const founderEmail = founder.profiles?.email as string | undefined
-    if (!founderEmail) return []
+    const founderEmail = emailMap[founder.id]
+    if (!founderEmail) { skipped++; return [] }
     const hasCategories = (founder.product_categories ?? []).length > 0
     const matchingInvestors = !hasCategories ? [] : (investors ?? []).filter((inv) => {
       if (investorPairs.has(`${founder.id}:${inv.id}`)) return false
@@ -455,8 +480,8 @@ export async function triggerUnmatchedDigest(): Promise<{ emailsSent?: number; t
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const investorJobs = (investors ?? []).flatMap((investor: any) => {
-    const investorEmail = investor.profiles?.email as string | undefined
-    if (!investorEmail) return []
+    const investorEmail = emailMap[investor.id]
+    if (!investorEmail) { skipped++; return [] }
     const hasStages = (investor.stages ?? []).length > 0
     const hasCats = (investor.saas_subcategories ?? []).length > 0
     const matchingFounders = (!hasStages || !hasCats) ? [] : (founders ?? []).filter((founder) => {
@@ -470,8 +495,8 @@ export async function triggerUnmatchedDigest(): Promise<{ emailsSent?: number; t
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const lenderJobs = (lenders ?? []).flatMap((lender: any) => {
-    const lenderEmail = lender.profiles?.email as string | undefined
-    if (!lenderEmail) return []
+    const lenderEmail = emailMap[lender.id]
+    if (!lenderEmail) { skipped++; return [] }
     const hasStages = (lender.stages ?? []).length > 0
     const matchingFounders = !hasStages ? [] : (founders ?? []).filter((founder) => {
       if (lenderPairs.has(`${founder.id}:${lender.id}`)) return false
@@ -484,7 +509,7 @@ export async function triggerUnmatchedDigest(): Promise<{ emailsSent?: number; t
 
   const allJobs = [...founderJobs, ...investorJobs, ...lenderJobs]
   const emailsSent = await sendInBatches(allJobs, (fn) => fn())
-  return { emailsSent, total: allJobs.length }
+  return { emailsSent, total: allJobs.length, skipped }
 }
 
 export async function sendTestDigestToEmail(email: string): Promise<{ error?: string; success?: boolean }> {

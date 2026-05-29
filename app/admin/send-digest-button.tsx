@@ -8,11 +8,11 @@ const inputCls = 'border border-gray-200 rounded-md px-3 py-2 text-sm outline-no
 
 export default function SendDigestButton() {
   const [matchedLoading, setMatchedLoading] = useState(false)
-  const [matchedResult, setMatchedResult] = useState<{ emailsSent: number; total: number } | null>(null)
+  const [matchedResult, setMatchedResult] = useState<{ emailsSent: number; total: number; skipped: number } | null>(null)
   const [matchedError, setMatchedError] = useState('')
 
   const [unmatchedLoading, setUnmatchedLoading] = useState(false)
-  const [unmatchedResult, setUnmatchedResult] = useState<{ emailsSent: number; total: number } | null>(null)
+  const [unmatchedResult, setUnmatchedResult] = useState<{ emailsSent: number; total: number; skipped: number } | null>(null)
   const [unmatchedError, setUnmatchedError] = useState('')
 
   const [testEmail, setTestEmail] = useState('')
@@ -27,7 +27,7 @@ export default function SendDigestButton() {
     setMatchedError('')
     const res = await triggerMonthlyDigest()
     if (res.error) setMatchedError(res.error)
-    else setMatchedResult({ emailsSent: res.emailsSent ?? 0, total: res.total ?? 0 })
+    else setMatchedResult({ emailsSent: res.emailsSent ?? 0, total: res.total ?? 0, skipped: res.skipped ?? 0 })
     setMatchedLoading(false)
   }
 
@@ -38,7 +38,7 @@ export default function SendDigestButton() {
     setUnmatchedError('')
     const res = await triggerUnmatchedDigest()
     if (res.error) setUnmatchedError(res.error)
-    else setUnmatchedResult({ emailsSent: res.emailsSent ?? 0, total: res.total ?? 0 })
+    else setUnmatchedResult({ emailsSent: res.emailsSent ?? 0, total: res.total ?? 0, skipped: res.skipped ?? 0 })
     setUnmatchedLoading(false)
   }
 
@@ -63,7 +63,7 @@ export default function SendDigestButton() {
           <button onClick={handleMatched} disabled={matchedLoading} className={btnCls}>
             {matchedLoading ? 'Sending…' : 'Send digest — matched users'}
           </button>
-          {matchedResult && <p className="text-sm text-green-600">Done — {matchedResult.emailsSent} of {matchedResult.total} sent.</p>}
+          {matchedResult && <p className="text-sm text-green-600">Done — {matchedResult.emailsSent} of {matchedResult.total} sent.{matchedResult.skipped > 0 ? ` (${matchedResult.skipped} skipped — no profile email found)` : ''}</p>}
           {matchedError && <p className="text-sm text-red-500">{matchedError}</p>}
         </div>
       </div>
@@ -75,7 +75,7 @@ export default function SendDigestButton() {
           <button onClick={handleUnmatched} disabled={unmatchedLoading} className={btnCls}>
             {unmatchedLoading ? 'Sending…' : 'Send digest — unmatched users'}
           </button>
-          {unmatchedResult && <p className="text-sm text-green-600">Done — {unmatchedResult.emailsSent} of {unmatchedResult.total} sent.</p>}
+          {unmatchedResult && <p className="text-sm text-green-600">Done — {unmatchedResult.emailsSent} of {unmatchedResult.total} sent.{unmatchedResult.skipped > 0 ? ` (${unmatchedResult.skipped} skipped — no profile email found)` : ''}</p>}
           {unmatchedError && <p className="text-sm text-red-500">{unmatchedError}</p>}
         </div>
       </div>
