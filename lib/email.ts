@@ -663,7 +663,10 @@ export async function sendMonthlyFounderDigest({
     to: founderEmail,
     subject: 'UnlockedVC update',
     html: `
-      <p>Here are investors and lenders on UnlockedVC that match your profile.</p>
+      ${matchingInvestors.length > 0 || matchingLenders.length > 0
+        ? '<p>Here are investors and lenders on UnlockedVC that match your profile.</p>'
+        : '<p>No new matches this month — here\'s what\'s happening on UnlockedVC.</p>'
+      }
 
       ${matchingInvestors.length > 0 ? `
         <p style="font-weight:600;margin:20px 0 6px">Matching investors (${matchingInvestors.length})</p>
@@ -707,9 +710,12 @@ export async function sendMonthlyInvestorDigest({
     to: investorEmail,
     subject: 'UnlockedVC update',
     html: `
-      <p>Here are active founders on UnlockedVC that match your thesis this month.</p>
+      ${matchingFounders.length > 0
+        ? '<p>Here are active founders on UnlockedVC that match your thesis this month.</p>'
+        : '<p>No new matches this month — here\'s what\'s happening on UnlockedVC.</p>'
+      }
 
-      <table style="border-collapse:collapse;margin:8px 0">${founderRows}</table>
+      ${matchingFounders.length > 0 ? `<table style="border-collapse:collapse;margin:8px 0">${founderRows}</table>` : ''}
 
       <p style="margin-top:28px"><a href="${APP_URL}/login" style="background:#534AB7;color:white;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block">Log In</a></p>
 
@@ -743,9 +749,12 @@ export async function sendMonthlyLenderDigest({
     to: lenderEmail,
     subject: 'UnlockedVC update',
     html: `
-      <p>Here are active founders on UnlockedVC that match your lending criteria this month.</p>
+      ${matchingFounders.length > 0
+        ? '<p>Here are active founders on UnlockedVC that match your lending criteria this month.</p>'
+        : '<p>No new matches this month — here\'s what\'s happening on UnlockedVC.</p>'
+      }
 
-      <table style="border-collapse:collapse;margin:8px 0">${founderRows}</table>
+      ${matchingFounders.length > 0 ? `<table style="border-collapse:collapse;margin:8px 0">${founderRows}</table>` : ''}
 
       <p style="margin-top:28px"><a href="${APP_URL}/login" style="background:#534AB7;color:white;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block">Log In</a></p>
 
