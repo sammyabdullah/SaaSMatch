@@ -327,6 +327,7 @@ export async function triggerDigest(): Promise<{ emailsSent?: number; total?: nu
       const batch = items.slice(i, i + BATCH_SIZE)
       const results = await Promise.allSettled(batch.map(fn))
       sent += results.filter((r) => r.status === 'fulfilled').length
+      if (i + BATCH_SIZE < items.length) await new Promise((r) => setTimeout(r, 1000))
     }
     return sent
   }
