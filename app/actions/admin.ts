@@ -412,6 +412,9 @@ export async function sendTestDigestToEmail(email: string): Promise<{ error?: st
     { data: latestLenders },
     { data: acceptedInvConn },
     { data: acceptedLenConn },
+    { data: allFoundersForMap },
+    { data: allInvestorsForMap },
+    { data: allLendersForMap },
   ] = await Promise.all([
     admin.from('founder_profiles').select('id, stage, product_categories, company_name').eq('is_approved', true).eq('status', 'active').limit(5),
     admin.from('investor_profiles').select('id, firm_name, partner_name, stages, saas_subcategories').eq('is_approved', true).limit(5),
@@ -422,11 +425,15 @@ export async function sendTestDigestToEmail(email: string): Promise<{ error?: st
     admin.from('lender_profiles').select('institution_name, contact_name').eq('is_approved', true).order('created_at', { ascending: false }).limit(5),
     admin.from('flags').select('founder_id, investor_id, responded_at').eq('status', 'accepted').order('responded_at', { ascending: false }).limit(10),
     admin.from('lender_flags').select('founder_id, lender_id, responded_at').eq('status', 'accepted').order('responded_at', { ascending: false }).limit(10),
+    admin.from('founder_profiles').select('id, company_name').eq('is_approved', true).eq('status', 'active'),
+    admin.from('investor_profiles').select('id, firm_name').eq('is_approved', true),
+    admin.from('lender_profiles').select('id, institution_name').eq('is_approved', true),
   ])
 
-  const investorNameMap = Object.fromEntries((investors ?? []).map((i) => [i.id, i.firm_name]))
-  const lenderNameMap = Object.fromEntries((lenders ?? []).map((l) => [l.id, l.institution_name]))
-  const founderNameMap = Object.fromEntries((founders ?? []).map((f) => [f.id, f.company_name]))
+  // Name maps built from full data so connections show real names
+  const investorNameMap = Object.fromEntries((allInvestorsForMap ?? []).map((i) => [i.id, i.firm_name]))
+  const lenderNameMap = Object.fromEntries((allLendersForMap ?? []).map((l) => [l.id, l.institution_name]))
+  const founderNameMap = Object.fromEntries((allFoundersForMap ?? []).map((f) => [f.id, f.company_name]))
 
   type ConnRow = { date: string; left: string; right: string }
   const latestConnections = [
