@@ -21,8 +21,8 @@ if (RESEND_API_KEY === 'PASTE_YOUR_RESEND_API_KEY_HERE') {
 
 const resend = new Resend(RESEND_API_KEY)
 
-const FROM = 'UnlockedVC <noreply@unlockedvc.com>'
-const APP_URL = 'https://unlockedvc.com'
+const FROM = 'FounderInvited <noreply@founderinvited.com>'
+const APP_URL = 'https://founderinvited.com'
 
 // ── Sample data ───────────────────────────────────────────────────────────────
 
@@ -162,9 +162,9 @@ async function sendFounderSample() {
   const r1 = await resend.emails.send({
     from: FROM,
     to: TO_EMAIL,
-    subject: 'UnlockedVC update (founder sample)',
+    subject: 'FounderInvited update (founder sample)',
     html: `
-      <p>Here are investors and lenders on UnlockedVC that match your profile.</p>
+      <p>Here are investors and lenders on FounderInvited that match your profile.</p>
 
       <p style="font-weight:600;margin:20px 0 6px">Matching investors (${matchingInvestors.length})</p>
       <table style="border-collapse:collapse">${investorRows}</table>
@@ -176,7 +176,7 @@ async function sendFounderSample() {
 
       ${buildPlatformStatsHtml(samplePlatformStats)}
 
-      <p style="color:#999;font-size:12px;margin-top:24px">You're receiving this digest because you have an active founder profile on UnlockedVC.</p>
+      <p style="color:#999;font-size:12px;margin-top:24px">You're receiving this digest because you have an active founder profile on FounderInvited.</p>
     `,
   })
   if (r1.error) throw new Error(`Founder: ${r1.error.message}`)
@@ -202,9 +202,9 @@ async function sendInvestorSample() {
   const r2 = await resend.emails.send({
     from: FROM,
     to: TO_EMAIL,
-    subject: 'UnlockedVC update (investor sample)',
+    subject: 'FounderInvited update (investor sample)',
     html: `
-      <p>Here are active founders on UnlockedVC that match your thesis this month.</p>
+      <p>Here are active founders on FounderInvited that match your thesis this month.</p>
 
       <table style="border-collapse:collapse;margin:8px 0">${founderRows}</table>
 
@@ -212,7 +212,7 @@ async function sendInvestorSample() {
 
       ${buildPlatformStatsHtml(samplePlatformStats)}
 
-      <p style="color:#999;font-size:12px;margin-top:24px">You're receiving this digest because you have an approved investor profile on UnlockedVC.</p>
+      <p style="color:#999;font-size:12px;margin-top:24px">You're receiving this digest because you have an approved investor profile on FounderInvited.</p>
     `,
   })
   if (r2.error) throw new Error(`Investor: ${r2.error.message}`)
@@ -237,9 +237,9 @@ async function sendLenderSample() {
   const r3 = await resend.emails.send({
     from: FROM,
     to: TO_EMAIL,
-    subject: 'UnlockedVC update (lender sample)',
+    subject: 'FounderInvited update (lender sample)',
     html: `
-      <p>Here are active founders on UnlockedVC that match your lending criteria this month.</p>
+      <p>Here are active founders on FounderInvited that match your lending criteria this month.</p>
 
       <table style="border-collapse:collapse;margin:8px 0">${founderRows}</table>
 
@@ -247,7 +247,7 @@ async function sendLenderSample() {
 
       ${buildPlatformStatsHtml(samplePlatformStats)}
 
-      <p style="color:#999;font-size:12px;margin-top:24px">You're receiving this digest because you have an approved lender profile on UnlockedVC.</p>
+      <p style="color:#999;font-size:12px;margin-top:24px">You're receiving this digest because you have an approved lender profile on FounderInvited.</p>
     `,
   })
   if (r3.error) throw new Error(`Lender: ${r3.error.message}`)

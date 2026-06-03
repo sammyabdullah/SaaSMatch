@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 
 const NOTIFY_EMAIL = 'sammy@blossomstreetventures.com'
-const FROM = 'UnlockedVC <noreply@unlockedvc.com>'
+const FROM = 'FounderInvited <noreply@founderinvited.com>'
 
 export async function POST(req: NextRequest) {
   const secret = process.env.RESEND_WEBHOOK_SECRET
@@ -45,9 +45,9 @@ export async function POST(req: NextRequest) {
     await resend.emails.send({
       from: FROM,
       to: NOTIFY_EMAIL,
-      subject: `⚠️ Email bounce on UnlockedVC — ${to}`,
+      subject: `⚠️ Email bounce on FounderInvited — ${to}`,
       html: `
-        <p>An email sent from UnlockedVC bounced or failed to deliver.</p>
+        <p>An email sent from FounderInvited bounced or failed to deliver.</p>
         <table cellpadding="6" style="font-size:13px;color:#333">
           <tr><td style="color:#666">Recipient</td><td>${to}</td></tr>
           <tr><td style="color:#666">Subject</td><td>${subject}</td></tr>

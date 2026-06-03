@@ -1,5 +1,5 @@
 /**
- * Shared formatting utilities for UnlockedVC.
+ * Shared formatting utilities for FounderInvited.
  */
 
 export function fmtUsd(n: number): string {

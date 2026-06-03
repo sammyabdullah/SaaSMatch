@@ -1,5 +1,5 @@
 /**
- * Hand-written Database type for UnlockedVC.
+ * Hand-written Database type for FounderInvited.
  * Replace with the generated output once you have a live project:
  *   npx supabase gen types typescript --project-id <id> > lib/supabase/types.ts
  */

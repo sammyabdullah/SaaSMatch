@@ -62,7 +62,7 @@ export default async function Home() {
     <div className="px-6 pt-8 pb-32 text-center">
       <div className="max-w-2xl mx-auto">
       <p className="text-gray-500 text-base mb-12">
-        UnlockedVC connects SaaS founders with investors and lenders. It&apos;s free and simple: build a profile in 15 seconds, browse the other side, and flag interest. Contact details are shared only when both parties opt in. Welcome.
+        FounderInvited connects SaaS founders with investors and lenders. It&apos;s free and simple: build a profile in 15 seconds, browse the other side, and flag interest. Contact details are shared only when both parties opt in. Welcome.
       </p>
       <div className="flex flex-col sm:flex-row gap-4 justify-center mb-14">
         <Link

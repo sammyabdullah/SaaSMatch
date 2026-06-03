@@ -10,7 +10,7 @@ const geistSans = localFont({
 })
 
 export const metadata: Metadata = {
-  title: 'UnlockedVC',
+  title: 'FounderInvited',
   description: 'Private matchmaking for SaaS founders and investors',
 }
 

@@ -4,9 +4,9 @@ function getResend() {
   return new Resend(process.env.RESEND_API_KEY)
 }
 
-const FROM = 'UnlockedVC <noreply@unlockedvc.com>'
+const FROM = 'FounderInvited <noreply@founderinvited.com>'
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? 'sammy@blossomstreetventures.com'
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://unlockedvc.com'
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://founderinvited.com'
 
 // ─── Founder flagged an investor ─────────────────────────────────────────────
 // Email goes to the investor with the founder's profile summary.
@@ -31,9 +31,9 @@ export async function sendFounderFlaggedInvestorEmail({
   await getResend().emails.send({
     from: FROM,
     to: investorEmail,
-    subject: 'UnlockedVC request',
+    subject: 'FounderInvited request',
     html: `
-      <p>A founder in the UnlockedVC network has flagged your profile and would like to connect.</p>
+      <p>A founder in the FounderInvited network has flagged your profile and would like to connect.</p>
 
       <table style="border-collapse:collapse;margin:16px 0">
         <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Stage</td><td style="font-size:13px">${fmtStage(founder.stage)}</td></tr>
@@ -50,7 +50,7 @@ export async function sendFounderFlaggedInvestorEmail({
 
       <p><a href="${APP_URL}/dashboard" style="background:#534AB7;color:white;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block">View in Dashboard</a></p>
 
-      <p style="color:#999;font-size:12px">You're receiving this because you have an approved investor profile on UnlockedVC.</p>
+      <p style="color:#999;font-size:12px">You're receiving this because you have an approved investor profile on FounderInvited.</p>
     `,
   })
 }
@@ -78,9 +78,9 @@ export async function sendInvestorFlaggedFounderEmail({
   await getResend().emails.send({
     from: FROM,
     to: founderEmail,
-    subject: 'UnlockedVC request',
+    subject: 'FounderInvited request',
     html: `
-      <p><strong>${investor.firm_name}</strong> (${investor.partner_name}) has flagged your profile on UnlockedVC and would like to connect.</p>
+      <p><strong>${investor.firm_name}</strong> (${investor.partner_name}) has flagged your profile on FounderInvited and would like to connect.</p>
 
       <table style="border-collapse:collapse;margin:16px 0">
         <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Firm</td><td style="font-size:13px">${investor.firm_name}</td></tr>
@@ -96,7 +96,7 @@ export async function sendInvestorFlaggedFounderEmail({
 
       <p><a href="${APP_URL}/dashboard" style="background:#534AB7;color:white;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block">View in Dashboard</a></p>
 
-      <p style="color:#999;font-size:12px">You're receiving this because you have an approved founder profile on UnlockedVC.</p>
+      <p style="color:#999;font-size:12px">You're receiving this because you have an approved founder profile on FounderInvited.</p>
     `,
   })
 }
@@ -143,7 +143,7 @@ export async function sendConnectionAcceptedFounderEmail({
     to: founderEmail,
     subject: 'Connection request confirmed',
     html: `
-      <p>You're now connected with ${firmLink} (${investorPartnerName}) on UnlockedVC.</p>
+      <p>You're now connected with ${firmLink} (${investorPartnerName}) on FounderInvited.</p>
 
       <table style="border-collapse:collapse;margin:16px 0">
         ${investorLocation ? `<tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Location</td><td style="font-size:13px">${investorLocation}</td></tr>` : ''}
@@ -201,7 +201,7 @@ export async function sendConnectionAcceptedInvestorEmail({
     to: investorEmail,
     subject: 'Connection request confirmed',
     html: `
-      <p>You're now connected with ${companyLink} on UnlockedVC.</p>
+      <p>You're now connected with ${companyLink} on FounderInvited.</p>
 
       <table style="border-collapse:collapse;margin:16px 0">
         ${founderLocation ? `<tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Location</td><td style="font-size:13px">${founderLocation}</td></tr>` : ''}
@@ -239,7 +239,7 @@ export async function sendAdminConnectionEmail({
     to: ADMIN_EMAIL,
     subject: `New connection: ${founderEmail} ↔ ${investorFirmName}`,
     html: `
-      <p>A new connection was made on UnlockedVC.</p>
+      <p>A new connection was made on FounderInvited.</p>
       <p><strong>Founder:</strong> ${founderEmail}<br>
       <strong>Investor:</strong> ${investorFirmName} (${investorEmail})<br>
       <strong>Initiated by:</strong> ${initiatedBy}</p>
@@ -268,7 +268,7 @@ export async function sendAdminNewFounderEmail({
     to: ADMIN_EMAIL,
     subject: `New founder signup: ${company_name}`,
     html: `
-      <p>A new founder has submitted a profile on UnlockedVC and is awaiting approval.</p>
+      <p>A new founder has submitted a profile on FounderInvited and is awaiting approval.</p>
       <table style="border-collapse:collapse;margin:16px 0">
         <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Email</td><td style="font-size:13px">${email}</td></tr>
         <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Company</td><td style="font-size:13px">${company_name}</td></tr>
@@ -303,7 +303,7 @@ export async function sendAdminNewInvestorEmail({
     to: ADMIN_EMAIL,
     subject: `New investor signup: ${firm_name}`,
     html: `
-      <p>A new investor has submitted a profile on UnlockedVC and is awaiting approval.</p>
+      <p>A new investor has submitted a profile on FounderInvited and is awaiting approval.</p>
       <table style="border-collapse:collapse;margin:16px 0">
         <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Email</td><td style="font-size:13px">${email}</td></tr>
         <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Firm</td><td style="font-size:13px">${firm_name}</td></tr>
@@ -321,9 +321,9 @@ export async function sendWelcomeFounderEmail({ email }: { email: string }) {
   await getResend().emails.send({
     from: FROM,
     to: email,
-    subject: 'You\'re approved — welcome to UnlockedVC',
+    subject: 'You\'re approved — welcome to FounderInvited',
     html: `
-      <p>Your founder profile has been reviewed and approved. You're now live on UnlockedVC.</p>
+      <p>Your founder profile has been reviewed and approved. You're now live on FounderInvited.</p>
 
       <p>You can now browse for Investors, and they can also discover your profile. You'll be notified here when one reciprocates or expresses interest in you.</p>
 
@@ -337,9 +337,9 @@ export async function sendWelcomeInvestorEmail({ email }: { email: string }) {
   await getResend().emails.send({
     from: FROM,
     to: email,
-    subject: 'You\'re approved — welcome to UnlockedVC',
+    subject: 'You\'re approved — welcome to FounderInvited',
     html: `
-      <p>Your investor profile is approved. You now have full access to UnlockedVC.</p>
+      <p>Your investor profile is approved. You now have full access to FounderInvited.</p>
 
       <p>Browse active founder profiles in Discover and flag any that fit your thesis. You'll be notified here when a founder reciprocates interest in connecting with you or expresses the initial interest.</p>
 
@@ -369,7 +369,7 @@ export async function sendAdminNewLenderEmail({
     to: ADMIN_EMAIL,
     subject: `New lender signup: ${institution_name}`,
     html: `
-      <p>A new lender has submitted a profile on UnlockedVC and is awaiting approval.</p>
+      <p>A new lender has submitted a profile on FounderInvited and is awaiting approval.</p>
       <table style="border-collapse:collapse;margin:16px 0">
         <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Email</td><td style="font-size:13px">${email}</td></tr>
         <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Institution</td><td style="font-size:13px">${institution_name}</td></tr>
@@ -387,9 +387,9 @@ export async function sendWelcomeLenderEmail({ email }: { email: string }) {
   await getResend().emails.send({
     from: FROM,
     to: email,
-    subject: 'You\'re approved — welcome to UnlockedVC',
+    subject: 'You\'re approved — welcome to FounderInvited',
     html: `
-      <p>Your lender profile is approved. You now have full access to UnlockedVC.</p>
+      <p>Your lender profile is approved. You now have full access to FounderInvited.</p>
 
       <p>Browse active founder profiles in Discover and express interest in companies that fit your lending criteria.</p>
 
@@ -421,9 +421,9 @@ export async function sendFounderFlaggedLenderEmail({
   await getResend().emails.send({
     from: FROM,
     to: lenderEmail,
-    subject: 'UnlockedVC request',
+    subject: 'FounderInvited request',
     html: `
-      <p>A founder in the UnlockedVC network has expressed interest in connecting with you.</p>
+      <p>A founder in the FounderInvited network has expressed interest in connecting with you.</p>
 
       <table style="border-collapse:collapse;margin:16px 0">
         <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Stage</td><td style="font-size:13px">${fmtStage(founder.stage)}</td></tr>
@@ -440,7 +440,7 @@ export async function sendFounderFlaggedLenderEmail({
 
       <p><a href="${APP_URL}/dashboard" style="background:#534AB7;color:white;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block">View in Dashboard</a></p>
 
-      <p style="color:#999;font-size:12px">You're receiving this because you have an approved lender profile on UnlockedVC.</p>
+      <p style="color:#999;font-size:12px">You're receiving this because you have an approved lender profile on FounderInvited.</p>
     `,
   })
 }
@@ -467,9 +467,9 @@ export async function sendLenderFlaggedFounderEmail({
   await getResend().emails.send({
     from: FROM,
     to: founderEmail,
-    subject: 'UnlockedVC request',
+    subject: 'FounderInvited request',
     html: `
-      <p><strong>${lender.institution_name}</strong> (${lender.contact_name}) has expressed interest in your company on UnlockedVC.</p>
+      <p><strong>${lender.institution_name}</strong> (${lender.contact_name}) has expressed interest in your company on FounderInvited.</p>
 
       <table style="border-collapse:collapse;margin:16px 0">
         <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Institution</td><td style="font-size:13px">${lender.institution_name}</td></tr>
@@ -485,7 +485,7 @@ export async function sendLenderFlaggedFounderEmail({
 
       <p><a href="${APP_URL}/dashboard" style="background:#534AB7;color:white;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block">View in Dashboard</a></p>
 
-      <p style="color:#999;font-size:12px">You're receiving this because you have an approved founder profile on UnlockedVC.</p>
+      <p style="color:#999;font-size:12px">You're receiving this because you have an approved founder profile on FounderInvited.</p>
     `,
   })
 }
@@ -531,7 +531,7 @@ export async function sendConnectionAcceptedLenderEmail({
     html: `
       <p>Hi ${lenderName},</p>
 
-      <p>${companyLink} has accepted your introduction request on UnlockedVC.</p>
+      <p>${companyLink} has accepted your introduction request on FounderInvited.</p>
 
       <table style="border-collapse:collapse;margin:16px 0">
         ${founderLocation ? `<tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Location</td><td style="font-size:13px">${founderLocation}</td></tr>` : ''}
@@ -594,7 +594,7 @@ export async function sendConnectionAcceptedFounderFromLenderEmail({
     to: founderEmail,
     subject: `${lenderInstitutionName} accepted your connection request`,
     html: `
-      <p>Great news! ${institutionLink} (${lenderContactName}) has accepted your introduction request on UnlockedVC.</p>
+      <p>Great news! ${institutionLink} (${lenderContactName}) has accepted your introduction request on FounderInvited.</p>
 
       <table style="border-collapse:collapse;margin:16px 0">
         ${lenderLocation ? `<tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Location</td><td style="font-size:13px">${lenderLocation}</td></tr>` : ''}
@@ -630,7 +630,7 @@ export async function sendAdminLenderConnectionEmail({
     to: ADMIN_EMAIL,
     subject: `New lender connection: ${founderEmail} ↔ ${lenderInstitutionName}`,
     html: `
-      <p>A new lender connection was made on UnlockedVC.</p>
+      <p>A new lender connection was made on FounderInvited.</p>
       <p><strong>Founder:</strong> ${founderEmail}<br>
       <strong>Lender:</strong> ${lenderInstitutionName} (${lenderEmail})<br>
       <strong>Initiated by:</strong> ${initiatedBy}</p>
@@ -661,11 +661,11 @@ export async function sendMonthlyFounderDigest({
   const { error: sendError } = await getResend().emails.send({
     from: FROM,
     to: founderEmail,
-    subject: 'UnlockedVC update',
+    subject: 'FounderInvited update',
     html: `
       ${matchingInvestors.length > 0 || matchingLenders.length > 0
-        ? '<p>Here are investors and lenders on UnlockedVC that match your profile.</p>'
-        : '<p>No new matches this month — here\'s what\'s happening on UnlockedVC.</p>'
+        ? '<p>Here are investors and lenders on FounderInvited that match your profile.</p>'
+        : '<p>No new matches this month — here\'s what\'s happening on FounderInvited.</p>'
       }
 
       ${matchingInvestors.length > 0 ? `
@@ -682,7 +682,7 @@ export async function sendMonthlyFounderDigest({
 
       ${buildPlatformStatsHtml(platformStats)}
 
-      <p style="color:#999;font-size:12px;margin-top:24px">You're receiving this digest because you have an active founder profile on UnlockedVC.</p>
+      <p style="color:#999;font-size:12px;margin-top:24px">You're receiving this digest because you have an active founder profile on FounderInvited.</p>
     `,
   })
   if (sendError) throw new Error(sendError.message)
@@ -709,11 +709,11 @@ export async function sendMonthlyInvestorDigest({
   const { error: sendError } = await getResend().emails.send({
     from: FROM,
     to: investorEmail,
-    subject: 'UnlockedVC update',
+    subject: 'FounderInvited update',
     html: `
       ${matchingFounders.length > 0
-        ? '<p>Here are active founders on UnlockedVC that match your thesis this month.</p>'
-        : '<p>No new matches this month — here\'s what\'s happening on UnlockedVC.</p>'
+        ? '<p>Here are active founders on FounderInvited that match your thesis this month.</p>'
+        : '<p>No new matches this month — here\'s what\'s happening on FounderInvited.</p>'
       }
 
       ${matchingFounders.length > 0 ? `<table style="border-collapse:collapse;margin:8px 0">${founderRows}</table>` : ''}
@@ -722,7 +722,7 @@ export async function sendMonthlyInvestorDigest({
 
       ${buildPlatformStatsHtml(platformStats)}
 
-      <p style="color:#999;font-size:12px;margin-top:24px">You're receiving this digest because you have an approved investor profile on UnlockedVC.</p>
+      <p style="color:#999;font-size:12px;margin-top:24px">You're receiving this digest because you have an approved investor profile on FounderInvited.</p>
     `,
   })
   if (sendError) throw new Error(sendError.message)
@@ -749,11 +749,11 @@ export async function sendMonthlyLenderDigest({
   const { error: sendError } = await getResend().emails.send({
     from: FROM,
     to: lenderEmail,
-    subject: 'UnlockedVC update',
+    subject: 'FounderInvited update',
     html: `
       ${matchingFounders.length > 0
-        ? '<p>Here are active founders on UnlockedVC that match your lending criteria this month.</p>'
-        : '<p>No new matches this month — here\'s what\'s happening on UnlockedVC.</p>'
+        ? '<p>Here are active founders on FounderInvited that match your lending criteria this month.</p>'
+        : '<p>No new matches this month — here\'s what\'s happening on FounderInvited.</p>'
       }
 
       ${matchingFounders.length > 0 ? `<table style="border-collapse:collapse;margin:8px 0">${founderRows}</table>` : ''}
@@ -762,7 +762,7 @@ export async function sendMonthlyLenderDigest({
 
       ${buildPlatformStatsHtml(platformStats)}
 
-      <p style="color:#999;font-size:12px;margin-top:24px">You're receiving this digest because you have an approved lender profile on UnlockedVC.</p>
+      <p style="color:#999;font-size:12px;margin-top:24px">You're receiving this digest because you have an approved lender profile on FounderInvited.</p>
     `,
   })
   if (sendError) throw new Error(sendError.message)

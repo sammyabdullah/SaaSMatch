@@ -39,7 +39,7 @@ export default async function Navbar() {
             height={32}
             style={{ flexShrink: 0, objectFit: 'contain' }}
           />
-          <span style={{ color: '#000000' }}>Unlocked</span><span style={{ color: '#29ABE2' }}>VC</span>
+          <span style={{ color: '#000000' }}>Founder</span><span style={{ color: '#29ABE2' }}>Invited</span>
         </Link>
 
         <div className="flex items-center gap-5">
