@@ -46,18 +46,12 @@ export async function approveInvestor(investorId: string) {
   await requireAdmin()
 
   const admin = createAdminClient()
-  const { error } = await admin
-    .from('investor_profiles')
-    .update({ is_approved: true })
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (admin.from('investor_profiles') as any)
+    .update({ is_approved: true, status: 'active' })
     .eq('id', investorId)
 
   if (error) throw new Error(error.message)
-
-  // Best-effort status update (requires migration 00023)
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (admin.from('investor_profiles') as any).update({ status: 'active' }).eq('id', investorId)
-  } catch {}
 
   try {
     const { data: profile } = await admin.from('profiles').select('email').eq('id', investorId).single()
@@ -127,18 +121,12 @@ export async function approveLender(lenderId: string) {
   await requireAdmin()
 
   const admin = createAdminClient()
-  const { error } = await admin
-    .from('lender_profiles')
-    .update({ is_approved: true })
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (admin.from('lender_profiles') as any)
+    .update({ is_approved: true, status: 'active' })
     .eq('id', lenderId)
 
   if (error) throw new Error(error.message)
-
-  // Best-effort status update (requires migration 00023)
-  try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await (admin.from('lender_profiles') as any).update({ status: 'active' }).eq('id', lenderId)
-  } catch {}
 
   try {
     const { data: profile } = await admin.from('profiles').select('email').eq('id', lenderId).single()
@@ -333,7 +321,7 @@ export async function triggerDigest(): Promise<{ emailsSent?: number; total?: nu
       if (!(inv.stages as string[] ?? []).length) return false
       return (inv.stages as string[] ?? []).includes(founder.stage) && (inv.saas_subcategories ?? []).some((s: string) => (founder.product_categories ?? []).includes(s))
     })
-    const matchingLenders = !hasCategories ? [] : (lenders ?? []).filter((lender) => {
+    const matchingLenders = (lenders ?? []).filter((lender) => {
       if (lenderPairs.has(`${founder.id}:${lender.id}`)) return false
       if (!(lender.stages ?? []).length) return false
       return (lender.stages ?? []).includes(founder.stage)
@@ -391,7 +379,8 @@ export async function triggerDigest(): Promise<{ emailsSent?: number; total?: nu
   for (let i = 0; i < allPayloads.length; i += 100) {
     const batch = allPayloads.slice(i, i + 100)
     const { data, error } = await resend.batch.send(batch)
-    if (!error) emailsSent += data?.data?.length ?? batch.length
+    if (error) return { error: `Resend batch failed: ${error.message}`, emailsSent, total, skipped }
+    emailsSent += data?.data?.length ?? batch.length
   }
 
   return { emailsSent, total, skipped }
