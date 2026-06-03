@@ -3,7 +3,8 @@
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
-import { sendWelcomeFounderEmail, sendWelcomeInvestorEmail, sendWelcomeLenderEmail, sendMonthlyFounderDigest, sendMonthlyInvestorDigest, sendMonthlyLenderDigest } from '@/lib/email'
+import { Resend } from 'resend'
+import { sendWelcomeFounderEmail, sendWelcomeInvestorEmail, sendWelcomeLenderEmail, sendMonthlyFounderDigest, sendMonthlyInvestorDigest, sendMonthlyLenderDigest, buildMonthlyFounderDigestEmail, buildMonthlyInvestorDigestEmail, buildMonthlyLenderDigestEmail } from '@/lib/email'
 
 async function requireAdmin() {
   const supabase = await createClient()
@@ -320,22 +321,10 @@ export async function triggerDigest(): Promise<{ emailsSent?: number; total?: nu
     latestConnections,
   }
 
-  const BATCH_SIZE = 10
-  async function sendInBatches<T>(items: T[], fn: (item: T) => Promise<void>): Promise<number> {
-    let sent = 0
-    for (let i = 0; i < items.length; i += BATCH_SIZE) {
-      const batch = items.slice(i, i + BATCH_SIZE)
-      const results = await Promise.allSettled(batch.map(fn))
-      sent += results.filter((r) => r.status === 'fulfilled').length
-      if (i + BATCH_SIZE < items.length) await new Promise((r) => setTimeout(r, 2000))
-    }
-    return sent
-  }
-
   let skipped = 0
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const founderJobs = (founders ?? []).flatMap((founder: any) => {
+  const founderPayloads = (founders ?? []).flatMap((founder: any) => {
     const founderEmail = emailMap[founder.id]
     if (!founderEmail) { skipped++; return [] }
     const hasCategories = (founder.product_categories ?? []).length > 0
@@ -349,7 +338,7 @@ export async function triggerDigest(): Promise<{ emailsSent?: number; total?: nu
       if (!(lender.stages ?? []).length) return false
       return (lender.stages ?? []).includes(founder.stage)
     })
-    return [() => sendMonthlyFounderDigest({
+    return [buildMonthlyFounderDigestEmail({
       founderEmail,
       matchingInvestors: matchingInvestors.map((inv) => ({ firm_name: inv.firm_name, partner_name: inv.partner_name })),
       matchingLenders: matchingLenders.map((l) => ({ institution_name: l.institution_name, contact_name: l.contact_name })),
@@ -358,7 +347,7 @@ export async function triggerDigest(): Promise<{ emailsSent?: number; total?: nu
   })
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const investorJobs = (investors ?? []).flatMap((investor: any) => {
+  const investorPayloads = (investors ?? []).flatMap((investor: any) => {
     const investorEmail = emailMap[investor.id]
     if (!investorEmail) { skipped++; return [] }
     const hasStages = (investor.stages ?? []).length > 0
@@ -368,7 +357,7 @@ export async function triggerDigest(): Promise<{ emailsSent?: number; total?: nu
       if (!(founder.product_categories ?? []).length) return false
       return (investor.stages ?? []).includes(founder.stage) && (investor.saas_subcategories ?? []).some((s: string) => (founder.product_categories ?? []).includes(s))
     })
-    return [() => sendMonthlyInvestorDigest({
+    return [buildMonthlyInvestorDigestEmail({
       investorEmail,
       matchingFounders: matchingFounders.map((f) => ({ company_name: f.company_name, stage: f.stage as string, product_categories: (f.product_categories ?? []) as string[] })),
       platformStats,
@@ -376,7 +365,7 @@ export async function triggerDigest(): Promise<{ emailsSent?: number; total?: nu
   })
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const lenderJobs = (lenders ?? []).flatMap((lender: any) => {
+  const lenderPayloads = (lenders ?? []).flatMap((lender: any) => {
     const lenderEmail = emailMap[lender.id]
     if (!lenderEmail) { skipped++; return [] }
     const hasStages = (lender.stages ?? []).length > 0
@@ -385,16 +374,27 @@ export async function triggerDigest(): Promise<{ emailsSent?: number; total?: nu
       if (!(founder.product_categories ?? []).length) return false
       return (lender.stages ?? []).includes(founder.stage)
     })
-    return [() => sendMonthlyLenderDigest({
+    return [buildMonthlyLenderDigestEmail({
       lenderEmail,
       matchingFounders: matchingFounders.map((f) => ({ company_name: f.company_name, stage: f.stage as string, product_categories: (f.product_categories ?? []) as string[] })),
       platformStats,
     })]
   })
 
-  const allJobs = [...founderJobs, ...investorJobs, ...lenderJobs]
-  const emailsSent = await sendInBatches(allJobs, (fn) => fn())
-  return { emailsSent, total: allJobs.length, skipped }
+  const allPayloads = [...founderPayloads, ...investorPayloads, ...lenderPayloads]
+  const total = allPayloads.length
+
+  // Resend batch API: up to 100 emails per call — far fewer HTTP round-trips
+  // than individual sends, keeping total runtime well within Vercel's limits.
+  const resend = new Resend(process.env.RESEND_API_KEY!)
+  let emailsSent = 0
+  for (let i = 0; i < allPayloads.length; i += 100) {
+    const batch = allPayloads.slice(i, i + 100)
+    const { data, error } = await resend.batch.send(batch)
+    if (!error) emailsSent += data?.data?.length ?? batch.length
+  }
+
+  return { emailsSent, total, skipped }
 }
 
 export async function sendTestDigestToEmail(email: string): Promise<{ error?: string; success?: boolean }> {

@@ -639,26 +639,20 @@ export async function sendAdminLenderConnectionEmail({
 }
 
 // ─── Monthly digest: founder ──────────────────────────────────────────────────
-export async function sendMonthlyFounderDigest({
-  founderEmail,
-  matchingInvestors,
-  matchingLenders,
-  platformStats,
-}: {
+type FounderDigestParams = {
   founderEmail: string
   matchingInvestors: { firm_name: string; partner_name: string }[]
   matchingLenders: { institution_name: string; contact_name: string }[]
   platformStats: PlatformStats
-}) {
+}
+export function buildMonthlyFounderDigestEmail({ founderEmail, matchingInvestors, matchingLenders, platformStats }: FounderDigestParams) {
   const investorRows = matchingInvestors.map(inv =>
     `<tr><td style="padding:2px 16px 2px 0;font-size:13px;width:200px"><strong>${inv.firm_name}</strong></td><td style="padding:2px 0;font-size:13px;color:#555">${inv.partner_name}</td></tr>`
   ).join('')
-
   const lenderRows = matchingLenders.map(l =>
     `<tr><td style="padding:2px 16px 2px 0;font-size:13px;width:200px"><strong>${l.institution_name}</strong></td><td style="padding:2px 0;font-size:13px;color:#555">${l.contact_name}</td></tr>`
   ).join('')
-
-  const { error: sendError } = await getResend().emails.send({
+  return {
     from: FROM,
     to: founderEmail,
     subject: 'FounderInvited update',
@@ -684,20 +678,20 @@ export async function sendMonthlyFounderDigest({
 
       <p style="color:#999;font-size:12px;margin-top:24px">You're receiving this digest because you have an active founder profile on FounderInvited.</p>
     `,
-  })
-  if (sendError) throw new Error(sendError.message)
+  }
+}
+export async function sendMonthlyFounderDigest(params: FounderDigestParams) {
+  const { error } = await getResend().emails.send(buildMonthlyFounderDigestEmail(params))
+  if (error) throw new Error(error.message)
 }
 
 // ─── Monthly digest: investor ─────────────────────────────────────────────────
-export async function sendMonthlyInvestorDigest({
-  investorEmail,
-  matchingFounders,
-  platformStats,
-}: {
+type InvestorDigestParams = {
   investorEmail: string
   matchingFounders: { company_name: string; stage: string; product_categories: string[] }[]
   platformStats: PlatformStats
-}) {
+}
+export function buildMonthlyInvestorDigestEmail({ investorEmail, matchingFounders, platformStats }: InvestorDigestParams) {
   const founderRows = matchingFounders.map(f =>
     `<tr>
       <td style="padding:2px 16px 2px 0;font-size:13px;width:200px"><strong>${f.company_name}</strong></td>
@@ -705,8 +699,7 @@ export async function sendMonthlyInvestorDigest({
       <td style="padding:2px 0;font-size:13px;color:#888">${f.product_categories.join(', ')}</td>
     </tr>`
   ).join('')
-
-  const { error: sendError } = await getResend().emails.send({
+  return {
     from: FROM,
     to: investorEmail,
     subject: 'FounderInvited update',
@@ -724,20 +717,20 @@ export async function sendMonthlyInvestorDigest({
 
       <p style="color:#999;font-size:12px;margin-top:24px">You're receiving this digest because you have an approved investor profile on FounderInvited.</p>
     `,
-  })
-  if (sendError) throw new Error(sendError.message)
+  }
+}
+export async function sendMonthlyInvestorDigest(params: InvestorDigestParams) {
+  const { error } = await getResend().emails.send(buildMonthlyInvestorDigestEmail(params))
+  if (error) throw new Error(error.message)
 }
 
 // ─── Monthly digest: lender ──────────────────────────────────────────────────
-export async function sendMonthlyLenderDigest({
-  lenderEmail,
-  matchingFounders,
-  platformStats,
-}: {
+type LenderDigestParams = {
   lenderEmail: string
   matchingFounders: { company_name: string; stage: string; product_categories: string[] }[]
   platformStats: PlatformStats
-}) {
+}
+export function buildMonthlyLenderDigestEmail({ lenderEmail, matchingFounders, platformStats }: LenderDigestParams) {
   const founderRows = matchingFounders.map(f =>
     `<tr>
       <td style="padding:2px 16px 2px 0;font-size:13px;width:200px"><strong>${f.company_name}</strong></td>
@@ -745,8 +738,7 @@ export async function sendMonthlyLenderDigest({
       <td style="padding:2px 0;font-size:13px;color:#888">${f.product_categories.join(', ')}</td>
     </tr>`
   ).join('')
-
-  const { error: sendError } = await getResend().emails.send({
+  return {
     from: FROM,
     to: lenderEmail,
     subject: 'FounderInvited update',
@@ -764,8 +756,11 @@ export async function sendMonthlyLenderDigest({
 
       <p style="color:#999;font-size:12px;margin-top:24px">You're receiving this digest because you have an approved lender profile on FounderInvited.</p>
     `,
-  })
-  if (sendError) throw new Error(sendError.message)
+  }
+}
+export async function sendMonthlyLenderDigest(params: LenderDigestParams) {
+  const { error } = await getResend().emails.send(buildMonthlyLenderDigestEmail(params))
+  if (error) throw new Error(error.message)
 }
 
 // ─── Platform stats type & HTML builder ──────────────────────────────────────
