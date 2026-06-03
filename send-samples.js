@@ -101,13 +101,13 @@ function buildPlatformStatsHtml(s) {
         <tr>
           <td width="50%" style="padding-right:6px">
             <div style="border:1px solid #e5e7eb;border-radius:10px;padding:14px;text-align:center">
-              <p style="font-size:10px;color:#9ca3af;letter-spacing:0.05em;text-transform:uppercase;margin:0 0 4px">Live Investors on Unlocked</p>
+              <p style="font-size:10px;color:#9ca3af;letter-spacing:0.05em;text-transform:uppercase;margin:0 0 4px">Live Investors on FounderInvited</p>
               <p style="font-size:28px;font-weight:700;color:#534AB7;margin:0">${s.investorCount}</p>
             </div>
           </td>
           <td width="50%" style="padding-left:6px">
             <div style="border:1px solid #e5e7eb;border-radius:10px;padding:14px;text-align:center">
-              <p style="font-size:10px;color:#9ca3af;letter-spacing:0.05em;text-transform:uppercase;margin:0 0 4px">Live Lenders on Unlocked</p>
+              <p style="font-size:10px;color:#9ca3af;letter-spacing:0.05em;text-transform:uppercase;margin:0 0 4px">Live Lenders on FounderInvited</p>
               <p style="font-size:28px;font-weight:700;color:#534AB7;margin:0">${s.lenderCount}</p>
             </div>
           </td>
