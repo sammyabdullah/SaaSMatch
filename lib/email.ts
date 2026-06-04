@@ -644,8 +644,7 @@ const REBRAND_NOTICE = `
   <div style="border-left:3px solid #534AB7;padding:12px 16px;margin-bottom:24px;background:#f9f9ff">
     <p style="font-size:14px;font-weight:700;color:#111827;margin:0 0 10px">Update: FounderInvited.com is the new home of what you signed up for on UnlockedVC.</p>
     <p style="font-size:14px;color:#374151;margin:0 0 10px">The name may have changed, but it&#39;s the same platform and same mission: connecting B2B SaaS founders with investors and lenders via mutual opt-in. No warm intro required, no cold outreach, no gatekeeping. Free, as always.</p>
-    <p style="font-size:14px;color:#374151;margin:0 0 10px">Why the new name? 500 Startups &mdash; the venture firm famously built on &ldquo;supporting founders&rdquo; &mdash; sent us a cease and desist letter. A free tool, built for founders, targeted by a VC firm whose entire brand is democratizing access to capital. We found that ironic too.</p>
-    <p style="font-size:14px;color:#374151;margin:0">So we rebranded. And honestly? We like the new name better.</p>
+    <p style="font-size:14px;color:#374151;margin:0">Why the new name? 500 Startups, the venture firm famously built on &ldquo;supporting founders&rdquo; sent us a cease and desist letter. FounderInvited is a free tool, built for founders, and now has been targeted by a VC firm whose brand is democratizing access to capital. Yea, we found that ironic too. So we rebranded. And honestly? We like the new name better.</p>
   </div>`
 type FounderDigestParams = {
   founderEmail: string
