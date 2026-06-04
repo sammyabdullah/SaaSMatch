@@ -774,62 +774,62 @@ type PlatformStats = {
 
 function buildPlatformStatsHtml(s: PlatformStats): string {
   const invItems = s.latestInvestors.map((inv, i) => `
-    <div style="${i > 0 ? 'border-top:1px solid #f3f4f6;padding-top:10px;margin-top:10px' : ''}">
-      <p style="font-size:13px;font-weight:600;color:#111827;margin:0">${inv.firm_name}</p>
-      <p style="font-size:12px;color:#6b7280;margin:2px 0 0">${inv.partner_name}</p>
+    <div style="${i > 0 ? 'border-top:1px solid #f3f4f6;padding-top:6px;margin-top:6px' : ''}">
+      <p style="font-size:12px;font-weight:600;color:#111827;margin:0">${inv.firm_name}</p>
+      <p style="font-size:11px;color:#6b7280;margin:1px 0 0">${inv.partner_name}</p>
     </div>`).join('')
 
   const lenItems = s.latestLenders.map((l, i) => `
-    <div style="${i > 0 ? 'border-top:1px solid #f3f4f6;padding-top:10px;margin-top:10px' : ''}">
-      <p style="font-size:13px;font-weight:600;color:#111827;margin:0">${l.institution_name}</p>
-      <p style="font-size:12px;color:#6b7280;margin:2px 0 0">${l.contact_name}</p>
+    <div style="${i > 0 ? 'border-top:1px solid #f3f4f6;padding-top:6px;margin-top:6px' : ''}">
+      <p style="font-size:12px;font-weight:600;color:#111827;margin:0">${l.institution_name}</p>
+      <p style="font-size:11px;color:#6b7280;margin:1px 0 0">${l.contact_name}</p>
     </div>`).join('')
 
   const connRows = s.latestConnections.map((c, i) => `
-    <div style="${i > 0 ? 'border-top:1px solid #f3f4f6;padding-top:10px;margin-top:10px' : ''}">
+    <div style="${i > 0 ? 'border-top:1px solid #f3f4f6;padding-top:6px;margin-top:6px' : ''}">
       <table width="100%" cellpadding="0" cellspacing="0">
         <tr>
-          <td style="font-size:13px;font-weight:600;color:#111827;width:38%">${c.left}</td>
-          <td style="font-size:12px;color:#9ca3af;text-align:center">just connected with</td>
-          <td style="font-size:13px;font-weight:600;color:#111827;text-align:right;width:38%">${c.right}</td>
+          <td style="font-size:12px;font-weight:600;color:#111827;width:38%">${c.left}</td>
+          <td style="font-size:11px;color:#9ca3af;text-align:center">connected with</td>
+          <td style="font-size:12px;font-weight:600;color:#111827;text-align:right;width:38%">${c.right}</td>
         </tr>
       </table>
     </div>`).join('')
 
   return `
-    <div style="margin-top:36px;border-top:1px solid #e5e7eb;padding-top:24px">
-      <p style="font-size:11px;color:#9ca3af;letter-spacing:0.05em;text-transform:uppercase;margin:0 0 16px">Platform activity</p>
+    <div style="margin-top:20px;border-top:1px solid #e5e7eb;padding-top:14px">
+      <p style="font-size:11px;color:#9ca3af;letter-spacing:0.05em;text-transform:uppercase;margin:0 0 10px">Platform activity</p>
 
       <!-- Live counts -->
-      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:12px">
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:8px">
         <tr>
-          <td width="50%" style="padding-right:6px">
-            <div style="border:1px solid #e5e7eb;border-radius:10px;padding:14px;text-align:center">
-              <p style="font-size:10px;color:#9ca3af;letter-spacing:0.05em;text-transform:uppercase;margin:0 0 4px">Live Investors on FounderInvited</p>
-              <p style="font-size:28px;font-weight:700;color:#534AB7;margin:0">${s.investorCount}</p>
+          <td width="50%" style="padding-right:4px">
+            <div style="border:1px solid #e5e7eb;border-radius:8px;padding:8px 10px;text-align:center">
+              <p style="font-size:10px;color:#9ca3af;letter-spacing:0.04em;text-transform:uppercase;margin:0 0 2px">Live Investors</p>
+              <p style="font-size:20px;font-weight:700;color:#534AB7;margin:0">${s.investorCount}</p>
             </div>
           </td>
-          <td width="50%" style="padding-left:6px">
-            <div style="border:1px solid #e5e7eb;border-radius:10px;padding:14px;text-align:center">
-              <p style="font-size:10px;color:#9ca3af;letter-spacing:0.05em;text-transform:uppercase;margin:0 0 4px">Live Lenders on FounderInvited</p>
-              <p style="font-size:28px;font-weight:700;color:#534AB7;margin:0">${s.lenderCount}</p>
+          <td width="50%" style="padding-left:4px">
+            <div style="border:1px solid #e5e7eb;border-radius:8px;padding:8px 10px;text-align:center">
+              <p style="font-size:10px;color:#9ca3af;letter-spacing:0.04em;text-transform:uppercase;margin:0 0 2px">Live Lenders</p>
+              <p style="font-size:20px;font-weight:700;color:#534AB7;margin:0">${s.lenderCount}</p>
             </div>
           </td>
         </tr>
       </table>
 
       <!-- Latest to join -->
-      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:12px">
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:8px">
         <tr>
-          <td width="50%" valign="top" style="padding-right:6px">
-            <div style="border:1px solid #e5e7eb;border-radius:10px;padding:14px">
-              <p style="font-size:10px;color:#9ca3af;letter-spacing:0.05em;text-transform:uppercase;margin:0 0 12px">Latest Investors to Join</p>
+          <td width="50%" valign="top" style="padding-right:4px">
+            <div style="border:1px solid #e5e7eb;border-radius:8px;padding:8px 10px">
+              <p style="font-size:10px;color:#9ca3af;letter-spacing:0.04em;text-transform:uppercase;margin:0 0 7px">Latest Investors</p>
               ${invItems}
             </div>
           </td>
-          <td width="50%" valign="top" style="padding-left:6px">
-            <div style="border:1px solid #e5e7eb;border-radius:10px;padding:14px">
-              <p style="font-size:10px;color:#9ca3af;letter-spacing:0.05em;text-transform:uppercase;margin:0 0 12px">Latest Lenders to Join</p>
+          <td width="50%" valign="top" style="padding-left:4px">
+            <div style="border:1px solid #e5e7eb;border-radius:8px;padding:8px 10px">
+              <p style="font-size:10px;color:#9ca3af;letter-spacing:0.04em;text-transform:uppercase;margin:0 0 7px">Latest Lenders</p>
               ${lenItems}
             </div>
           </td>
@@ -838,8 +838,8 @@ function buildPlatformStatsHtml(s: PlatformStats): string {
 
       <!-- Latest connections -->
       ${s.latestConnections.length > 0 ? `
-      <div style="border:1px solid #e5e7eb;border-radius:10px;padding:14px">
-        <p style="font-size:10px;color:#9ca3af;letter-spacing:0.05em;text-transform:uppercase;margin:0 0 12px;text-align:center">Latest Connections</p>
+      <div style="border:1px solid #e5e7eb;border-radius:8px;padding:8px 10px">
+        <p style="font-size:10px;color:#9ca3af;letter-spacing:0.04em;text-transform:uppercase;margin:0 0 7px;text-align:center">Latest Connections</p>
         ${connRows}
       </div>` : ''}
     </div>`
