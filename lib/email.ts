@@ -656,7 +656,7 @@ export function buildMonthlyFounderDigestEmail({ founderEmail, matchingInvestors
     from: FROM,
     to: founderEmail,
     subject: 'FounderInvited update',
-    html: `
+    html: `<div style="max-width:600px;margin:0 auto;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
       ${matchingInvestors.length > 0 || matchingLenders.length > 0
         ? '<p>Here are investors and lenders on FounderInvited that match your profile.</p>'
         : '<p>No new matches this month — here\'s what\'s happening on FounderInvited.</p>'
@@ -677,7 +677,7 @@ export function buildMonthlyFounderDigestEmail({ founderEmail, matchingInvestors
       ${buildPlatformStatsHtml(platformStats)}
 
       <p style="color:#999;font-size:12px;margin-top:24px">You're receiving this digest because you have an active founder profile on FounderInvited.</p>
-    `,
+    </div>`,
   }
 }
 export async function sendMonthlyFounderDigest(params: FounderDigestParams) {
@@ -703,7 +703,7 @@ export function buildMonthlyInvestorDigestEmail({ investorEmail, matchingFounder
     from: FROM,
     to: investorEmail,
     subject: 'FounderInvited update',
-    html: `
+    html: `<div style="max-width:600px;margin:0 auto;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
       ${matchingFounders.length > 0
         ? '<p>Here are active founders on FounderInvited that match your thesis this month.</p>'
         : '<p>No new matches this month — here\'s what\'s happening on FounderInvited.</p>'
@@ -716,7 +716,7 @@ export function buildMonthlyInvestorDigestEmail({ investorEmail, matchingFounder
       ${buildPlatformStatsHtml(platformStats)}
 
       <p style="color:#999;font-size:12px;margin-top:24px">You're receiving this digest because you have an approved investor profile on FounderInvited.</p>
-    `,
+    </div>`,
   }
 }
 export async function sendMonthlyInvestorDigest(params: InvestorDigestParams) {
@@ -742,7 +742,7 @@ export function buildMonthlyLenderDigestEmail({ lenderEmail, matchingFounders, p
     from: FROM,
     to: lenderEmail,
     subject: 'FounderInvited update',
-    html: `
+    html: `<div style="max-width:600px;margin:0 auto;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
       ${matchingFounders.length > 0
         ? '<p>Here are active founders on FounderInvited that match your lending criteria this month.</p>'
         : '<p>No new matches this month — here\'s what\'s happening on FounderInvited.</p>'
@@ -755,7 +755,7 @@ export function buildMonthlyLenderDigestEmail({ lenderEmail, matchingFounders, p
       ${buildPlatformStatsHtml(platformStats)}
 
       <p style="color:#999;font-size:12px;margin-top:24px">You're receiving this digest because you have an approved lender profile on FounderInvited.</p>
-    `,
+    </div>`,
   }
 }
 export async function sendMonthlyLenderDigest(params: LenderDigestParams) {
@@ -773,63 +773,65 @@ type PlatformStats = {
 }
 
 function buildPlatformStatsHtml(s: PlatformStats): string {
+  // space-y-3 = 12px gap between items (matches homepage)
   const invItems = s.latestInvestors.map((inv, i) => `
-    <div style="${i > 0 ? 'border-top:1px solid #f3f4f6;padding-top:6px;margin-top:6px' : ''}">
-      <p style="font-size:12px;font-weight:600;color:#111827;margin:0">${inv.firm_name}</p>
-      <p style="font-size:11px;color:#6b7280;margin:1px 0 0">${inv.partner_name}</p>
+    <div style="${i > 0 ? 'border-top:1px solid #f3f4f6;padding-top:12px;margin-top:12px' : ''}">
+      <p style="font-size:14px;font-weight:600;color:#111827;margin:0;line-height:1.3">${inv.firm_name}</p>
+      <p style="font-size:12px;color:#6b7280;margin:2px 0 0">${inv.partner_name}</p>
     </div>`).join('')
 
   const lenItems = s.latestLenders.map((l, i) => `
-    <div style="${i > 0 ? 'border-top:1px solid #f3f4f6;padding-top:6px;margin-top:6px' : ''}">
-      <p style="font-size:12px;font-weight:600;color:#111827;margin:0">${l.institution_name}</p>
-      <p style="font-size:11px;color:#6b7280;margin:1px 0 0">${l.contact_name}</p>
+    <div style="${i > 0 ? 'border-top:1px solid #f3f4f6;padding-top:12px;margin-top:12px' : ''}">
+      <p style="font-size:14px;font-weight:600;color:#111827;margin:0;line-height:1.3">${l.institution_name}</p>
+      <p style="font-size:12px;color:#6b7280;margin:2px 0 0">${l.contact_name}</p>
     </div>`).join('')
 
+  // space-y-1.5 = 6px gap between connection rows (matches homepage)
   const connRows = s.latestConnections.map((c, i) => `
     <div style="${i > 0 ? 'border-top:1px solid #f3f4f6;padding-top:6px;margin-top:6px' : ''}">
       <table width="100%" cellpadding="0" cellspacing="0">
         <tr>
-          <td style="font-size:12px;font-weight:600;color:#111827;width:38%">${c.left}</td>
-          <td style="font-size:11px;color:#9ca3af;text-align:center">connected with</td>
-          <td style="font-size:12px;font-weight:600;color:#111827;text-align:right;width:38%">${c.right}</td>
+          <td style="font-size:14px;font-weight:600;color:#111827">${c.left}</td>
+          <td style="font-size:12px;color:#9ca3af;text-align:center;white-space:nowrap;padding:0 8px">and</td>
+          <td style="font-size:14px;font-weight:600;color:#111827;text-align:right">${c.right}</td>
         </tr>
       </table>
     </div>`).join('')
 
   return `
-    <div style="margin-top:20px;border-top:1px solid #e5e7eb;padding-top:14px">
-      <p style="font-size:11px;color:#9ca3af;letter-spacing:0.05em;text-transform:uppercase;margin:0 0 10px">Platform activity</p>
+    <div style="margin-top:12px;border-top:1px solid #e5e7eb;padding-top:12px">
+      <p style="font-size:11px;color:#9ca3af;letter-spacing:0.05em;text-transform:uppercase;margin:0 0 8px">Platform activity</p>
 
-      <!-- Live counts -->
-      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:8px">
+      <!-- Live counts — p-5 = 20px padding, matches homepage -->
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:12px">
         <tr>
-          <td width="50%" style="padding-right:4px">
-            <div style="border:1px solid #e5e7eb;border-radius:8px;padding:8px 10px;text-align:center">
-              <p style="font-size:10px;color:#9ca3af;letter-spacing:0.04em;text-transform:uppercase;margin:0 0 2px">Live Investors</p>
-              <p style="font-size:20px;font-weight:700;color:#534AB7;margin:0">${s.investorCount}</p>
+          <td width="50%" style="padding-right:6px">
+            <div style="border:1px solid #f3f4f6;border-radius:12px;padding:20px;text-align:center;background:#fff">
+              <p style="font-size:11px;color:#9ca3af;letter-spacing:0.05em;text-transform:uppercase;margin:0 0 4px">Live Investors on FounderInvited</p>
+              <p style="font-size:30px;font-weight:700;color:#534AB7;margin:0">${s.investorCount}</p>
             </div>
           </td>
-          <td width="50%" style="padding-left:4px">
-            <div style="border:1px solid #e5e7eb;border-radius:8px;padding:8px 10px;text-align:center">
-              <p style="font-size:10px;color:#9ca3af;letter-spacing:0.04em;text-transform:uppercase;margin:0 0 2px">Live Lenders</p>
-              <p style="font-size:20px;font-weight:700;color:#534AB7;margin:0">${s.lenderCount}</p>
+          <td width="50%" style="padding-left:6px">
+            <div style="border:1px solid #f3f4f6;border-radius:12px;padding:20px;text-align:center;background:#fff">
+              <p style="font-size:11px;color:#9ca3af;letter-spacing:0.05em;text-transform:uppercase;margin:0 0 4px">Live Lenders on FounderInvited</p>
+              <p style="font-size:30px;font-weight:700;color:#534AB7;margin:0">${s.lenderCount}</p>
             </div>
           </td>
         </tr>
       </table>
 
       <!-- Latest to join -->
-      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:8px">
+      <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:12px">
         <tr>
-          <td width="50%" valign="top" style="padding-right:4px">
-            <div style="border:1px solid #e5e7eb;border-radius:8px;padding:8px 10px">
-              <p style="font-size:10px;color:#9ca3af;letter-spacing:0.04em;text-transform:uppercase;margin:0 0 7px">Latest Investors</p>
+          <td width="50%" valign="top" style="padding-right:6px">
+            <div style="border:1px solid #f3f4f6;border-radius:12px;padding:20px;background:#fff">
+              <p style="font-size:11px;color:#9ca3af;letter-spacing:0.05em;text-transform:uppercase;margin:0 0 12px">Latest Investors to Join</p>
               ${invItems}
             </div>
           </td>
-          <td width="50%" valign="top" style="padding-left:4px">
-            <div style="border:1px solid #e5e7eb;border-radius:8px;padding:8px 10px">
-              <p style="font-size:10px;color:#9ca3af;letter-spacing:0.04em;text-transform:uppercase;margin:0 0 7px">Latest Lenders</p>
+          <td width="50%" valign="top" style="padding-left:6px">
+            <div style="border:1px solid #f3f4f6;border-radius:12px;padding:20px;background:#fff">
+              <p style="font-size:11px;color:#9ca3af;letter-spacing:0.05em;text-transform:uppercase;margin:0 0 12px">Latest Lenders to Join</p>
               ${lenItems}
             </div>
           </td>
@@ -838,8 +840,8 @@ function buildPlatformStatsHtml(s: PlatformStats): string {
 
       <!-- Latest connections -->
       ${s.latestConnections.length > 0 ? `
-      <div style="border:1px solid #e5e7eb;border-radius:8px;padding:8px 10px">
-        <p style="font-size:10px;color:#9ca3af;letter-spacing:0.04em;text-transform:uppercase;margin:0 0 7px;text-align:center">Latest Connections</p>
+      <div style="border:1px solid #f3f4f6;border-radius:12px;padding:16px 20px;background:#fff">
+        <p style="font-size:11px;color:#9ca3af;letter-spacing:0.05em;text-transform:uppercase;margin:0 0 12px">Latest Connections</p>
         ${connRows}
       </div>` : ''}
     </div>`
