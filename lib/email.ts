@@ -656,7 +656,7 @@ export function buildMonthlyFounderDigestEmail({ founderEmail, matchingInvestors
     from: FROM,
     to: founderEmail,
     subject: 'FounderInvited update',
-    html: `<div style="max-width:600px;margin:0 auto;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+    html: `<div style="max-width:600px;margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
       ${matchingInvestors.length > 0 || matchingLenders.length > 0
         ? '<p>Here are investors and lenders on FounderInvited that match your profile.</p>'
         : '<p>No new matches this month — here\'s what\'s happening on FounderInvited.</p>'
@@ -703,7 +703,7 @@ export function buildMonthlyInvestorDigestEmail({ investorEmail, matchingFounder
     from: FROM,
     to: investorEmail,
     subject: 'FounderInvited update',
-    html: `<div style="max-width:600px;margin:0 auto;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+    html: `<div style="max-width:600px;margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
       ${matchingFounders.length > 0
         ? '<p>Here are active founders on FounderInvited that match your thesis this month.</p>'
         : '<p>No new matches this month — here\'s what\'s happening on FounderInvited.</p>'
@@ -742,7 +742,7 @@ export function buildMonthlyLenderDigestEmail({ lenderEmail, matchingFounders, p
     from: FROM,
     to: lenderEmail,
     subject: 'FounderInvited update',
-    html: `<div style="max-width:600px;margin:0 auto;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+    html: `<div style="max-width:600px;margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
       ${matchingFounders.length > 0
         ? '<p>Here are active founders on FounderInvited that match your lending criteria this month.</p>'
         : '<p>No new matches this month — here\'s what\'s happening on FounderInvited.</p>'
@@ -791,9 +791,9 @@ function buildPlatformStatsHtml(s: PlatformStats): string {
     <div style="${i > 0 ? 'border-top:1px solid #f3f4f6;padding-top:6px;margin-top:6px' : ''}">
       <table width="100%" cellpadding="0" cellspacing="0">
         <tr>
-          <td style="font-size:14px;font-weight:600;color:#111827">${c.left}</td>
-          <td style="font-size:12px;color:#9ca3af;text-align:center;white-space:nowrap;padding:0 8px">and</td>
-          <td style="font-size:14px;font-weight:600;color:#111827;text-align:right">${c.right}</td>
+          <td width="46%" style="font-size:14px;font-weight:600;color:#111827">${c.left}</td>
+          <td width="8%" style="font-size:12px;color:#9ca3af;text-align:center;white-space:nowrap">and</td>
+          <td width="46%" style="font-size:14px;font-weight:600;color:#111827;text-align:right">${c.right}</td>
         </tr>
       </table>
     </div>`).join('')
