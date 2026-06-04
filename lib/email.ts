@@ -639,6 +639,14 @@ export async function sendAdminLenderConnectionEmail({
 }
 
 // ─── Monthly digest: founder ──────────────────────────────────────────────────
+
+const REBRAND_NOTICE = `
+  <div style="border-left:3px solid #534AB7;padding:12px 16px;margin-bottom:24px;background:#f9f9ff">
+    <p style="font-size:14px;font-weight:700;color:#111827;margin:0 0 10px">Update: FounderInvited.com is the new home of what you signed up for on UnlockedVC.</p>
+    <p style="font-size:14px;color:#374151;margin:0 0 10px">The name may have changed, but it&#39;s the same platform and same mission: connecting B2B SaaS founders with investors and lenders via mutual opt-in. No warm intro required, no cold outreach, no gatekeeping. Free, as always.</p>
+    <p style="font-size:14px;color:#374151;margin:0 0 10px">Why the new name? 500 Startups &mdash; the venture firm famously built on &ldquo;supporting founders&rdquo; &mdash; sent us a cease and desist letter. A free tool, built for founders, targeted by a VC firm whose entire brand is democratizing access to capital. We found that ironic too.</p>
+    <p style="font-size:14px;color:#374151;margin:0">So we rebranded. And honestly? We like the new name better.</p>
+  </div>`
 type FounderDigestParams = {
   founderEmail: string
   matchingInvestors: { firm_name: string; partner_name: string }[]
@@ -657,6 +665,7 @@ export function buildMonthlyFounderDigestEmail({ founderEmail, matchingInvestors
     to: founderEmail,
     subject: 'FounderInvited update',
     html: `<div style="max-width:600px;margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+      ${REBRAND_NOTICE}
       ${matchingInvestors.length > 0 || matchingLenders.length > 0
         ? '<p>Here are investors and lenders on FounderInvited that match your profile.</p>'
         : '<p>No new matches this month — here\'s what\'s happening on FounderInvited.</p>'
@@ -704,6 +713,7 @@ export function buildMonthlyInvestorDigestEmail({ investorEmail, matchingFounder
     to: investorEmail,
     subject: 'FounderInvited update',
     html: `<div style="max-width:600px;margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+      ${REBRAND_NOTICE}
       ${matchingFounders.length > 0
         ? '<p>Here are active founders on FounderInvited that match your thesis this month.</p>'
         : '<p>No new matches this month — here\'s what\'s happening on FounderInvited.</p>'
@@ -743,6 +753,7 @@ export function buildMonthlyLenderDigestEmail({ lenderEmail, matchingFounders, p
     to: lenderEmail,
     subject: 'FounderInvited update',
     html: `<div style="max-width:600px;margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+      ${REBRAND_NOTICE}
       ${matchingFounders.length > 0
         ? '<p>Here are active founders on FounderInvited that match your lending criteria this month.</p>'
         : '<p>No new matches this month — here\'s what\'s happening on FounderInvited.</p>'
