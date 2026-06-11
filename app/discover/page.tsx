@@ -132,16 +132,6 @@ export default async function DiscoverPage() {
       )
     }
 
-    if (!myProfile.is_approved) {
-      return (
-        <div className="max-w-5xl mx-auto px-6 py-12">
-          <p className="text-sm text-gray-500">
-            Your profile must be approved before you can browse founders.
-          </p>
-        </div>
-      )
-    }
-
     const myFlaggedFounderIds = (myFlags ?? []).map((f) => f.founder_id)
     const connectedFounderIds = new Set((connectedFounderFlags ?? []).map((f) => f.founder_id))
     const visibleFounders = (founders ?? []).filter((f) => !connectedFounderIds.has(f.id))
@@ -192,16 +182,6 @@ export default async function DiscoverPage() {
         <div className="max-w-5xl mx-auto px-6 py-12">
           <p className="text-sm text-gray-500">
             Complete your profile before browsing founders.
-          </p>
-        </div>
-      )
-    }
-
-    if (!myProfile.is_approved) {
-      return (
-        <div className="max-w-5xl mx-auto px-6 py-12">
-          <p className="text-sm text-gray-500">
-            Your profile must be approved before you can browse founders.
           </p>
         </div>
       )
