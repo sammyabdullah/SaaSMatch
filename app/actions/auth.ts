@@ -8,7 +8,7 @@ export async function signUp(email: string, password: string, role: string) {
 
   const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://founderinvited.com'
 
-  const { error } = await supabase.auth.signUp({
+  const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
@@ -21,7 +21,13 @@ export async function signUp(email: string, password: string, role: string) {
     return { error: error.message }
   }
 
-  redirect('/onboarding')
+  // If a session was created the project has email confirmation disabled —
+  // user is already logged in, send them straight to onboarding.
+  // Otherwise they need to confirm their email first.
+  if (data.session) {
+    redirect('/onboarding')
+  }
+  redirect('/auth/confirmed')
 }
 
 export async function signIn(email: string, password: string) {

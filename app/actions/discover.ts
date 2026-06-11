@@ -177,24 +177,21 @@ export async function flagLenderAsFounder(lenderId: string): Promise<{ error?: s
 
   // Send notification email to the lender
   try {
-    const [{ data: lp }, { data: founderProfile }] = await Promise.all([
+    const [{ data: lp }, { data: lenderEmailProfile }, { data: fp }] = await Promise.all([
       admin.from('lender_profiles')
         .select('institution_name, contact_name, loan_size_min_usd, loan_size_max_usd, stages, geography_focus, thesis_statement')
         .eq('id', lenderId)
         .single(),
       admin.from('profiles').select('email').eq('id', lenderId).single(),
-    ])
-
-    const [{ data: fp }] = await Promise.all([
       admin.from('founder_profiles')
         .select('company_name, website, stage, arr_range, raising_amount_usd, product_categories, mom_growth_pct, why_now, location')
         .eq('id', user.id)
         .single(),
     ])
 
-    if (lp && founderProfile?.email && fp) {
+    if (lp && lenderEmailProfile?.email && fp) {
       await sendFounderFlaggedLenderEmail({
-        lenderEmail: founderProfile.email,
+        lenderEmail: lenderEmailProfile.email,
         founder: fp as Parameters<typeof sendFounderFlaggedLenderEmail>[0]['founder'],
       })
     }

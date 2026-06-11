@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
       }
       // Email confirmation — sign out and show confirmed page
       await supabase.auth.signOut()
-      return NextResponse.redirect(`${origin}/auth/confirmed`)
+      return NextResponse.redirect(`${origin}/auth/confirmed?verified=1`)
     }
   }
 
