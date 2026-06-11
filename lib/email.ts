@@ -16,6 +16,8 @@ export async function sendFounderFlaggedInvestorEmail({
 }: {
   investorEmail: string
   founder: {
+    company_name: string
+    website: string | null
     stage: string
     arr_range: string
     raising_amount_usd: number
@@ -27,15 +29,20 @@ export async function sendFounderFlaggedInvestorEmail({
 }) {
   const categoryList = founder.product_categories.join(', ')
   const raise = formatUsd(founder.raising_amount_usd)
+  const companyLink = founder.website
+    ? `<a href="${founder.website}" style="color:#534AB7;text-decoration:none">${founder.company_name}</a>`
+    : `<strong>${founder.company_name}</strong>`
 
   await getResend().emails.send({
     from: FROM,
     to: investorEmail,
     subject: 'FounderInvited request',
     html: `
-      <p>A founder in the FounderInvited network has flagged your profile and would like to connect.</p>
+      <p>${companyLink} has flagged your profile on FounderInvited and would like to connect.</p>
 
       <table style="border-collapse:collapse;margin:16px 0">
+        <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Company</td><td style="font-size:13px">${founder.company_name}</td></tr>
+        ${founder.website ? `<tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Website</td><td style="font-size:13px"><a href="${founder.website}" style="color:#534AB7">${founder.website}</a></td></tr>` : ''}
         <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Stage</td><td style="font-size:13px">${fmtStage(founder.stage)}</td></tr>
         <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">ARR range</td><td style="font-size:13px">${fmtArr(founder.arr_range)}</td></tr>
         <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Raising</td><td style="font-size:13px">${raise}</td></tr>
@@ -406,6 +413,8 @@ export async function sendFounderFlaggedLenderEmail({
 }: {
   lenderEmail: string
   founder: {
+    company_name: string
+    website: string | null
     stage: string
     arr_range: string
     raising_amount_usd: number
@@ -417,15 +426,20 @@ export async function sendFounderFlaggedLenderEmail({
 }) {
   const categoryList = founder.product_categories.join(', ')
   const raise = formatUsd(founder.raising_amount_usd)
+  const companyLink = founder.website
+    ? `<a href="${founder.website}" style="color:#534AB7;text-decoration:none">${founder.company_name}</a>`
+    : `<strong>${founder.company_name}</strong>`
 
   await getResend().emails.send({
     from: FROM,
     to: lenderEmail,
     subject: 'FounderInvited request',
     html: `
-      <p>A founder in the FounderInvited network has expressed interest in connecting with you.</p>
+      <p>${companyLink} has expressed interest in connecting with you on FounderInvited.</p>
 
       <table style="border-collapse:collapse;margin:16px 0">
+        <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Company</td><td style="font-size:13px">${founder.company_name}</td></tr>
+        ${founder.website ? `<tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Website</td><td style="font-size:13px"><a href="${founder.website}" style="color:#534AB7">${founder.website}</a></td></tr>` : ''}
         <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Stage</td><td style="font-size:13px">${fmtStage(founder.stage)}</td></tr>
         <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">ARR range</td><td style="font-size:13px">${fmtArr(founder.arr_range)}</td></tr>
         <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Raising</td><td style="font-size:13px">${raise}</td></tr>

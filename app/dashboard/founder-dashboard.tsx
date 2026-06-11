@@ -155,12 +155,13 @@ export default async function FounderDashboard({ userId }: Props) {
 
   const investorIds = Array.from(new Set((rawViews ?? []).map((v) => v.investor_id)))
   const { data: investorNames } = investorIds.length > 0
-    ? await admin.from('investor_profiles').select('id, firm_name').in('id', investorIds)
+    ? await admin.from('investor_profiles').select('id, firm_name, website').in('id', investorIds)
     : { data: [] }
-  const investorNameMap = Object.fromEntries((investorNames ?? []).map((i) => [i.id, i.firm_name]))
+  const investorInfoMap = Object.fromEntries((investorNames ?? []).map((i) => [i.id, { firm_name: i.firm_name, website: i.website }]))
   const recentViews = (rawViews ?? []).map((v) => ({
     ...v,
-    firm_name: investorNameMap[v.investor_id] ?? null,
+    firm_name: investorInfoMap[v.investor_id]?.firm_name ?? null,
+    website: investorInfoMap[v.investor_id]?.website ?? null,
   }))
 
   // All outgoing flags for activity feed (all statuses)
@@ -263,6 +264,31 @@ export default async function FounderDashboard({ userId }: Props) {
         />
         <MetricCard label="Profile views this week" value={viewsThisWeek ?? 0} />
       </div>
+
+      {/* Who viewed your profile */}
+      {recentViews.length > 0 && (
+        <section className="mb-10">
+          <h2 className="text-base font-semibold text-gray-900 mb-1">Investors who viewed your profile</h2>
+          <p className="text-sm text-gray-500 mb-4">These investors have looked at your profile recently.</p>
+          <div className="border border-gray-200 rounded-lg divide-y divide-gray-100">
+            {recentViews.map((v, i) => (
+              <div key={i} className="px-4 py-3 flex items-center justify-between">
+                <div>
+                  {v.website ? (
+                    <a href={v.website} target="_blank" rel="noopener noreferrer"
+                      className="text-sm font-semibold text-[#534AB7] hover:underline">
+                      {v.firm_name ?? 'Unknown investor'}
+                    </a>
+                  ) : (
+                    <p className="text-sm font-semibold text-gray-900">{v.firm_name ?? 'Unknown investor'}</p>
+                  )}
+                </div>
+                <p className="text-xs text-gray-400">{fmtDate(v.viewed_at)}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Incoming investor interest — action required */}
       {incomingFlags && incomingFlags.length > 0 && (
