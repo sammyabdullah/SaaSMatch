@@ -414,17 +414,17 @@ export default function FounderDiscoverClient({
                   {flagErrors[id] && <p className="text-xs text-red-500 mb-1">{flagErrors[id]}</p>}
                   {flagState === 'idle' && (
                     <button onClick={() => handleLenderFlag(id)}
-                      className="w-full text-sm py-2 rounded-md border transition-colors border-sky-500 text-sky-600 hover:bg-sky-500 hover:text-white">
-                      Express interest
+                      className="w-full text-sm py-2 rounded-md border transition-colors border-[#534AB7] text-[#534AB7] hover:bg-[#534AB7] hover:text-white">
+                      Send connection request
                     </button>
                   )}
                   {flagState === 'pending_undo' && (
                     <div className="flex items-center gap-2">
-                      <span className="flex-1 text-sm text-center text-green-600">Sent ✓</span>
+                      <span className="flex-1 text-sm text-center text-green-600">Flagged ✓</span>
                       <button onClick={() => handleLenderUndo(id)} className="text-xs text-gray-500 hover:text-gray-700 border border-gray-200 px-2.5 py-1 rounded-md transition-colors">Undo</button>
                     </div>
                   )}
-                  {flagState === 'flagged' && <div className="text-sm text-center text-green-600 py-2">Sent ✓</div>}
+                  {flagState === 'flagged' && <div className="text-sm text-center text-green-600 py-2">Flagged ✓</div>}
                 </div>
               </div>
             )
