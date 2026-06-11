@@ -180,8 +180,8 @@ export default async function LenderDashboard({ userId }: Props) {
 
       {/* Metric cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-10">
-        <MetricCard label="Profile views this week" value={profileViewsThisWeek ?? 0} />
         <MetricCard label="Founders expressed interest in" value={expressedInterestCount ?? 0} />
+        <MetricCard label="Profile views this week" value={profileViewsThisWeek ?? 0} />
         <MetricCard label="Connections" value={totalConnections} accent={totalConnections > 0 ? 'green' : 'gray'} />
         <MetricCard
           label="Pending intros"

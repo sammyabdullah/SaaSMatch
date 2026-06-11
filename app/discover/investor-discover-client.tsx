@@ -229,7 +229,7 @@ export default function InvestorDiscoverClient({
             </select>
           </div>
           <div>
-            <label className="block text-xs text-gray-500 mb-1">MoM growth min %</label>
+            <label className="block text-xs text-gray-500 mb-1">YOY growth min %</label>
             <input
               type="number"
               value={momGrowthMin}
