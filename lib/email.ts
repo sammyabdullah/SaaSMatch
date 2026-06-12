@@ -787,6 +787,42 @@ export async function sendMonthlyLenderDigest(params: LenderDigestParams) {
   if (error) throw new Error(error.message)
 }
 
+// ─── Monthly digest: lender ──────────────────────────────────────────────────
+export async function sendMonthlyLenderDigest({
+  lenderEmail,
+  matchingFounders,
+  platformStats,
+}: {
+  lenderEmail: string
+  matchingFounders: { company_name: string; stage: string; product_categories: string[] }[]
+  platformStats: PlatformStats
+}) {
+  const founderRows = matchingFounders.map(f =>
+    `<tr>
+      <td style="padding:2px 16px 2px 0;font-size:13px;width:200px"><strong>${f.company_name}</strong></td>
+      <td style="padding:2px 16px 2px 0;font-size:13px;color:#555">${fmtStage(f.stage)}</td>
+      <td style="padding:2px 0;font-size:13px;color:#888">${f.product_categories.join(', ')}</td>
+    </tr>`
+  ).join('')
+
+  await getResend().emails.send({
+    from: FROM,
+    to: lenderEmail,
+    subject: 'Unlocked matches',
+    html: `
+      <p>Here are active founders on UnlockedVC that match your lending criteria this month.</p>
+
+      <table style="border-collapse:collapse;margin:8px 0">${founderRows}</table>
+
+      <p style="margin-top:28px"><a href="${APP_URL}/login" style="background:#534AB7;color:white;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block">Log In</a></p>
+
+      ${buildPlatformStatsHtml(platformStats)}
+
+      <p style="color:#999;font-size:12px;margin-top:24px">You're receiving this digest because you have an approved lender profile on UnlockedVC.</p>
+    `,
+  })
+}
+
 // ─── Platform stats type & HTML builder ──────────────────────────────────────
 type PlatformStats = {
   investorCount: number
