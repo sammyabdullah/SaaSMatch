@@ -386,6 +386,63 @@ export async function triggerDigest(): Promise<{ emailsSent?: number; total?: nu
   return { emailsSent, total, skipped }
 }
 
+const MAX_DECK_BYTES = 15 * 1024 * 1024
+
+export async function adminUploadFounderDeck(
+  founderId: string,
+  formData: FormData
+): Promise<{ error?: string; deckUrl?: string }> {
+  await requireAdmin()
+
+  const file = formData.get('deck') as File | null
+  if (!file || file.size === 0) return { error: 'No file provided.' }
+  if (file.size > MAX_DECK_BYTES) return { error: 'File must be 15 MB or smaller.' }
+  if (file.type !== 'application/pdf') return { error: 'Only PDF files are accepted.' }
+
+  const admin = createAdminClient()
+  const bytes = await file.arrayBuffer()
+  const path = `${founderId}.pdf`
+
+  const { error: uploadError } = await admin.storage
+    .from('decks')
+    .upload(path, bytes, { upsert: true, contentType: 'application/pdf' })
+
+  if (uploadError) return { error: uploadError.message }
+
+  const { data: { publicUrl } } = admin.storage.from('decks').getPublicUrl(path)
+
+  const { error: dbError } = await admin
+    .from('founder_profiles')
+    .update({ deck_url: publicUrl, updated_at: new Date().toISOString() })
+    .eq('id', founderId)
+
+  if (dbError) return { error: dbError.message }
+
+  revalidatePath('/admin')
+  revalidatePath('/discover')
+  return { deckUrl: publicUrl }
+}
+
+export async function adminRemoveFounderDeck(
+  founderId: string
+): Promise<{ error?: string; success?: boolean }> {
+  await requireAdmin()
+
+  const admin = createAdminClient()
+  await admin.storage.from('decks').remove([`${founderId}.pdf`])
+
+  const { error } = await admin
+    .from('founder_profiles')
+    .update({ deck_url: null, updated_at: new Date().toISOString() })
+    .eq('id', founderId)
+
+  if (error) return { error: error.message }
+
+  revalidatePath('/admin')
+  revalidatePath('/discover')
+  return { success: true }
+}
+
 export async function sendTestDigestToEmail(email: string): Promise<{ error?: string; success?: boolean }> {
   await requireAdmin()
   if (!email) return { error: 'Email is required' }

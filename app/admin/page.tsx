@@ -6,6 +6,7 @@ import { redirect } from 'next/navigation'
 import { ApproveButton, RejectButton, ApproveInvestorButton, RejectInvestorButton, DeleteFounderButton, DeleteInvestorButton, ApproveLenderButton, RejectLenderButton, DeleteLenderButton } from './approve-button'
 import ChangeEmailForm from './change-email-form'
 import SendDigestButton from './send-digest-button'
+import AdminDeckUpload from './admin-deck-upload'
 
 function fmt(value: string) {
   return value.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
@@ -319,6 +320,11 @@ function FounderCard({
           </p>
         </div>
       )}
+
+      {/* Pitch deck */}
+      <div className="mb-5">
+        <AdminDeckUpload founderId={fp.id} currentDeckUrl={fp.deck_url ?? null} />
+      </div>
 
       {/* Actions */}
       <div className="flex gap-3 pt-2">

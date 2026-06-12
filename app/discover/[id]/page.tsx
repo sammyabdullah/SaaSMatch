@@ -126,6 +126,25 @@ export default async function ProfileDetailPage({ params }: Props) {
           </div>
         )}
 
+        {fp.deck_url && (
+          <div className="border border-gray-200 rounded-lg p-6 mb-6">
+            <h2 className="text-sm font-semibold text-gray-900 border-b border-gray-100 pb-2 mb-4">
+              Pitch deck
+            </h2>
+            <a
+              href={fp.deck_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 text-sm text-[#534AB7] hover:underline font-medium"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              </svg>
+              View pitch deck ↗
+            </a>
+          </div>
+        )}
+
         <div className="flex items-center justify-between text-xs text-gray-400 mb-8">
           <span>Listed {fmtDate(fp.created_at)}</span>
         </div>
@@ -394,6 +413,23 @@ export default async function ProfileDetailPage({ params }: Props) {
           <div className="border border-gray-200 rounded-lg p-6 mb-6">
             <h2 className="text-sm font-semibold text-gray-900 border-b border-gray-100 pb-2 mb-4">In their own words and traction</h2>
             <p className="text-sm text-gray-700 italic">&ldquo;{fp.why_now}&rdquo;</p>
+          </div>
+        )}
+
+        {fp.deck_url && (
+          <div className="border border-gray-200 rounded-lg p-6 mb-6">
+            <h2 className="text-sm font-semibold text-gray-900 border-b border-gray-100 pb-2 mb-4">Pitch deck</h2>
+            <a
+              href={fp.deck_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 text-sm text-[#534AB7] hover:underline font-medium"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              </svg>
+              View pitch deck ↗
+            </a>
           </div>
         )}
 

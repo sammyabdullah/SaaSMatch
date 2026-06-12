@@ -167,3 +167,61 @@ export async function deleteAccount(): Promise<void> {
 
   redirect('/')
 }
+
+const MAX_DECK_BYTES = 15 * 1024 * 1024 // 15 MB
+
+export async function uploadFounderDeck(
+  formData: FormData
+): Promise<{ error?: string; deckUrl?: string }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+
+  const file = formData.get('deck') as File | null
+  if (!file || file.size === 0) return { error: 'No file provided.' }
+  if (file.size > MAX_DECK_BYTES) return { error: 'File must be 15 MB or smaller.' }
+  if (file.type !== 'application/pdf') return { error: 'Only PDF files are accepted.' }
+
+  const admin = createAdminClient()
+  const bytes = await file.arrayBuffer()
+  const path = `${user.id}.pdf`
+
+  const { error: uploadError } = await admin.storage
+    .from('decks')
+    .upload(path, bytes, { upsert: true, contentType: 'application/pdf' })
+
+  if (uploadError) return { error: uploadError.message }
+
+  const { data: { publicUrl } } = admin.storage.from('decks').getPublicUrl(path)
+
+  const { error: dbError } = await admin
+    .from('founder_profiles')
+    .update({ deck_url: publicUrl, updated_at: new Date().toISOString() })
+    .eq('id', user.id)
+
+  if (dbError) return { error: dbError.message }
+
+  revalidatePath('/account')
+  revalidatePath('/discover')
+  return { deckUrl: publicUrl }
+}
+
+export async function removeFounderDeck(): Promise<{ error?: string; success?: boolean }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+
+  const admin = createAdminClient()
+  await admin.storage.from('decks').remove([`${user.id}.pdf`])
+
+  const { error } = await admin
+    .from('founder_profiles')
+    .update({ deck_url: null, updated_at: new Date().toISOString() })
+    .eq('id', user.id)
+
+  if (error) return { error: error.message }
+
+  revalidatePath('/account')
+  revalidatePath('/discover')
+  return { success: true }
+}

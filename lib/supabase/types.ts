@@ -64,6 +64,7 @@ export type Database = {
           revenue_model: RevenueModel
           raising_amount_usd: number
           why_now: string
+          deck_url: string | null
           product_categories: string[]
           status: FounderStatus
           is_approved: boolean
@@ -108,6 +109,7 @@ export type Database = {
           revenue_model?: RevenueModel
           raising_amount_usd?: number
           why_now?: string
+          deck_url?: string | null
           product_categories?: string[]
           status?: FounderStatus
           is_approved?: boolean
