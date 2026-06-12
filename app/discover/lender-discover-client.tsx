@@ -31,7 +31,7 @@ const GTM_OPTIONS = ['sales-led', 'product-led', 'hybrid'] as const
 const REVENUE_OPTIONS = ['seat-based', 'usage-based', 'platform-fee', 'other'] as const
 const PRODUCT_CATEGORIES = [
   'iPaaS', 'Vertical SaaS', 'DevTools', 'Security',
-  'Data & Analytics', 'HR Tech', 'FinTech', 'MarTech', 'RevOps', 'Ed Tech', 'Other',
+  'Data & Analytics', 'HR Tech', 'FinTech', 'MarTech', 'RevOps', 'Ed Tech', 'Healthcare', 'Other',
 ]
 
 type FlagState = 'idle' | 'pending_undo' | 'flagged'
