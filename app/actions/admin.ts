@@ -443,6 +443,24 @@ export async function adminRemoveFounderDeck(
   return { success: true }
 }
 
+export async function pauseUser(userId: string): Promise<{ error?: string; success?: boolean }> {
+  await requireAdmin()
+  const admin = createAdminClient()
+  const { error } = await admin.from('profiles').update({ is_paused: true }).eq('id', userId)
+  if (error) return { error: error.message }
+  revalidatePath('/admin')
+  return { success: true }
+}
+
+export async function unpauseUser(userId: string): Promise<{ error?: string; success?: boolean }> {
+  await requireAdmin()
+  const admin = createAdminClient()
+  const { error } = await admin.from('profiles').update({ is_paused: false }).eq('id', userId)
+  if (error) return { error: error.message }
+  revalidatePath('/admin')
+  return { success: true }
+}
+
 export async function sendTestDigestToEmail(email: string): Promise<{ error?: string; success?: boolean }> {
   await requireAdmin()
   if (!email) return { error: 'Email is required' }

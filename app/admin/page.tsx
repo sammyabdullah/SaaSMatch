@@ -7,6 +7,7 @@ import { ApproveButton, RejectButton, ApproveInvestorButton, RejectInvestorButto
 import ChangeEmailForm from './change-email-form'
 import SendDigestButton from './send-digest-button'
 import AdminDeckUpload from './admin-deck-upload'
+import { PauseUserButton } from './pause-button'
 
 function fmt(value: string) {
   return value.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
@@ -51,40 +52,40 @@ export default async function AdminPage() {
 
   const { data: pending } = await admin
     .from('founder_profiles')
-    .select('*, profiles(email)')
+    .select('*, profiles(email, is_paused)')
     .eq('is_approved', false)
     .neq('status', 'closed')
     .order('created_at', { ascending: true })
 
   const { data: approvedFounders } = await admin
     .from('founder_profiles')
-    .select('*, profiles(email)')
+    .select('*, profiles(email, is_paused)')
     .eq('is_approved', true)
     .order('created_at', { ascending: false })
     .limit(20)
 
   const { data: pendingInvestors } = await admin
     .from('investor_profiles')
-    .select('*, profiles(email)')
+    .select('*, profiles(email, is_paused)')
     .eq('is_approved', false)
     .order('created_at', { ascending: true })
 
   const { data: approvedInvestors } = await admin
     .from('investor_profiles')
-    .select('*, profiles(email)')
+    .select('*, profiles(email, is_paused)')
     .eq('is_approved', true)
     .order('created_at', { ascending: false })
     .limit(20)
 
   const { data: pendingLenders } = await admin
     .from('lender_profiles')
-    .select('*, profiles(email)')
+    .select('*, profiles(email, is_paused)')
     .eq('is_approved', false)
     .order('created_at', { ascending: true })
 
   const { data: approvedLenders } = await admin
     .from('lender_profiles')
-    .select('*, profiles(email)')
+    .select('*, profiles(email, is_paused)')
     .eq('is_approved', true)
     .order('created_at', { ascending: false })
     .limit(20)
@@ -334,6 +335,7 @@ function FounderCard({
             <RejectButton founderId={fp.id} />
           </>
         )}
+        <PauseUserButton userId={fp.id} isPaused={fp.profiles?.is_paused ?? false} />
         <DeleteFounderButton founderId={fp.id} />
       </div>
     </div>
@@ -412,6 +414,7 @@ function InvestorCard({
             <RejectInvestorButton investorId={ip.id} />
           </>
         )}
+        <PauseUserButton userId={ip.id} isPaused={ip.profiles?.is_paused ?? false} />
         <DeleteInvestorButton investorId={ip.id} />
       </div>
     </div>
@@ -502,6 +505,7 @@ function LenderCard({
             <RejectLenderButton lenderId={lp.id} />
           </>
         )}
+        <PauseUserButton userId={lp.id} isPaused={lp.profiles?.is_paused ?? false} />
         <DeleteLenderButton lenderId={lp.id} />
       </div>
     </div>

@@ -33,16 +33,19 @@ export type Database = {
           role: UserRole
           email: string
           created_at: string
+          is_paused: boolean
         }
         Insert: {
           id: string
           role: UserRole
           email: string
           created_at?: string
+          is_paused?: boolean
         }
         Update: {
           role?: UserRole
           email?: string
+          is_paused?: boolean
         }
         Relationships: []
       }

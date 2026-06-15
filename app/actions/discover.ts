@@ -17,6 +17,9 @@ export async function flagInvestor(investorId: string): Promise<{ error?: string
 
   const admin = createAdminClient()
 
+  const { data: myProfile } = await admin.from('profiles').select('is_paused').eq('id', user.id).single()
+  if (myProfile?.is_paused) return { error: 'Your account has been paused. Please contact the platform.' }
+
   const { error } = await admin.from('flags').insert({
     founder_id: user.id,
     investor_id: investorId,
@@ -89,6 +92,9 @@ export async function flagFounder(founderId: string): Promise<{ error?: string; 
 
   const admin = createAdminClient()
 
+  const { data: myProfile } = await admin.from('profiles').select('is_paused').eq('id', user.id).single()
+  if (myProfile?.is_paused) return { error: 'Your account has been paused. Please contact the platform.' }
+
   const { error } = await admin.from('flags').insert({
     founder_id: founderId,
     investor_id: user.id,
@@ -158,6 +164,9 @@ export async function flagLenderAsFounder(lenderId: string): Promise<{ error?: s
   if (!user) return { error: 'Not authenticated' }
 
   const admin = createAdminClient()
+
+  const { data: myProfile } = await admin.from('profiles').select('is_paused').eq('id', user.id).single()
+  if (myProfile?.is_paused) return { error: 'Your account has been paused. Please contact the platform.' }
 
   const { error } = await admin.from('lender_flags').insert({
     founder_id: user.id,
@@ -232,6 +241,9 @@ export async function flagFounderAsLender(founderId: string): Promise<{ error?: 
   if (!user) return { error: 'Not authenticated' }
 
   const admin = createAdminClient()
+
+  const { data: myProfile } = await admin.from('profiles').select('is_paused').eq('id', user.id).single()
+  if (myProfile?.is_paused) return { error: 'Your account has been paused. Please contact the platform.' }
 
   const { error } = await admin.from('lender_flags').insert({
     founder_id: founderId,
