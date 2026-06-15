@@ -12,7 +12,7 @@ const LOAN_TYPES = [
 
 const SAAS_SUBCATEGORIES = [
   'iPaaS', 'Vertical SaaS', 'DevTools', 'Security',
-  'Data & Analytics', 'HR Tech', 'FinTech', 'MarTech', 'RevOps', 'Ed Tech', 'Other',
+  'Data & Analytics', 'HR Tech', 'FinTech', 'MarTech', 'RevOps', 'Ed Tech', 'Healthcare', 'Other',
 ]
 
 const STAGE_OPTIONS: { value: FounderStage; label: string }[] = [
