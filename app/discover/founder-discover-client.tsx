@@ -403,7 +403,7 @@ export default function FounderDiscoverClient({
                     <p className={`text-xs text-gray-600 italic ${isThesisExpanded ? '' : 'line-clamp-2'}`}>
                       &ldquo;{lender.thesis_statement}&rdquo;
                     </p>
-                    <button type="button" onClick={() => setExpandedThesis((prev) => ({ ...prev, [id]: !isThesisExpanded }))}
+                    <button type="button" onClick={(e) => { e.stopPropagation(); setExpandedThesis((prev) => ({ ...prev, [id]: !isThesisExpanded })) }}
                       className="text-xs text-[#534AB7] hover:text-[#4339A0] mt-1">
                       {isThesisExpanded ? 'Show less' : 'Read more'}
                     </button>
