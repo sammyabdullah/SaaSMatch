@@ -8,6 +8,7 @@ import ChangeEmailForm from './change-email-form'
 import SendDigestButton from './send-digest-button'
 import AdminDeckUpload from './admin-deck-upload'
 import { PauseUserButton } from './pause-button'
+import { EditFounderButton, EditInvestorButton, EditLenderButton } from './admin-edit-form'
 
 function fmt(value: string) {
   return value.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
@@ -328,13 +329,14 @@ function FounderCard({
       </div>
 
       {/* Actions */}
-      <div className="flex gap-3 pt-2">
+      <div className="flex flex-wrap gap-3 pt-2">
         {showActions && (
           <>
             <ApproveButton founderId={fp.id} />
             <RejectButton founderId={fp.id} />
           </>
         )}
+        <EditFounderButton profile={fp} />
         <PauseUserButton userId={fp.id} isPaused={fp.profiles?.is_paused ?? false} />
         <DeleteFounderButton founderId={fp.id} />
       </div>
@@ -407,13 +409,14 @@ function InvestorCard({
         </div>
       )}
 
-      <div className="flex gap-3 pt-2">
+      <div className="flex flex-wrap gap-3 pt-2">
         {showActions && (
           <>
             <ApproveInvestorButton investorId={ip.id} />
             <RejectInvestorButton investorId={ip.id} />
           </>
         )}
+        <EditInvestorButton profile={ip} />
         <PauseUserButton userId={ip.id} isPaused={ip.profiles?.is_paused ?? false} />
         <DeleteInvestorButton investorId={ip.id} />
       </div>
@@ -498,13 +501,14 @@ function LenderCard({
         </div>
       )}
 
-      <div className="flex gap-3 pt-2">
+      <div className="flex flex-wrap gap-3 pt-2">
         {showActions && (
           <>
             <ApproveLenderButton lenderId={lp.id} />
             <RejectLenderButton lenderId={lp.id} />
           </>
         )}
+        <EditLenderButton profile={lp} />
         <PauseUserButton userId={lp.id} isPaused={lp.profiles?.is_paused ?? false} />
         <DeleteLenderButton lenderId={lp.id} />
       </div>

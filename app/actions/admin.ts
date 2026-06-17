@@ -443,6 +443,54 @@ export async function adminRemoveFounderDeck(
   return { success: true }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function updateFounderProfile(founderId: string, fields: Record<string, any>): Promise<{ error?: string; success?: boolean }> {
+  await requireAdmin()
+  const admin = createAdminClient()
+  const allowed: Record<string, unknown> = {}
+  const keys = ['company_name','website','location','founded_year','stage','arr_range','mom_growth_pct','nrr_pct','acv_usd','gtm_motion','revenue_model','raising_amount_usd','why_now','product_categories']
+  for (const k of keys) { if (k in fields) allowed[k] = fields[k] }
+  if (Object.keys(allowed).length === 0) return { error: 'No valid fields to update' }
+  allowed.updated_at = new Date().toISOString()
+  const { error } = await admin.from('founder_profiles').update(allowed).eq('id', founderId)
+  if (error) return { error: error.message }
+  revalidatePath('/admin')
+  revalidatePath('/discover')
+  return { success: true }
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function updateInvestorProfile(investorId: string, fields: Record<string, any>): Promise<{ error?: string; success?: boolean }> {
+  await requireAdmin()
+  const admin = createAdminClient()
+  const allowed: Record<string, unknown> = {}
+  const keys = ['firm_name','partner_name','website','location','check_size_min_usd','check_size_max_usd','stages','leads_rounds','geography_focus','saas_subcategories','arr_sweet_spot_min','arr_sweet_spot_max','thesis_statement']
+  for (const k of keys) { if (k in fields) allowed[k] = fields[k] }
+  if (Object.keys(allowed).length === 0) return { error: 'No valid fields to update' }
+  allowed.updated_at = new Date().toISOString()
+  const { error } = await admin.from('investor_profiles').update(allowed).eq('id', investorId)
+  if (error) return { error: error.message }
+  revalidatePath('/admin')
+  revalidatePath('/discover')
+  return { success: true }
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function updateLenderProfile(lenderId: string, fields: Record<string, any>): Promise<{ error?: string; success?: boolean }> {
+  await requireAdmin()
+  const admin = createAdminClient()
+  const allowed: Record<string, unknown> = {}
+  const keys = ['institution_name','contact_name','website','location','loan_size_min_usd','loan_size_max_usd','loan_types','stages','geography_focus','saas_subcategories','arr_min_requirement','arr_max_sweet_spot','thesis_statement']
+  for (const k of keys) { if (k in fields) allowed[k] = fields[k] }
+  if (Object.keys(allowed).length === 0) return { error: 'No valid fields to update' }
+  allowed.updated_at = new Date().toISOString()
+  const { error } = await admin.from('lender_profiles').update(allowed).eq('id', lenderId)
+  if (error) return { error: error.message }
+  revalidatePath('/admin')
+  revalidatePath('/discover')
+  return { success: true }
+}
+
 export async function pauseUser(userId: string): Promise<{ error?: string; success?: boolean }> {
   await requireAdmin()
   const admin = createAdminClient()
