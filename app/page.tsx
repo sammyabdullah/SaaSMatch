@@ -13,6 +13,10 @@ export default async function Home() {
     { data: lastLenders },
     { data: investorConnections },
     { data: lenderConnections },
+    { count: investorFlagCount },
+    { count: lenderFlagCount },
+    { data: firstInvestorConn },
+    { data: firstLenderConn },
   ] = await Promise.all([
     admin.from('investor_profiles').select('id', { count: 'exact', head: true }).eq('is_approved', true),
     admin.from('lender_profiles').select('id', { count: 'exact', head: true }).eq('is_approved', true),
@@ -20,7 +24,18 @@ export default async function Home() {
     admin.from('lender_profiles').select('institution_name, contact_name').eq('is_approved', true).order('created_at', { ascending: false }).limit(5),
     admin.from('flags').select('founder_id, investor_id, responded_at').eq('status', 'accepted').order('responded_at', { ascending: false }).limit(50),
     admin.from('lender_flags').select('founder_id, lender_id, responded_at').eq('status', 'accepted').order('responded_at', { ascending: false }).limit(50),
+    admin.from('flags').select('id', { count: 'exact', head: true }).eq('status', 'accepted'),
+    admin.from('lender_flags').select('id', { count: 'exact', head: true }).eq('status', 'accepted'),
+    admin.from('flags').select('responded_at').eq('status', 'accepted').order('responded_at', { ascending: true }).limit(1),
+    admin.from('lender_flags').select('responded_at').eq('status', 'accepted').order('responded_at', { ascending: true }).limit(1),
   ])
+
+  const totalConnections = (investorFlagCount ?? 0) + (lenderFlagCount ?? 0)
+  const firstInvDate = firstInvestorConn?.[0]?.responded_at
+  const firstLenDate = firstLenderConn?.[0]?.responded_at
+  const firstConnectionDate = firstInvDate && firstLenDate
+    ? (firstInvDate < firstLenDate ? firstInvDate : firstLenDate)
+    : firstInvDate ?? firstLenDate ?? null
 
   // Look up names for connections
   const founderIds = Array.from(new Set([
@@ -130,6 +145,15 @@ export default async function Home() {
         </div>
       </div>
       </div>
+
+      {totalConnections > 0 && firstConnectionDate && (
+        <div className="max-w-2xl mx-auto mt-6 mb-3">
+          <p className="text-sm text-gray-500">
+            <span className="font-semibold text-[#534AB7]">{totalConnections.toLocaleString()}</span> connection{totalConnections !== 1 ? 's' : ''} made since{' '}
+            {new Date(firstConnectionDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}.
+          </p>
+        </div>
+      )}
 
       {latestConnections.length > 0 && (
         <div className="max-w-2xl mx-auto mt-3">
