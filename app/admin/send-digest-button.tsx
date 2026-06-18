@@ -86,9 +86,9 @@ export default function SendDigestButton({ savedOpeningParagraph, savedSubjectLi
           onChange={(e) => setOpeningParagraph(e.target.value)}
           rows={4}
           className={textareaCls}
-          placeholder="Write your opening message here. The first line will be bold. Leave blank to send without one."
+          placeholder="Write your opening message here. Leave blank to send without one."
         />
-        <p className="text-xs text-gray-400 mt-1">Appears at the top of every digest email in a highlighted box. The first paragraph is bold.</p>
+        <p className="text-xs text-gray-400 mt-1">Appears as plain text at the top of every digest email.</p>
       </div>
 
       {/* Send to everyone */}

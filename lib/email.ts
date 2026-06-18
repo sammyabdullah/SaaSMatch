@@ -656,16 +656,7 @@ export async function sendAdminLenderConnectionEmail({
 
 function formatOpeningParagraph(text: string): string {
   const paragraphs = text.split(/\n\n+/).filter(Boolean)
-  if (paragraphs.length <= 1) {
-    return `<div style="border-left:3px solid #534AB7;padding:12px 16px;margin-bottom:24px;background:#f9f9ff">
-      <p style="font-size:14px;color:#374151;margin:0">${text.replace(/\n/g, '<br>')}</p>
-    </div>`
-  }
-  const [first, ...rest] = paragraphs
-  return `<div style="border-left:3px solid #534AB7;padding:12px 16px;margin-bottom:24px;background:#f9f9ff">
-    <p style="font-size:14px;font-weight:700;color:#111827;margin:0 0 10px">${first.replace(/\n/g, '<br>')}</p>
-    ${rest.map(p => `<p style="font-size:14px;color:#374151;margin:0 0 10px">${p.replace(/\n/g, '<br>')}</p>`).join('')}
-  </div>`
+  return paragraphs.map(p => `<p style="font-size:14px;color:#374151;margin:0 0 14px">${p.replace(/\n/g, '<br>')}</p>`).join('')
 }
 
 type FounderDigestParams = {
