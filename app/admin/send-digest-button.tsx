@@ -7,7 +7,12 @@ const btnCls = 'px-4 py-2 bg-[#534AB7] text-white text-sm font-medium rounded-md
 const inputCls = 'border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#534AB7] focus:border-transparent w-64'
 const textareaCls = 'w-full border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#534AB7] focus:border-transparent resize-none'
 
-export default function SendDigestButton() {
+interface Props {
+  savedOpeningParagraph: string
+  savedSubjectLine: string
+}
+
+export default function SendDigestButton({ savedOpeningParagraph, savedSubjectLine }: Props) {
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<{ emailsSent: number; total: number; skipped: number } | null>(null)
   const [error, setError] = useState('')
@@ -17,14 +22,15 @@ export default function SendDigestButton() {
   const [testResult, setTestResult] = useState('')
   const [testError, setTestError] = useState('')
 
-  const [customMessage, setCustomMessage] = useState('')
+  const [openingParagraph, setOpeningParagraph] = useState(savedOpeningParagraph)
+  const [subjectLine, setSubjectLine] = useState(savedSubjectLine)
 
   async function handleSend() {
     if (!confirm('Send the monthly digest to all founders, investors, and lenders now?')) return
     setLoading(true)
     setResult(null)
     setError('')
-    const res = await triggerDigest(customMessage.trim() || undefined)
+    const res = await triggerDigest(openingParagraph.trim() || undefined, subjectLine.trim() || undefined)
     if (res.error) setError(res.error)
     else setResult({ emailsSent: res.emailsSent ?? 0, total: res.total ?? 0, skipped: res.skipped ?? 0 })
     setLoading(false)
@@ -36,7 +42,7 @@ export default function SendDigestButton() {
     setTestLoading(true)
     setTestResult('')
     setTestError('')
-    const res = await sendTestDigestToEmail(testEmail, customMessage.trim() || undefined)
+    const res = await sendTestDigestToEmail(testEmail, openingParagraph.trim() || undefined, subjectLine.trim() || undefined)
     if (res.error) setTestError(res.error)
     else setTestResult(`Sent 3 sample emails (founder, investor, lender) to ${testEmail}`)
     setTestLoading(false)
@@ -44,18 +50,35 @@ export default function SendDigestButton() {
 
   return (
     <div className="space-y-6">
-      {/* Custom opening message */}
+      {/* Subject line */}
       <div>
-        <label className="block text-xs text-gray-500 mb-2">
-          Opening paragraph <span className="text-gray-400">(optional — appears at the top of every digest email)</span>
-        </label>
-        <textarea
-          value={customMessage}
-          onChange={(e) => setCustomMessage(e.target.value)}
-          rows={3}
+        <label className="block text-xs text-gray-500 mb-1">Subject line</label>
+        <input
+          value={subjectLine}
+          onChange={(e) => setSubjectLine(e.target.value)}
           className={textareaCls}
-          placeholder="e.g. Big news this month — we've added 10 new investors to the platform…"
+          placeholder="FounderInvited update"
         />
+        <p className="text-xs text-gray-400 mt-1">Leave blank to use the default: &ldquo;FounderInvited update&rdquo;</p>
+      </div>
+
+      {/* Opening paragraph */}
+      <div>
+        {savedOpeningParagraph && (
+          <div className="mb-3 border border-gray-100 rounded-md p-3 bg-gray-50">
+            <p className="text-xs text-gray-400 mb-1 uppercase tracking-wide">Last opening paragraph sent</p>
+            <p className="text-sm text-gray-700 whitespace-pre-wrap">{savedOpeningParagraph}</p>
+          </div>
+        )}
+        <label className="block text-xs text-gray-500 mb-1">Opening paragraph</label>
+        <textarea
+          value={openingParagraph}
+          onChange={(e) => setOpeningParagraph(e.target.value)}
+          rows={4}
+          className={textareaCls}
+          placeholder="Write your opening message here. The first line will be bold. Leave blank to send without one."
+        />
+        <p className="text-xs text-gray-400 mt-1">Appears at the top of every digest email in a highlighted box. The first paragraph is bold.</p>
       </div>
 
       {/* Send to everyone */}

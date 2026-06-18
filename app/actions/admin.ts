@@ -250,7 +250,30 @@ export async function deleteFounderProfile(founderId: string) {
   revalidatePath('/discover')
 }
 
-export async function triggerDigest(customMessage?: string): Promise<{ emailsSent?: number; total?: number; skipped?: number; error?: string }> {
+export async function getDigestSettings(): Promise<{ openingParagraph: string; subjectLine: string }> {
+  await requireAdmin()
+  const admin = createAdminClient()
+  const [{ data: opRow }, { data: slRow }] = await Promise.all([
+    admin.from('site_settings').select('value').eq('key', 'digest_opening_paragraph').maybeSingle(),
+    admin.from('site_settings').select('value').eq('key', 'digest_subject_line').maybeSingle(),
+  ])
+  return {
+    openingParagraph: opRow?.value ?? '',
+    subjectLine: slRow?.value ?? '',
+  }
+}
+
+async function saveDigestSettings(admin: ReturnType<typeof createAdminClient>, openingParagraph?: string, subjectLine?: string) {
+  const now = new Date().toISOString()
+  if (openingParagraph !== undefined) {
+    await admin.from('site_settings').upsert({ key: 'digest_opening_paragraph', value: openingParagraph, updated_at: now }, { onConflict: 'key' })
+  }
+  if (subjectLine !== undefined) {
+    await admin.from('site_settings').upsert({ key: 'digest_subject_line', value: subjectLine, updated_at: now }, { onConflict: 'key' })
+  }
+}
+
+export async function triggerDigest(openingParagraph?: string, subjectLine?: string): Promise<{ emailsSent?: number; total?: number; skipped?: number; error?: string }> {
   await requireAdmin()
 
   const admin = createAdminClient()
@@ -331,7 +354,8 @@ export async function triggerDigest(customMessage?: string): Promise<{ emailsSen
       matchingInvestors: matchingInvestors.map((inv) => ({ firm_name: inv.firm_name, partner_name: inv.partner_name })),
       matchingLenders: matchingLenders.map((l) => ({ institution_name: l.institution_name, contact_name: l.contact_name })),
       platformStats,
-      customMessage,
+      openingParagraph,
+      subjectLine,
     })]
   })
 
@@ -350,7 +374,8 @@ export async function triggerDigest(customMessage?: string): Promise<{ emailsSen
       investorEmail,
       matchingFounders: matchingFounders.map((f) => ({ company_name: f.company_name, stage: f.stage as string, product_categories: (f.product_categories ?? []) as string[] })),
       platformStats,
-      customMessage,
+      openingParagraph,
+      subjectLine,
     })]
   })
 
@@ -368,7 +393,8 @@ export async function triggerDigest(customMessage?: string): Promise<{ emailsSen
       lenderEmail,
       matchingFounders: matchingFounders.map((f) => ({ company_name: f.company_name, stage: f.stage as string, product_categories: (f.product_categories ?? []) as string[] })),
       platformStats,
-      customMessage,
+      openingParagraph,
+      subjectLine,
     })]
   })
 
@@ -386,6 +412,7 @@ export async function triggerDigest(customMessage?: string): Promise<{ emailsSen
     emailsSent += data?.data?.length ?? batch.length
   }
 
+  await saveDigestSettings(admin, openingParagraph, subjectLine)
   return { emailsSent, total, skipped }
 }
 
@@ -512,7 +539,7 @@ export async function unpauseUser(userId: string): Promise<{ error?: string; suc
   return { success: true }
 }
 
-export async function sendTestDigestToEmail(email: string, customMessage?: string): Promise<{ error?: string; success?: boolean }> {
+export async function sendTestDigestToEmail(email: string, openingParagraph?: string, subjectLine?: string): Promise<{ error?: string; success?: boolean }> {
   await requireAdmin()
   if (!email) return { error: 'Email is required' }
 

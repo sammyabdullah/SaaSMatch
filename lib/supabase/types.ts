@@ -346,6 +346,24 @@ export type Database = {
         Relationships: []
       }
 
+      site_settings: {
+        Row: {
+          key: string
+          value: string
+          updated_at: string
+        }
+        Insert: {
+          key: string
+          value?: string
+          updated_at?: string
+        }
+        Update: {
+          value?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+
       lender_flags: {
         Row: {
           id: string

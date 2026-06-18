@@ -654,20 +654,29 @@ export async function sendAdminLenderConnectionEmail({
 
 // ─── Monthly digest: founder ──────────────────────────────────────────────────
 
-const REBRAND_NOTICE = `
-  <div style="border-left:3px solid #534AB7;padding:12px 16px;margin-bottom:24px;background:#f9f9ff">
-    <p style="font-size:14px;font-weight:700;color:#111827;margin:0 0 10px">Update: FounderInvited.com is the new home of what you signed up for on UnlockedVC.</p>
-    <p style="font-size:14px;color:#374151;margin:0 0 10px">The name may have changed, but it&#39;s the same platform and same mission: connecting B2B SaaS founders with investors and lenders via mutual opt-in. No warm intro required, no cold outreach, no gatekeeping. Free, as always.</p>
-    <p style="font-size:14px;color:#374151;margin:0">Why the new name? 500 Startups, the venture firm famously built on &ldquo;supporting founders&rdquo; sent us a cease and desist letter. FounderInvited is a free tool, built for founders, and now has been targeted by a VC firm whose brand is democratizing access to capital. Yea, we found that ironic too. So we rebranded. And honestly, we like the new name better.</p>
+function formatOpeningParagraph(text: string): string {
+  const paragraphs = text.split(/\n\n+/).filter(Boolean)
+  if (paragraphs.length <= 1) {
+    return `<div style="border-left:3px solid #534AB7;padding:12px 16px;margin-bottom:24px;background:#f9f9ff">
+      <p style="font-size:14px;color:#374151;margin:0">${text.replace(/\n/g, '<br>')}</p>
+    </div>`
+  }
+  const [first, ...rest] = paragraphs
+  return `<div style="border-left:3px solid #534AB7;padding:12px 16px;margin-bottom:24px;background:#f9f9ff">
+    <p style="font-size:14px;font-weight:700;color:#111827;margin:0 0 10px">${first.replace(/\n/g, '<br>')}</p>
+    ${rest.map(p => `<p style="font-size:14px;color:#374151;margin:0 0 10px">${p.replace(/\n/g, '<br>')}</p>`).join('')}
   </div>`
+}
+
 type FounderDigestParams = {
   founderEmail: string
   matchingInvestors: { firm_name: string; partner_name: string }[]
   matchingLenders: { institution_name: string; contact_name: string }[]
   platformStats: PlatformStats
-  customMessage?: string
+  openingParagraph?: string
+  subjectLine?: string
 }
-export function buildMonthlyFounderDigestEmail({ founderEmail, matchingInvestors, matchingLenders, platformStats, customMessage }: FounderDigestParams) {
+export function buildMonthlyFounderDigestEmail({ founderEmail, matchingInvestors, matchingLenders, platformStats, openingParagraph, subjectLine }: FounderDigestParams) {
   const investorRows = matchingInvestors.map(inv =>
     `<tr><td style="padding:2px 16px 2px 0;font-size:13px;width:200px"><strong>${inv.firm_name}</strong></td><td style="padding:2px 0;font-size:13px;color:#555">${inv.partner_name}</td></tr>`
   ).join('')
@@ -677,10 +686,9 @@ export function buildMonthlyFounderDigestEmail({ founderEmail, matchingInvestors
   return {
     from: FROM,
     to: founderEmail,
-    subject: 'FounderInvited update',
+    subject: subjectLine || 'FounderInvited update',
     html: `<div style="max-width:600px;margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
-      ${REBRAND_NOTICE}
-      ${customMessage ? `<p style="font-size:14px;color:#374151;margin-bottom:20px">${customMessage.replace(/\n/g, '<br>')}</p>` : ''}
+      ${openingParagraph ? formatOpeningParagraph(openingParagraph) : ''}
       ${matchingInvestors.length > 0 || matchingLenders.length > 0
         ? '<p>Here are investors and lenders on FounderInvited that match your profile.</p>'
         : '<p>No new matches this month — here\'s what\'s happening on FounderInvited.</p>'
@@ -714,9 +722,10 @@ type InvestorDigestParams = {
   investorEmail: string
   matchingFounders: { company_name: string; stage: string; product_categories: string[] }[]
   platformStats: PlatformStats
-  customMessage?: string
+  openingParagraph?: string
+  subjectLine?: string
 }
-export function buildMonthlyInvestorDigestEmail({ investorEmail, matchingFounders, platformStats, customMessage }: InvestorDigestParams) {
+export function buildMonthlyInvestorDigestEmail({ investorEmail, matchingFounders, platformStats, openingParagraph, subjectLine }: InvestorDigestParams) {
   const founderRows = matchingFounders.map(f =>
     `<tr>
       <td style="padding:2px 16px 2px 0;font-size:13px;width:200px"><strong>${f.company_name}</strong></td>
@@ -727,10 +736,9 @@ export function buildMonthlyInvestorDigestEmail({ investorEmail, matchingFounder
   return {
     from: FROM,
     to: investorEmail,
-    subject: 'FounderInvited update',
+    subject: subjectLine || 'FounderInvited update',
     html: `<div style="max-width:600px;margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
-      ${REBRAND_NOTICE}
-      ${customMessage ? `<p style="font-size:14px;color:#374151;margin-bottom:20px">${customMessage.replace(/\n/g, '<br>')}</p>` : ''}
+      ${openingParagraph ? formatOpeningParagraph(openingParagraph) : ''}
       ${matchingFounders.length > 0
         ? '<p>Here are active founders on FounderInvited that match your thesis this month.</p>'
         : '<p>No new matches this month — here\'s what\'s happening on FounderInvited.</p>'
@@ -756,9 +764,10 @@ type LenderDigestParams = {
   lenderEmail: string
   matchingFounders: { company_name: string; stage: string; product_categories: string[] }[]
   platformStats: PlatformStats
-  customMessage?: string
+  openingParagraph?: string
+  subjectLine?: string
 }
-export function buildMonthlyLenderDigestEmail({ lenderEmail, matchingFounders, platformStats, customMessage }: LenderDigestParams) {
+export function buildMonthlyLenderDigestEmail({ lenderEmail, matchingFounders, platformStats, openingParagraph, subjectLine }: LenderDigestParams) {
   const founderRows = matchingFounders.map(f =>
     `<tr>
       <td style="padding:2px 16px 2px 0;font-size:13px;width:200px"><strong>${f.company_name}</strong></td>
@@ -769,10 +778,9 @@ export function buildMonthlyLenderDigestEmail({ lenderEmail, matchingFounders, p
   return {
     from: FROM,
     to: lenderEmail,
-    subject: 'FounderInvited update',
+    subject: subjectLine || 'FounderInvited update',
     html: `<div style="max-width:600px;margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
-      ${REBRAND_NOTICE}
-      ${customMessage ? `<p style="font-size:14px;color:#374151;margin-bottom:20px">${customMessage.replace(/\n/g, '<br>')}</p>` : ''}
+      ${openingParagraph ? formatOpeningParagraph(openingParagraph) : ''}
       ${matchingFounders.length > 0
         ? '<p>Here are active founders on FounderInvited that match your lending criteria this month.</p>'
         : '<p>No new matches this month — here\'s what\'s happening on FounderInvited.</p>'

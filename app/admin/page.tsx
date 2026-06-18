@@ -91,6 +91,13 @@ export default async function AdminPage() {
     .order('created_at', { ascending: false })
     .limit(20)
 
+  const [{ data: opRow }, { data: slRow }] = await Promise.all([
+    admin.from('site_settings').select('value').eq('key', 'digest_opening_paragraph').maybeSingle(),
+    admin.from('site_settings').select('value').eq('key', 'digest_subject_line').maybeSingle(),
+  ])
+  const savedOpeningParagraph = opRow?.value ?? ''
+  const savedSubjectLine = slRow?.value ?? ''
+
   const { count: approvedFounderCount } = await admin
     .from('founder_profiles')
     .select('id', { count: 'exact', head: true })
@@ -231,7 +238,7 @@ export default async function AdminPage() {
       <section className="mb-14">
         <h2 className="text-base font-semibold text-gray-900 mb-2">Monthly digest</h2>
         <p className="text-sm text-gray-500 mb-4">Sends matched emails to all active founders, investors, and lenders right now.</p>
-        <SendDigestButton />
+        <SendDigestButton savedOpeningParagraph={savedOpeningParagraph} savedSubjectLine={savedSubjectLine} />
       </section>
 
       {/* Approved Lenders */}
