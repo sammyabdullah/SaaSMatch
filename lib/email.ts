@@ -678,7 +678,7 @@ export function buildMonthlyFounderDigestEmail({ founderEmail, matchingInvestors
     from: FROM,
     to: founderEmail,
     subject: subjectLine || 'FounderInvited update',
-    html: `<div style="max-width:600px;margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+    html: `<div style="margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
       ${openingParagraph ? formatOpeningParagraph(openingParagraph) : ''}
       ${matchingInvestors.length > 0 || matchingLenders.length > 0
         ? '<p>Here are investors and lenders on FounderInvited that match your profile.</p>'
@@ -728,7 +728,7 @@ export function buildMonthlyInvestorDigestEmail({ investorEmail, matchingFounder
     from: FROM,
     to: investorEmail,
     subject: subjectLine || 'FounderInvited update',
-    html: `<div style="max-width:600px;margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+    html: `<div style="margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
       ${openingParagraph ? formatOpeningParagraph(openingParagraph) : ''}
       ${matchingFounders.length > 0
         ? '<p>Here are active founders on FounderInvited that match your thesis this month.</p>'
@@ -770,7 +770,7 @@ export function buildMonthlyLenderDigestEmail({ lenderEmail, matchingFounders, p
     from: FROM,
     to: lenderEmail,
     subject: subjectLine || 'FounderInvited update',
-    html: `<div style="max-width:600px;margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+    html: `<div style="margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
       ${openingParagraph ? formatOpeningParagraph(openingParagraph) : ''}
       ${matchingFounders.length > 0
         ? '<p>Here are active founders on FounderInvited that match your lending criteria this month.</p>'
