@@ -592,27 +592,34 @@ export async function sendTestDigestToEmail(email: string, openingParagraph?: st
     latestConnections,
   }
 
-  await sendMonthlyFounderDigest({
-    founderEmail: email,
-    matchingInvestors: (investors ?? []).slice(0, 3).map((i) => ({ firm_name: i.firm_name, partner_name: i.partner_name })),
-    matchingLenders: (lenders ?? []).slice(0, 2).map((l) => ({ institution_name: l.institution_name, contact_name: l.contact_name })),
-    platformStats,
-    customMessage,
-  })
+  try {
+    await sendMonthlyFounderDigest({
+      founderEmail: email,
+      matchingInvestors: (investors ?? []).slice(0, 3).map((i) => ({ firm_name: i.firm_name, partner_name: i.partner_name })),
+      matchingLenders: (lenders ?? []).slice(0, 2).map((l) => ({ institution_name: l.institution_name, contact_name: l.contact_name })),
+      platformStats,
+      openingParagraph,
+      subjectLine,
+    })
 
-  await sendMonthlyInvestorDigest({
-    investorEmail: email,
-    matchingFounders: (founders ?? []).slice(0, 3).map((f) => ({ company_name: f.company_name, stage: f.stage as string, product_categories: (f.product_categories ?? []) as string[] })),
-    platformStats,
-    customMessage,
-  })
+    await sendMonthlyInvestorDigest({
+      investorEmail: email,
+      matchingFounders: (founders ?? []).slice(0, 3).map((f) => ({ company_name: f.company_name, stage: f.stage as string, product_categories: (f.product_categories ?? []) as string[] })),
+      platformStats,
+      openingParagraph,
+      subjectLine,
+    })
 
-  await sendMonthlyLenderDigest({
-    lenderEmail: email,
-    matchingFounders: (founders ?? []).slice(0, 3).map((f) => ({ company_name: f.company_name, stage: f.stage as string, product_categories: (f.product_categories ?? []) as string[] })),
-    platformStats,
-    customMessage,
-  })
+    await sendMonthlyLenderDigest({
+      lenderEmail: email,
+      matchingFounders: (founders ?? []).slice(0, 3).map((f) => ({ company_name: f.company_name, stage: f.stage as string, product_categories: (f.product_categories ?? []) as string[] })),
+      platformStats,
+      openingParagraph,
+      subjectLine,
+    })
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : 'Failed to send test emails' }
+  }
 
   return { success: true }
 }

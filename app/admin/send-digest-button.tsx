@@ -30,10 +30,15 @@ export default function SendDigestButton({ savedOpeningParagraph, savedSubjectLi
     setLoading(true)
     setResult(null)
     setError('')
-    const res = await triggerDigest(openingParagraph.trim() || undefined, subjectLine.trim() || undefined)
-    if (res.error) setError(res.error)
-    else setResult({ emailsSent: res.emailsSent ?? 0, total: res.total ?? 0, skipped: res.skipped ?? 0 })
-    setLoading(false)
+    try {
+      const res = await triggerDigest(openingParagraph.trim() || undefined, subjectLine.trim() || undefined)
+      if (res.error) setError(res.error)
+      else setResult({ emailsSent: res.emailsSent ?? 0, total: res.total ?? 0, skipped: res.skipped ?? 0 })
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Something went wrong')
+    } finally {
+      setLoading(false)
+    }
   }
 
   async function handleTest(e: React.FormEvent) {
@@ -42,10 +47,15 @@ export default function SendDigestButton({ savedOpeningParagraph, savedSubjectLi
     setTestLoading(true)
     setTestResult('')
     setTestError('')
-    const res = await sendTestDigestToEmail(testEmail, openingParagraph.trim() || undefined, subjectLine.trim() || undefined)
-    if (res.error) setTestError(res.error)
-    else setTestResult(`Sent 3 sample emails (founder, investor, lender) to ${testEmail}`)
-    setTestLoading(false)
+    try {
+      const res = await sendTestDigestToEmail(testEmail, openingParagraph.trim() || undefined, subjectLine.trim() || undefined)
+      if (res.error) setTestError(res.error)
+      else setTestResult(`Sent 3 sample emails (founder, investor, lender) to ${testEmail}`)
+    } catch (err) {
+      setTestError(err instanceof Error ? err.message : 'Something went wrong')
+    } finally {
+      setTestLoading(false)
+    }
   }
 
   return (
