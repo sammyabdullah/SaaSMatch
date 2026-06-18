@@ -250,7 +250,7 @@ export async function deleteFounderProfile(founderId: string) {
   revalidatePath('/discover')
 }
 
-export async function triggerDigest(): Promise<{ emailsSent?: number; total?: number; skipped?: number; error?: string }> {
+export async function triggerDigest(customMessage?: string): Promise<{ emailsSent?: number; total?: number; skipped?: number; error?: string }> {
   await requireAdmin()
 
   const admin = createAdminClient()
@@ -331,6 +331,7 @@ export async function triggerDigest(): Promise<{ emailsSent?: number; total?: nu
       matchingInvestors: matchingInvestors.map((inv) => ({ firm_name: inv.firm_name, partner_name: inv.partner_name })),
       matchingLenders: matchingLenders.map((l) => ({ institution_name: l.institution_name, contact_name: l.contact_name })),
       platformStats,
+      customMessage,
     })]
   })
 
@@ -349,6 +350,7 @@ export async function triggerDigest(): Promise<{ emailsSent?: number; total?: nu
       investorEmail,
       matchingFounders: matchingFounders.map((f) => ({ company_name: f.company_name, stage: f.stage as string, product_categories: (f.product_categories ?? []) as string[] })),
       platformStats,
+      customMessage,
     })]
   })
 
@@ -366,6 +368,7 @@ export async function triggerDigest(): Promise<{ emailsSent?: number; total?: nu
       lenderEmail,
       matchingFounders: matchingFounders.map((f) => ({ company_name: f.company_name, stage: f.stage as string, product_categories: (f.product_categories ?? []) as string[] })),
       platformStats,
+      customMessage,
     })]
   })
 
@@ -509,7 +512,7 @@ export async function unpauseUser(userId: string): Promise<{ error?: string; suc
   return { success: true }
 }
 
-export async function sendTestDigestToEmail(email: string): Promise<{ error?: string; success?: boolean }> {
+export async function sendTestDigestToEmail(email: string, customMessage?: string): Promise<{ error?: string; success?: boolean }> {
   await requireAdmin()
   if (!email) return { error: 'Email is required' }
 
@@ -567,18 +570,21 @@ export async function sendTestDigestToEmail(email: string): Promise<{ error?: st
     matchingInvestors: (investors ?? []).slice(0, 3).map((i) => ({ firm_name: i.firm_name, partner_name: i.partner_name })),
     matchingLenders: (lenders ?? []).slice(0, 2).map((l) => ({ institution_name: l.institution_name, contact_name: l.contact_name })),
     platformStats,
+    customMessage,
   })
 
   await sendMonthlyInvestorDigest({
     investorEmail: email,
     matchingFounders: (founders ?? []).slice(0, 3).map((f) => ({ company_name: f.company_name, stage: f.stage as string, product_categories: (f.product_categories ?? []) as string[] })),
     platformStats,
+    customMessage,
   })
 
   await sendMonthlyLenderDigest({
     lenderEmail: email,
     matchingFounders: (founders ?? []).slice(0, 3).map((f) => ({ company_name: f.company_name, stage: f.stage as string, product_categories: (f.product_categories ?? []) as string[] })),
     platformStats,
+    customMessage,
   })
 
   return { success: true }

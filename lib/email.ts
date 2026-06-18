@@ -665,8 +665,9 @@ type FounderDigestParams = {
   matchingInvestors: { firm_name: string; partner_name: string }[]
   matchingLenders: { institution_name: string; contact_name: string }[]
   platformStats: PlatformStats
+  customMessage?: string
 }
-export function buildMonthlyFounderDigestEmail({ founderEmail, matchingInvestors, matchingLenders, platformStats }: FounderDigestParams) {
+export function buildMonthlyFounderDigestEmail({ founderEmail, matchingInvestors, matchingLenders, platformStats, customMessage }: FounderDigestParams) {
   const investorRows = matchingInvestors.map(inv =>
     `<tr><td style="padding:2px 16px 2px 0;font-size:13px;width:200px"><strong>${inv.firm_name}</strong></td><td style="padding:2px 0;font-size:13px;color:#555">${inv.partner_name}</td></tr>`
   ).join('')
@@ -679,6 +680,7 @@ export function buildMonthlyFounderDigestEmail({ founderEmail, matchingInvestors
     subject: 'FounderInvited update',
     html: `<div style="max-width:600px;margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
       ${REBRAND_NOTICE}
+      ${customMessage ? `<p style="font-size:14px;color:#374151;margin-bottom:20px">${customMessage.replace(/\n/g, '<br>')}</p>` : ''}
       ${matchingInvestors.length > 0 || matchingLenders.length > 0
         ? '<p>Here are investors and lenders on FounderInvited that match your profile.</p>'
         : '<p>No new matches this month — here\'s what\'s happening on FounderInvited.</p>'
@@ -712,8 +714,9 @@ type InvestorDigestParams = {
   investorEmail: string
   matchingFounders: { company_name: string; stage: string; product_categories: string[] }[]
   platformStats: PlatformStats
+  customMessage?: string
 }
-export function buildMonthlyInvestorDigestEmail({ investorEmail, matchingFounders, platformStats }: InvestorDigestParams) {
+export function buildMonthlyInvestorDigestEmail({ investorEmail, matchingFounders, platformStats, customMessage }: InvestorDigestParams) {
   const founderRows = matchingFounders.map(f =>
     `<tr>
       <td style="padding:2px 16px 2px 0;font-size:13px;width:200px"><strong>${f.company_name}</strong></td>
@@ -727,6 +730,7 @@ export function buildMonthlyInvestorDigestEmail({ investorEmail, matchingFounder
     subject: 'FounderInvited update',
     html: `<div style="max-width:600px;margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
       ${REBRAND_NOTICE}
+      ${customMessage ? `<p style="font-size:14px;color:#374151;margin-bottom:20px">${customMessage.replace(/\n/g, '<br>')}</p>` : ''}
       ${matchingFounders.length > 0
         ? '<p>Here are active founders on FounderInvited that match your thesis this month.</p>'
         : '<p>No new matches this month — here\'s what\'s happening on FounderInvited.</p>'
@@ -752,8 +756,9 @@ type LenderDigestParams = {
   lenderEmail: string
   matchingFounders: { company_name: string; stage: string; product_categories: string[] }[]
   platformStats: PlatformStats
+  customMessage?: string
 }
-export function buildMonthlyLenderDigestEmail({ lenderEmail, matchingFounders, platformStats }: LenderDigestParams) {
+export function buildMonthlyLenderDigestEmail({ lenderEmail, matchingFounders, platformStats, customMessage }: LenderDigestParams) {
   const founderRows = matchingFounders.map(f =>
     `<tr>
       <td style="padding:2px 16px 2px 0;font-size:13px;width:200px"><strong>${f.company_name}</strong></td>
@@ -767,6 +772,7 @@ export function buildMonthlyLenderDigestEmail({ lenderEmail, matchingFounders, p
     subject: 'FounderInvited update',
     html: `<div style="max-width:600px;margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
       ${REBRAND_NOTICE}
+      ${customMessage ? `<p style="font-size:14px;color:#374151;margin-bottom:20px">${customMessage.replace(/\n/g, '<br>')}</p>` : ''}
       ${matchingFounders.length > 0
         ? '<p>Here are active founders on FounderInvited that match your lending criteria this month.</p>'
         : '<p>No new matches this month — here\'s what\'s happening on FounderInvited.</p>'
