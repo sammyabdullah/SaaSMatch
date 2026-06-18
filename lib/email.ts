@@ -680,6 +680,7 @@ export function buildMonthlyFounderDigestEmail({ founderEmail, matchingInvestors
     subject: subjectLine || 'FounderInvited update',
     html: `<div style="margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
       ${openingParagraph ? formatOpeningParagraph(openingParagraph) : ''}
+      <div style="max-width:600px">
       ${matchingInvestors.length > 0 || matchingLenders.length > 0
         ? '<p>Here are investors and lenders on FounderInvited that match your profile.</p>'
         : '<p>No new matches this month — here\'s what\'s happening on FounderInvited.</p>'
@@ -700,6 +701,7 @@ export function buildMonthlyFounderDigestEmail({ founderEmail, matchingInvestors
       ${buildPlatformStatsHtml(platformStats)}
 
       <p style="color:#999;font-size:12px;margin-top:24px">You're receiving this digest because you have an active founder profile on FounderInvited.</p>
+      </div>
     </div>`,
   }
 }
@@ -730,6 +732,7 @@ export function buildMonthlyInvestorDigestEmail({ investorEmail, matchingFounder
     subject: subjectLine || 'FounderInvited update',
     html: `<div style="margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
       ${openingParagraph ? formatOpeningParagraph(openingParagraph) : ''}
+      <div style="max-width:600px">
       ${matchingFounders.length > 0
         ? '<p>Here are active founders on FounderInvited that match your thesis this month.</p>'
         : '<p>No new matches this month — here\'s what\'s happening on FounderInvited.</p>'
@@ -742,6 +745,7 @@ export function buildMonthlyInvestorDigestEmail({ investorEmail, matchingFounder
       ${buildPlatformStatsHtml(platformStats)}
 
       <p style="color:#999;font-size:12px;margin-top:24px">You're receiving this digest because you have an approved investor profile on FounderInvited.</p>
+      </div>
     </div>`,
   }
 }
@@ -772,6 +776,7 @@ export function buildMonthlyLenderDigestEmail({ lenderEmail, matchingFounders, p
     subject: subjectLine || 'FounderInvited update',
     html: `<div style="margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
       ${openingParagraph ? formatOpeningParagraph(openingParagraph) : ''}
+      <div style="max-width:600px">
       ${matchingFounders.length > 0
         ? '<p>Here are active founders on FounderInvited that match your lending criteria this month.</p>'
         : '<p>No new matches this month — here\'s what\'s happening on FounderInvited.</p>'
@@ -784,6 +789,7 @@ export function buildMonthlyLenderDigestEmail({ lenderEmail, matchingFounders, p
       ${buildPlatformStatsHtml(platformStats)}
 
       <p style="color:#999;font-size:12px;margin-top:24px">You're receiving this digest because you have an approved lender profile on FounderInvited.</p>
+      </div>
     </div>`,
   }
 }
