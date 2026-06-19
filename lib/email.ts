@@ -7,6 +7,7 @@ function getResend() {
 const FROM = 'FounderInvited <noreply@founderinvited.com>'
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? 'sammy@blossomstreetventures.com'
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://founderinvited.com'
+const EMAIL_FOOTER = '<p style="color:#999;font-size:12px;margin-top:24px">Please share FounderInvited with others. Courtesy of Blossom Street Ventures.</p>'
 
 // ─── Founder flagged an investor ─────────────────────────────────────────────
 // Email goes to the investor with the founder's profile summary.
@@ -57,7 +58,7 @@ export async function sendFounderFlaggedInvestorEmail({
 
       <p><a href="${APP_URL}/dashboard" style="background:#534AB7;color:white;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block">View in Dashboard</a></p>
 
-      <p style="color:#999;font-size:12px">You're receiving this because you have an approved investor profile on FounderInvited.</p>
+      ${EMAIL_FOOTER}
     `,
   })
 }
@@ -103,7 +104,7 @@ export async function sendInvestorFlaggedFounderEmail({
 
       <p><a href="${APP_URL}/dashboard" style="background:#534AB7;color:white;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block">View in Dashboard</a></p>
 
-      <p style="color:#999;font-size:12px">You're receiving this because you have an approved founder profile on FounderInvited.</p>
+      ${EMAIL_FOOTER}
     `,
   })
 }
@@ -165,6 +166,8 @@ export async function sendConnectionAcceptedFounderEmail({
       <p style="font-size:16px"><strong>${investorEmail}</strong></p>
 
       <p><a href="${APP_URL}/dashboard" style="background:#534AB7;color:white;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block">View in Dashboard</a></p>
+
+      ${EMAIL_FOOTER}
     `,
   })
 }
@@ -225,6 +228,8 @@ export async function sendConnectionAcceptedInvestorEmail({
       <p style="font-size:16px"><strong>${founderEmail}</strong></p>
 
       <p><a href="${APP_URL}/dashboard" style="background:#534AB7;color:white;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block">View in Dashboard</a></p>
+
+      ${EMAIL_FOOTER}
     `,
   })
 }
@@ -335,6 +340,8 @@ export async function sendWelcomeFounderEmail({ email }: { email: string }) {
       <p>You can now browse for Investors, and they can also discover your profile. You'll be notified here when one reciprocates or expresses interest in you.</p>
 
       <p><a href="${APP_URL}/dashboard" style="background:#534AB7;color:white;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block">Go to your dashboard</a></p>
+
+      ${EMAIL_FOOTER}
     `,
   })
 }
@@ -351,6 +358,8 @@ export async function sendWelcomeInvestorEmail({ email }: { email: string }) {
       <p>Browse active founder profiles in Discover and flag any that fit your thesis. You'll be notified here when a founder reciprocates interest in connecting with you or expresses the initial interest.</p>
 
       <p><a href="${APP_URL}/discover" style="background:#534AB7;color:white;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block">Browse founders</a></p>
+
+      ${EMAIL_FOOTER}
     `,
   })
 }
@@ -401,6 +410,8 @@ export async function sendWelcomeLenderEmail({ email }: { email: string }) {
       <p>Browse active founder profiles in Discover and express interest in companies that fit your lending criteria.</p>
 
       <p><a href="${APP_URL}/discover" style="background:#534AB7;color:white;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block">Browse founders</a></p>
+
+      ${EMAIL_FOOTER}
     `,
   })
 }
@@ -454,7 +465,7 @@ export async function sendFounderFlaggedLenderEmail({
 
       <p><a href="${APP_URL}/dashboard" style="background:#534AB7;color:white;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block">View in Dashboard</a></p>
 
-      <p style="color:#999;font-size:12px">You're receiving this because you have an approved lender profile on FounderInvited.</p>
+      ${EMAIL_FOOTER}
     `,
   })
 }
@@ -499,7 +510,7 @@ export async function sendLenderFlaggedFounderEmail({
 
       <p><a href="${APP_URL}/dashboard" style="background:#534AB7;color:white;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block">View in Dashboard</a></p>
 
-      <p style="color:#999;font-size:12px">You're receiving this because you have an approved founder profile on FounderInvited.</p>
+      ${EMAIL_FOOTER}
     `,
   })
 }
@@ -562,6 +573,8 @@ export async function sendConnectionAcceptedLenderEmail({
       <p style="font-size:16px"><strong>${founderEmail}</strong></p>
 
       <p><a href="${APP_URL}/dashboard" style="background:#534AB7;color:white;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block">View in Dashboard</a></p>
+
+      ${EMAIL_FOOTER}
     `,
   })
 }
@@ -623,6 +636,8 @@ export async function sendConnectionAcceptedFounderFromLenderEmail({
       <p style="font-size:16px"><strong>${lenderEmail}</strong></p>
 
       <p><a href="${APP_URL}/dashboard" style="background:#534AB7;color:white;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block">View in Dashboard</a></p>
+
+      ${EMAIL_FOOTER}
     `,
   })
 }
@@ -700,7 +715,7 @@ export function buildMonthlyFounderDigestEmail({ founderEmail, matchingInvestors
 
       ${buildPlatformStatsHtml(platformStats)}
 
-      <p style="color:#999;font-size:12px;margin-top:24px">You're receiving this digest because you have an active founder profile on FounderInvited.</p>
+      ${EMAIL_FOOTER}
       </div>
     </div>`,
   }
@@ -744,7 +759,7 @@ export function buildMonthlyInvestorDigestEmail({ investorEmail, matchingFounder
 
       ${buildPlatformStatsHtml(platformStats)}
 
-      <p style="color:#999;font-size:12px;margin-top:24px">You're receiving this digest because you have an approved investor profile on FounderInvited.</p>
+      ${EMAIL_FOOTER}
       </div>
     </div>`,
   }
@@ -788,7 +803,7 @@ export function buildMonthlyLenderDigestEmail({ lenderEmail, matchingFounders, p
 
       ${buildPlatformStatsHtml(platformStats)}
 
-      <p style="color:#999;font-size:12px;margin-top:24px">You're receiving this digest because you have an approved lender profile on FounderInvited.</p>
+      ${EMAIL_FOOTER}
       </div>
     </div>`,
   }
