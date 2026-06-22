@@ -34,6 +34,10 @@ export default function RootLayout({
               >
                 sammy@blossomstreetventures.com
               </a>
+              .&nbsp; Other tools we&apos;ve built for founders:{' '}
+              <a href="https://www.softwaremultiples.com" target="_blank" rel="noopener noreferrer" className="text-[#534AB7] hover:underline">SoftwareMultiples.com</a>,{' '}
+              <a href="https://www.twofounderstalk.com" target="_blank" rel="noopener noreferrer" className="text-[#534AB7] hover:underline">TwoFoundersTalk.com</a>,{' '}
+              <a href="https://www.softwaremrrcalculator.com" target="_blank" rel="noopener noreferrer" className="text-[#534AB7] hover:underline">SoftwareMRRCalculator.com</a>.
             </p>
           </div>
         </footer>
