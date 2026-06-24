@@ -191,6 +191,7 @@ export async function changeUserEmail(
 
   const { error: authError } = await admin.auth.admin.updateUserById(profile.id, {
     email: newEmail.trim().toLowerCase(),
+    email_confirm: true,
   })
   if (authError) return { error: authError.message }
 
