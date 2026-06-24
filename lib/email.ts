@@ -552,7 +552,7 @@ export async function sendConnectionAcceptedLenderEmail({
   await getResend().emails.send({
     from: FROM,
     to: lenderEmail,
-    subject: 'A founder accepted your connection request',
+    subject: 'You accepted a connection request on FounderInvited',
     html: `
       <p>Hi ${lenderName},</p>
 

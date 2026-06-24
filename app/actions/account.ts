@@ -116,9 +116,10 @@ export async function pauseProfile(): Promise<{ error?: string; success?: boolea
   if (!profile) return { error: 'Profile not found' }
 
   if (profile.role === 'founder') {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { error } = await supabase
       .from('founder_profiles')
-      .update({ status: 'pending' })
+      .update({ is_approved: false, status: 'pending' } as any)
       .eq('id', user.id)
     if (error) return { error: error.message }
   } else if (profile.role === 'investor') {
@@ -153,12 +154,18 @@ export async function deleteAccount(): Promise<void> {
   if (profile.role === 'founder') {
     await admin.from('flags').delete().eq('founder_id', user.id)
     await admin.from('lender_flags').delete().eq('founder_id', user.id)
+    await admin.from('profile_views').delete().eq('founder_id', user.id)
+    await admin.from('investor_profile_views').delete().eq('founder_id', user.id)
+    await admin.from('lender_profile_views').delete().eq('founder_id', user.id)
     await admin.from('founder_profiles').delete().eq('id', user.id)
   } else if (profile.role === 'investor') {
     await admin.from('flags').delete().eq('investor_id', user.id)
+    await admin.from('profile_views').delete().eq('investor_id', user.id)
+    await admin.from('investor_profile_views').delete().eq('investor_id', user.id)
     await admin.from('investor_profiles').delete().eq('id', user.id)
   } else if (profile.role === 'lender') {
     await admin.from('lender_flags').delete().eq('lender_id', user.id)
+    await admin.from('lender_profile_views').delete().eq('lender_id', user.id)
     await admin.from('lender_profiles').delete().eq('id', user.id)
   }
 

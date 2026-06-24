@@ -349,8 +349,9 @@ export async function triggerDigest(openingParagraph?: string, subjectLine?: str
     ...(investors ?? []).map((i) => i.id),
     ...(lenders ?? []).map((l) => l.id),
   ]
-  const { data: profileRows } = await admin.from('profiles').select('id, email').in('id', allProfileIds)
-  const emailMap = Object.fromEntries((profileRows ?? []).map((p) => [p.id, p.email as string]))
+  const { data: profileRows } = await admin.from('profiles').select('id, email, is_paused').in('id', allProfileIds)
+  const pausedIds = new Set((profileRows ?? []).filter((p) => p.is_paused).map((p) => p.id))
+  const emailMap = Object.fromEntries((profileRows ?? []).filter((p) => !p.is_paused).map((p) => [p.id, p.email as string]))
 
   const investorPairs = new Set((investorFlags ?? []).map((f) => `${f.founder_id}:${f.investor_id}`))
   const lenderPairs = new Set((lenderFlags ?? []).map((f) => `${f.founder_id}:${f.lender_id}`))
