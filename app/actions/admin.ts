@@ -189,11 +189,11 @@ export async function changeUserEmail(
 
   if (!profile) return { error: 'No user found with that email' }
 
-  const { error: authError } = await admin.auth.admin.updateUserById(profile.id, {
+  const { error: authError, data: authData } = await admin.auth.admin.updateUserById(profile.id, {
     email: newEmail.trim().toLowerCase(),
     email_confirm: true,
   })
-  if (authError) return { error: authError.message }
+  if (authError) return { error: `Auth update failed: ${authError.message} (status: ${authError.status})` }
 
   const { error: profileError } = await admin
     .from('profiles')
