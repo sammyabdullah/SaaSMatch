@@ -56,13 +56,14 @@ export default async function ProfileDetailPage({ params }: Props) {
       )
     }
 
-    // Check if already flagged
+    // Check if already flagged (exclude declined so user can re-flag)
     const { data: existingFlag } = await admin
       .from('flags')
       .select('id')
       .eq('investor_id', user.id)
       .eq('founder_id', id)
       .eq('flagged_by', 'investor')
+      .in('status', ['pending', 'accepted'])
       .maybeSingle()
 
     const isAlreadyFlagged = !!existingFlag
@@ -190,6 +191,7 @@ export default async function ProfileDetailPage({ params }: Props) {
         .eq('founder_id', user.id)
         .eq('lender_id', id)
         .eq('flagged_by', 'founder')
+        .in('status', ['pending', 'accepted'])
         .maybeSingle()
 
       return (
@@ -255,13 +257,14 @@ export default async function ProfileDetailPage({ params }: Props) {
       )
     }
 
-    // Investor profile — check if already flagged
+    // Investor profile — check if already flagged (exclude declined so user can re-flag)
     const { data: existingFlag } = await admin
       .from('flags')
       .select('id')
       .eq('founder_id', user.id)
       .eq('investor_id', id)
       .eq('flagged_by', 'founder')
+      .in('status', ['pending', 'accepted'])
       .maybeSingle()
 
     const isAlreadyFlagged = !!existingFlag
@@ -369,6 +372,7 @@ export default async function ProfileDetailPage({ params }: Props) {
       .eq('lender_id', user.id)
       .eq('founder_id', id)
       .eq('flagged_by', 'lender')
+      .in('status', ['pending', 'accepted'])
       .maybeSingle()
 
     const isAlreadyFlagged = !!existingFlag
