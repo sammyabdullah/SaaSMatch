@@ -244,6 +244,32 @@ export async function setUserPassword(
   return { success: true }
 }
 
+export async function deleteUserByEmail(email: string): Promise<{ error?: string; success?: boolean }> {
+  await requireAdmin()
+  const admin = createAdminClient()
+  const trimmed = email.trim().toLowerCase()
+
+  const { data: profile } = await admin.from('profiles').select('id, role').eq('email', trimmed).single()
+  if (!profile) return { error: 'No user found with that email' }
+
+  await admin.from('flags').delete().or(`founder_id.eq.${profile.id},investor_id.eq.${profile.id}`)
+  await admin.from('lender_flags').delete().or(`founder_id.eq.${profile.id},lender_id.eq.${profile.id}`)
+  await admin.from('profile_views').delete().or(`founder_id.eq.${profile.id},investor_id.eq.${profile.id}`)
+  await admin.from('investor_profile_views').delete().or(`founder_id.eq.${profile.id},investor_id.eq.${profile.id}`)
+  await admin.from('lender_profile_views').delete().or(`founder_id.eq.${profile.id},lender_id.eq.${profile.id}`)
+
+  await admin.from('founder_profiles').delete().eq('id', profile.id)
+  await admin.from('investor_profiles').delete().eq('id', profile.id)
+  await admin.from('lender_profiles').delete().eq('id', profile.id)
+  await admin.from('profiles').delete().eq('id', profile.id)
+
+  const { error: authError } = await admin.auth.admin.deleteUser(profile.id)
+  if (authError) return { error: `Profile deleted but auth cleanup failed: ${authError.message}` }
+
+  revalidatePath('/admin')
+  return { success: true }
+}
+
 export async function deleteFounderProfile(founderId: string) {
   await requireAdmin()
 

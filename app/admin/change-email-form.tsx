@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { changeUserEmail, setUserPassword } from '@/app/actions/admin'
+import { changeUserEmail, setUserPassword, deleteUserByEmail } from '@/app/actions/admin'
 
 export default function ChangeEmailForm() {
   const [currentEmail, setCurrentEmail] = useState('')
@@ -15,6 +15,11 @@ export default function ChangeEmailForm() {
   const [pwLoading, setPwLoading] = useState(false)
   const [pwError, setPwError] = useState('')
   const [pwSuccess, setPwSuccess] = useState('')
+
+  const [delEmail, setDelEmail] = useState('')
+  const [delLoading, setDelLoading] = useState(false)
+  const [delError, setDelError] = useState('')
+  const [delSuccess, setDelSuccess] = useState('')
 
   async function handleEmailSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -135,6 +140,49 @@ export default function ChangeEmailForm() {
             </button>
             {pwError && <p className="text-sm text-red-500">{pwError}</p>}
             {pwSuccess && <p className="text-sm text-green-600">{pwSuccess}</p>}
+          </div>
+        </form>
+      </div>
+      <div className="border-t border-gray-100 pt-8">
+        <p className="text-sm font-medium text-gray-700 mb-1">Delete user by email</p>
+        <p className="text-xs text-gray-400 mb-4">Permanently removes the auth account, profile, and all associated data (flags, views).</p>
+        <form onSubmit={async (e) => {
+          e.preventDefault()
+          if (!confirm(`Permanently delete the user ${delEmail}? This cannot be undone.`)) return
+          setDelLoading(true)
+          setDelError('')
+          setDelSuccess('')
+          try {
+            const result = await deleteUserByEmail(delEmail)
+            if (result?.error) setDelError(result.error)
+            else { setDelSuccess(`Deleted ${delEmail}`); setDelEmail('') }
+          } catch (err) {
+            setDelError(err instanceof Error ? err.message : 'Delete failed')
+          } finally {
+            setDelLoading(false)
+          }
+        }} className="space-y-4">
+          <div className="max-w-sm">
+            <label className="block text-xs text-gray-500 mb-1">User email</label>
+            <input
+              type="email"
+              required
+              value={delEmail}
+              onChange={(e) => setDelEmail(e.target.value)}
+              placeholder="user@example.com"
+              className="w-full border border-gray-200 rounded-md px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#534AB7] focus:border-transparent"
+            />
+          </div>
+          <div className="flex items-center gap-4">
+            <button
+              type="submit"
+              disabled={delLoading}
+              className="px-4 py-2 bg-red-600 text-white text-sm font-medium rounded-md hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {delLoading ? 'Deleting…' : 'Delete user'}
+            </button>
+            {delError && <p className="text-sm text-red-500">{delError}</p>}
+            {delSuccess && <p className="text-sm text-green-600">{delSuccess}</p>}
           </div>
         </form>
       </div>
