@@ -180,6 +180,7 @@ export async function changeUserEmail(
   await requireAdmin()
 
   const admin = createAdminClient()
+  const trimmedNew = newEmail.trim().toLowerCase()
 
   const { data: profile } = await admin
     .from('profiles')
@@ -189,15 +190,27 @@ export async function changeUserEmail(
 
   if (!profile) return { error: 'No user found with that email' }
 
-  const { error: authError, data: authData } = await admin.auth.admin.updateUserById(profile.id, {
-    email: newEmail.trim().toLowerCase(),
-    email_confirm: true,
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
+
+  const res = await fetch(`${supabaseUrl}/auth/v1/admin/users/${profile.id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${serviceKey}`,
+      apikey: serviceKey,
+    },
+    body: JSON.stringify({ email: trimmedNew, email_confirm: true }),
   })
-  if (authError) return { error: `Auth update failed: ${authError.message} (status: ${authError.status})` }
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}))
+    return { error: `Auth update failed: ${body.message || body.msg || res.statusText} (status: ${res.status})` }
+  }
 
   const { error: profileError } = await admin
     .from('profiles')
-    .update({ email: newEmail.trim().toLowerCase() })
+    .update({ email: trimmedNew })
     .eq('id', profile.id)
 
   if (profileError) return { error: profileError.message }
