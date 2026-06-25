@@ -567,7 +567,15 @@ export async function pauseUser(userId: string): Promise<{ error?: string; succe
   const admin = createAdminClient()
   const { error } = await admin.from('profiles').update({ is_paused: true }).eq('id', userId)
   if (error) return { error: error.message }
+
+  await Promise.all([
+    admin.from('flags').delete().eq('status', 'pending').or(`founder_id.eq.${userId},investor_id.eq.${userId}`),
+    admin.from('lender_flags').delete().eq('status', 'pending').or(`founder_id.eq.${userId},lender_id.eq.${userId}`),
+  ])
+
   revalidatePath('/admin')
+  revalidatePath('/dashboard')
+  revalidatePath('/discover')
   return { success: true }
 }
 

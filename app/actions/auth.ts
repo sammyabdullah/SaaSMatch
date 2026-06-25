@@ -50,12 +50,17 @@ export async function signIn(email: string, password: string) {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('role')
+    .select('role, is_paused')
     .eq('id', userId)
     .single()
 
   if (!profile) {
     return { error: 'Account setup incomplete. Please contact support.' }
+  }
+
+  if (profile.is_paused) {
+    await supabase.auth.signOut()
+    return { error: 'Your account is paused. Please contact us to reactivate.' }
   }
 
   // Check whether onboarding is complete

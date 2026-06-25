@@ -35,6 +35,14 @@ export async function acceptFlag(flagId: string): Promise<{ error?: string; succ
     return { error: 'Not authorized' }
   }
 
+  const [{ data: founderPause }, { data: investorPause }] = await Promise.all([
+    admin.from('profiles').select('is_paused').eq('id', flag.founder_id).single(),
+    admin.from('profiles').select('is_paused').eq('id', flag.investor_id).single(),
+  ])
+  if (founderPause?.is_paused || investorPause?.is_paused) {
+    return { error: 'This user is no longer available.' }
+  }
+
   // Mark the flag as accepted
   const { error: updateError } = await admin
     .from('flags')
@@ -171,6 +179,14 @@ export async function declineFlag(flagId: string): Promise<{ error?: string; suc
   }
   if (flag.flagged_by === 'investor' && flag.founder_id !== user.id) {
     return { error: 'Not authorized' }
+  }
+
+  const [{ data: founderPause }, { data: investorPause }] = await Promise.all([
+    admin.from('profiles').select('is_paused').eq('id', flag.founder_id).single(),
+    admin.from('profiles').select('is_paused').eq('id', flag.investor_id).single(),
+  ])
+  if (founderPause?.is_paused || investorPause?.is_paused) {
+    return { error: 'This user is no longer available.' }
   }
 
   const { error } = await admin

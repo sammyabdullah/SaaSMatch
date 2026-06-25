@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { pauseProfile, deleteAccount } from '@/app/actions/account'
 import type { UserRole } from '@/lib/supabase/types'
 
@@ -9,27 +10,29 @@ interface Props {
 }
 
 export default function DangerZone({ role }: Props) {
+  const router = useRouter()
   const [pauseLoading, setPauseLoading] = useState(false)
   const [pauseError, setPauseError] = useState('')
-  const [pauseSuccess, setPauseSuccess] = useState(false)
 
   const [deleteText, setDeleteText] = useState('')
   const [deleteLoading, setDeleteLoading] = useState(false)
   const [deleteError, setDeleteError] = useState('')
 
   async function handlePause() {
-    if (!window.confirm('Are you sure you want to pause your profile? It will no longer be visible to others.')) {
+    if (!window.confirm('Are you sure you want to pause your profile? Pending matches will be cancelled and you will be signed out.')) {
       return
     }
     setPauseLoading(true)
     setPauseError('')
-    const result = await pauseProfile()
-    if (result?.error) {
-      setPauseError(result.error)
-    } else {
-      setPauseSuccess(true)
+    try {
+      const result = await pauseProfile()
+      if (result?.error) {
+        setPauseError(result.error)
+        setPauseLoading(false)
+      }
+    } catch {
+      router.push('/login')
     }
-    setPauseLoading(false)
   }
 
   async function handleDelete() {
@@ -50,27 +53,21 @@ export default function DangerZone({ role }: Props) {
       {/* Pause profile */}
       <div className="border border-gray-200 rounded-lg p-6">
         <h3 className="text-sm font-semibold text-gray-900 mb-1">
-          {role === 'founder' ? 'Pause your profile' : 'Deactivate your profile'}
+          Pause your profile
         </h3>
         <p className="text-sm text-gray-500 mb-4">
-          {role === 'founder'
-            ? 'Your profile will be set to pending and hidden from investor discovery. You can reactivate it later by editing your profile.'
-            : 'Your profile will be hidden from founder discovery. Contact support to reactivate.'}
+          While paused, you won&apos;t be considered for new matches, pending matches will be cancelled, and you will be signed out. Contact us to reactivate.
         </p>
-        {pauseSuccess ? (
-          <p className="text-sm text-amber-600">Profile paused. It is no longer visible to others.</p>
-        ) : (
-          <div>
-            <button
-              onClick={handlePause}
-              disabled={pauseLoading}
-              className="text-sm border border-amber-500 text-amber-600 hover:bg-amber-50 px-4 py-2 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {pauseLoading ? 'Pausing…' : 'Pause my profile'}
-            </button>
-            {pauseError && <p className="text-sm text-red-600 mt-2">{pauseError}</p>}
-          </div>
-        )}
+        <div>
+          <button
+            onClick={handlePause}
+            disabled={pauseLoading}
+            className="text-sm border border-amber-500 text-amber-600 hover:bg-amber-50 px-4 py-2 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {pauseLoading ? 'Pausing…' : 'Pause my profile'}
+          </button>
+          {pauseError && <p className="text-sm text-red-600 mt-2">{pauseError}</p>}
+        </div>
       </div>
 
       {/* Delete account */}

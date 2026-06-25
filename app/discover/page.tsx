@@ -41,8 +41,8 @@ export default async function DiscoverPage() {
       { data: myLenderFlags },
       { data: connectedLenderFlags },
     ] = await Promise.all([
-      admin.from('investor_profiles').select('*, profiles(email)').eq('is_approved', true).order('created_at', { ascending: false }),
-      admin.from('lender_profiles').select('*, profiles(email)').eq('is_approved', true).order('created_at', { ascending: false }),
+      admin.from('investor_profiles').select('*, profiles!inner(email, is_paused)').eq('is_approved', true).eq('profiles.is_paused', false).order('created_at', { ascending: false }),
+      admin.from('lender_profiles').select('*, profiles!inner(email, is_paused)').eq('is_approved', true).eq('profiles.is_paused', false).order('created_at', { ascending: false }),
       admin.from('founder_profiles').select('*').eq('id', user.id).single(),
       admin.from('flags').select('investor_id').eq('founder_id', user.id).eq('flagged_by', 'founder').eq('status', 'pending'),
       admin.from('flags').select('investor_id').eq('founder_id', user.id).eq('status', 'accepted'),
@@ -92,12 +92,13 @@ export default async function DiscoverPage() {
   }
 
   if (profile.role === 'investor') {
-    // Fetch approved active founders
+    // Fetch approved active founders (exclude paused)
     const { data: founders } = await admin
       .from('founder_profiles')
-      .select('*, profiles(email)')
+      .select('*, profiles!inner(email, is_paused)')
       .eq('is_approved', true)
       .eq('status', 'active')
+      .eq('profiles.is_paused', false)
       .order('created_at', { ascending: false })
 
     // Fetch investor's own profile
@@ -147,12 +148,13 @@ export default async function DiscoverPage() {
   }
 
   if (profile.role === 'lender') {
-    // Fetch approved active founders
+    // Fetch approved active founders (exclude paused)
     const { data: founders } = await admin
       .from('founder_profiles')
-      .select('*, profiles(email)')
+      .select('*, profiles!inner(email, is_paused)')
       .eq('is_approved', true)
       .eq('status', 'active')
+      .eq('profiles.is_paused', false)
       .order('created_at', { ascending: false })
 
     // Fetch lender's own profile
