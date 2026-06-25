@@ -18,10 +18,10 @@ export default async function Home() {
     { data: firstInvestorConn },
     { data: firstLenderConn },
   ] = await Promise.all([
-    admin.from('investor_profiles').select('id', { count: 'exact', head: true }).eq('is_approved', true),
-    admin.from('lender_profiles').select('id', { count: 'exact', head: true }).eq('is_approved', true),
-    admin.from('investor_profiles').select('firm_name, partner_name').eq('is_approved', true).order('created_at', { ascending: false }).limit(5),
-    admin.from('lender_profiles').select('institution_name, contact_name').eq('is_approved', true).order('created_at', { ascending: false }).limit(5),
+    admin.from('investor_profiles').select('id, profiles!inner(is_paused)', { count: 'exact', head: true }).eq('is_approved', true).eq('profiles.is_paused', false),
+    admin.from('lender_profiles').select('id, profiles!inner(is_paused)', { count: 'exact', head: true }).eq('is_approved', true).eq('profiles.is_paused', false),
+    admin.from('investor_profiles').select('firm_name, partner_name, profiles!inner(is_paused)').eq('is_approved', true).eq('profiles.is_paused', false).order('created_at', { ascending: false }).limit(5),
+    admin.from('lender_profiles').select('institution_name, contact_name, profiles!inner(is_paused)').eq('is_approved', true).eq('profiles.is_paused', false).order('created_at', { ascending: false }).limit(5),
     admin.from('flags').select('founder_id, investor_id, responded_at').eq('status', 'accepted').order('responded_at', { ascending: false }).limit(50),
     admin.from('lender_flags').select('founder_id, lender_id, responded_at').eq('status', 'accepted').order('responded_at', { ascending: false }).limit(50),
     admin.from('flags').select('id', { count: 'exact', head: true }).eq('status', 'accepted'),
@@ -45,25 +45,28 @@ export default async function Home() {
   const investorIds = Array.from(new Set((investorConnections ?? []).map((c) => c.investor_id)))
   const lenderIds = Array.from(new Set((lenderConnections ?? []).map((c) => c.lender_id)))
 
-  const [{ data: founderNames }, { data: investorNames }, { data: lenderNames }] = await Promise.all([
+  const allUserIds = Array.from(new Set([...founderIds, ...investorIds, ...lenderIds]))
+  const [{ data: founderNames }, { data: investorNames }, { data: lenderNames }, { data: pauseRows }] = await Promise.all([
     founderIds.length > 0 ? admin.from('founder_profiles').select('id, company_name').in('id', founderIds) : { data: [] },
     investorIds.length > 0 ? admin.from('investor_profiles').select('id, firm_name').in('id', investorIds) : { data: [] },
     lenderIds.length > 0 ? admin.from('lender_profiles').select('id, institution_name').in('id', lenderIds) : { data: [] },
+    allUserIds.length > 0 ? admin.from('profiles').select('id, is_paused').in('id', allUserIds) : { data: [] },
   ])
 
+  const pausedIds = new Set((pauseRows ?? []).filter((p) => p.is_paused).map((p) => p.id))
   const founderMap = Object.fromEntries((founderNames ?? []).map((f) => [f.id, f.company_name]))
   const investorMap = Object.fromEntries((investorNames ?? []).map((i) => [i.id, i.firm_name]))
   const lenderMap = Object.fromEntries((lenderNames ?? []).map((l) => [l.id, l.institution_name]))
 
   type Connection = { date: string; left: string; right: string; kind: 'investor' | 'lender' }
   const latestConnections: Connection[] = [
-    ...(investorConnections ?? []).map((c) => ({
+    ...(investorConnections ?? []).filter((c) => !pausedIds.has(c.founder_id) && !pausedIds.has(c.investor_id)).map((c) => ({
       date: c.responded_at ?? '',
       left: investorMap[c.investor_id] ?? 'An investor',
       right: founderMap[c.founder_id] ?? 'A founder',
       kind: 'investor' as const,
     })),
-    ...(lenderConnections ?? []).map((c) => ({
+    ...(lenderConnections ?? []).filter((c) => !pausedIds.has(c.founder_id) && !pausedIds.has(c.lender_id)).map((c) => ({
       date: c.responded_at ?? '',
       left: lenderMap[c.lender_id] ?? 'A lender',
       right: founderMap[c.founder_id] ?? 'A founder',
