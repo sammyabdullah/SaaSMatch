@@ -181,14 +181,6 @@ export async function declineFlag(flagId: string): Promise<{ error?: string; suc
     return { error: 'Not authorized' }
   }
 
-  const [{ data: founderPause }, { data: investorPause }] = await Promise.all([
-    admin.from('profiles').select('is_paused').eq('id', flag.founder_id).single(),
-    admin.from('profiles').select('is_paused').eq('id', flag.investor_id).single(),
-  ])
-  if (founderPause?.is_paused || investorPause?.is_paused) {
-    return { error: 'This user is no longer available.' }
-  }
-
   const { error } = await admin
     .from('flags')
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

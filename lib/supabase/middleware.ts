@@ -70,7 +70,11 @@ export async function updateSession(request: NextRequest) {
         await supabase.auth.signOut()
         const url = request.nextUrl.clone()
         url.pathname = '/login'
-        return NextResponse.redirect(url)
+        const redirectResponse = NextResponse.redirect(url)
+        supabaseResponse.cookies.getAll().forEach(({ name, value, ...rest }) => {
+          redirectResponse.cookies.set({ name, value, ...rest })
+        })
+        return redirectResponse
       }
     }
   } catch {

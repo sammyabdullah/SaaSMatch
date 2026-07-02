@@ -31,6 +31,7 @@ export default function DangerZone({ role }: Props) {
         setPauseLoading(false)
       }
     } catch {
+      setPauseLoading(false)
       router.push('/login')
     }
   }
