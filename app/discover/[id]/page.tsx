@@ -40,6 +40,22 @@ export default async function ProfileDetailPage({ params }: Props) {
   const admin = createAdminClient()
 
   if (profile.role === 'investor') {
+    // Check if target user is paused
+    const { data: targetProfile } = await admin
+      .from('profiles')
+      .select('is_paused')
+      .eq('id', id)
+      .single()
+
+    if (targetProfile?.is_paused) {
+      return (
+        <div className="max-w-3xl mx-auto px-6 py-12">
+          <BackButton />
+          <p className="text-sm text-gray-500">This user is no longer available.</p>
+        </div>
+      )
+    }
+
     // Investor viewing a founder profile
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: fp } = await admin
@@ -160,6 +176,22 @@ export default async function ProfileDetailPage({ params }: Props) {
   }
 
   if (profile.role === 'founder') {
+    // Check if target user is paused
+    const { data: targetProfile } = await admin
+      .from('profiles')
+      .select('is_paused')
+      .eq('id', id)
+      .single()
+
+    if (targetProfile?.is_paused) {
+      return (
+        <div className="max-w-3xl mx-auto px-6 py-12">
+          <BackButton />
+          <p className="text-sm text-gray-500">This user is no longer available.</p>
+        </div>
+      )
+    }
+
     // Try investor profile first
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: ip } = await admin
@@ -351,6 +383,22 @@ export default async function ProfileDetailPage({ params }: Props) {
   }
 
   if (profile.role === 'lender') {
+    // Check if target user is paused
+    const { data: targetProfile } = await admin
+      .from('profiles')
+      .select('is_paused')
+      .eq('id', id)
+      .single()
+
+    if (targetProfile?.is_paused) {
+      return (
+        <div className="max-w-3xl mx-auto px-6 py-12">
+          <BackButton />
+          <p className="text-sm text-gray-500">This user is no longer available.</p>
+        </div>
+      )
+    }
+
     // Lender viewing a founder profile
     const { data: fp } = await admin
       .from('founder_profiles')
