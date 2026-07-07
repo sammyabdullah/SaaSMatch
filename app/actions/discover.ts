@@ -17,6 +17,13 @@ export async function flagInvestor(investorId: string): Promise<{ error?: string
 
   const admin = createAdminClient()
 
+  const [{ data: myProfile }, { data: targetProfile }] = await Promise.all([
+    admin.from('profiles').select('is_paused').eq('id', user.id).single(),
+    admin.from('profiles').select('is_paused').eq('id', investorId).single(),
+  ])
+  if (myProfile?.is_paused) return { error: 'Your account has been paused. Please contact the platform.' }
+  if (targetProfile?.is_paused) return { success: true }
+
   const { error } = await admin.from('flags').insert({
     founder_id: user.id,
     investor_id: investorId,
@@ -89,6 +96,13 @@ export async function flagFounder(founderId: string): Promise<{ error?: string; 
 
   const admin = createAdminClient()
 
+  const [{ data: myProfile }, { data: targetProfile }] = await Promise.all([
+    admin.from('profiles').select('is_paused').eq('id', user.id).single(),
+    admin.from('profiles').select('is_paused').eq('id', founderId).single(),
+  ])
+  if (myProfile?.is_paused) return { error: 'Your account has been paused. Please contact the platform.' }
+  if (targetProfile?.is_paused) return { success: true }
+
   const { error } = await admin.from('flags').insert({
     founder_id: founderId,
     investor_id: user.id,
@@ -159,6 +173,13 @@ export async function flagLenderAsFounder(lenderId: string): Promise<{ error?: s
 
   const admin = createAdminClient()
 
+  const [{ data: myProfile }, { data: targetProfile }] = await Promise.all([
+    admin.from('profiles').select('is_paused').eq('id', user.id).single(),
+    admin.from('profiles').select('is_paused').eq('id', lenderId).single(),
+  ])
+  if (myProfile?.is_paused) return { error: 'Your account has been paused. Please contact the platform.' }
+  if (targetProfile?.is_paused) return { success: true }
+
   const { error } = await admin.from('lender_flags').insert({
     founder_id: user.id,
     lender_id: lenderId,
@@ -177,24 +198,21 @@ export async function flagLenderAsFounder(lenderId: string): Promise<{ error?: s
 
   // Send notification email to the lender
   try {
-    const [{ data: lp }, { data: founderProfile }] = await Promise.all([
+    const [{ data: lp }, { data: lenderEmailProfile }, { data: fp }] = await Promise.all([
       admin.from('lender_profiles')
         .select('institution_name, contact_name, loan_size_min_usd, loan_size_max_usd, stages, geography_focus, thesis_statement')
         .eq('id', lenderId)
         .single(),
       admin.from('profiles').select('email').eq('id', lenderId).single(),
-    ])
-
-    const [{ data: fp }] = await Promise.all([
       admin.from('founder_profiles')
         .select('company_name, website, stage, arr_range, raising_amount_usd, product_categories, mom_growth_pct, why_now, location')
         .eq('id', user.id)
         .single(),
     ])
 
-    if (lp && founderProfile?.email && fp) {
+    if (lp && lenderEmailProfile?.email && fp) {
       await sendFounderFlaggedLenderEmail({
-        lenderEmail: founderProfile.email,
+        lenderEmail: lenderEmailProfile.email,
         founder: fp as Parameters<typeof sendFounderFlaggedLenderEmail>[0]['founder'],
       })
     }
@@ -235,6 +253,13 @@ export async function flagFounderAsLender(founderId: string): Promise<{ error?: 
   if (!user) return { error: 'Not authenticated' }
 
   const admin = createAdminClient()
+
+  const [{ data: myProfile }, { data: targetProfile }] = await Promise.all([
+    admin.from('profiles').select('is_paused').eq('id', user.id).single(),
+    admin.from('profiles').select('is_paused').eq('id', founderId).single(),
+  ])
+  if (myProfile?.is_paused) return { error: 'Your account has been paused. Please contact the platform.' }
+  if (targetProfile?.is_paused) return { success: true }
 
   const { error } = await admin.from('lender_flags').insert({
     founder_id: founderId,

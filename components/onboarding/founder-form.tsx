@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import MultiSelect from '@/components/ui/multi-select'
 import { submitFounderProfile } from '@/app/actions/onboarding'
+import { uploadFounderDeck } from '@/app/actions/account'
 import type { FounderStage, ArrRange, GtmMotion, RevenueModel } from '@/lib/supabase/types'
 
 function normalizeUrl(url: string): string {
@@ -72,8 +73,13 @@ const inputCls =
 
 const selectCls = inputCls + ' bg-white'
 
+const MAX_DECK_MB = 15
+const MAX_DECK_BYTES = MAX_DECK_MB * 1024 * 1024
+
 export default function FounderForm() {
   const [form, setForm] = useState<FormState>(empty)
+  const [deckFile, setDeckFile] = useState<File | null>(null)
+  const [deckError, setDeckError] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [submitted, setSubmitted] = useState(false)
@@ -123,9 +129,17 @@ export default function FounderForm() {
     if (result?.error) {
       setError(result.error)
       setLoading(false)
-    } else {
-      setSubmitted(true)
+      return
     }
+
+    // Upload deck after profile is created (non-fatal if it fails)
+    if (deckFile) {
+      const fd = new FormData()
+      fd.append('deck', deckFile)
+      await uploadFounderDeck(fd)
+    }
+
+    setSubmitted(true)
   }
 
   if (submitted) {
@@ -323,6 +337,49 @@ export default function FounderForm() {
             {form.why_now.length}/500
           </p>
         </div>
+      </section>
+
+      {/* Pitch deck */}
+      <section className="space-y-3">
+        <h2 className="text-sm font-semibold text-gray-900 border-b border-gray-100 pb-2">
+          Pitch deck <span className="text-gray-400 font-normal">(optional)</span>
+        </h2>
+        <p className="text-xs text-gray-500">
+          PDF only, max {MAX_DECK_MB} MB. Investors and lenders will see a link to view it on your profile. You can add or change this later in your account settings.
+        </p>
+        {deckFile ? (
+          <div className="flex items-center gap-3">
+            <span className="text-sm text-gray-700">{deckFile.name}</span>
+            <button
+              type="button"
+              onClick={() => { setDeckFile(null); setDeckError('') }}
+              className="text-xs text-gray-400 hover:text-red-600 transition-colors"
+            >
+              Remove
+            </button>
+          </div>
+        ) : (
+          <label className="inline-flex items-center gap-2 text-sm border border-[#534AB7] text-[#534AB7] hover:bg-[#534AB7] hover:text-white px-4 py-2 rounded-md cursor-pointer transition-colors">
+            Choose PDF
+            <input
+              type="file"
+              accept=".pdf,application/pdf"
+              className="sr-only"
+              onChange={(e) => {
+                const file = e.target.files?.[0]
+                e.target.value = ''
+                if (!file) return
+                if (file.size > MAX_DECK_BYTES) {
+                  setDeckError(`File is too large — maximum is ${MAX_DECK_MB} MB.`)
+                  return
+                }
+                setDeckError('')
+                setDeckFile(file)
+              }}
+            />
+          </label>
+        )}
+        {deckError && <p className="text-sm text-red-600">{deckError}</p>}
       </section>
 
       {error && <p className="text-sm text-red-600">{error}</p>}

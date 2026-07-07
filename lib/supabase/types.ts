@@ -33,16 +33,19 @@ export type Database = {
           role: UserRole
           email: string
           created_at: string
+          is_paused: boolean
         }
         Insert: {
           id: string
           role: UserRole
           email: string
           created_at?: string
+          is_paused?: boolean
         }
         Update: {
           role?: UserRole
           email?: string
+          is_paused?: boolean
         }
         Relationships: []
       }
@@ -64,6 +67,7 @@ export type Database = {
           revenue_model: RevenueModel
           raising_amount_usd: number
           why_now: string
+          deck_url: string | null
           product_categories: string[]
           status: FounderStatus
           is_approved: boolean
@@ -108,6 +112,7 @@ export type Database = {
           revenue_model?: RevenueModel
           raising_amount_usd?: number
           why_now?: string
+          deck_url?: string | null
           product_categories?: string[]
           status?: FounderStatus
           is_approved?: boolean
@@ -338,6 +343,24 @@ export type Database = {
           viewed_at?: string
         }
         Update: Record<string, never>
+        Relationships: []
+      }
+
+      site_settings: {
+        Row: {
+          key: string
+          value: string
+          updated_at: string
+        }
+        Insert: {
+          key: string
+          value?: string
+          updated_at?: string
+        }
+        Update: {
+          value?: string
+          updated_at?: string
+        }
         Relationships: []
       }
 

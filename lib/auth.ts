@@ -70,6 +70,15 @@ export async function getOnboardingStatus() {
     return { role: profile.role, onboarded: !!ip }
   }
 
+  if (profile.role === 'lender') {
+    const { data: lp } = await supabase
+      .from('lender_profiles')
+      .select('id')
+      .eq('id', user.id)
+      .maybeSingle()
+    return { role: profile.role, onboarded: !!lp }
+  }
+
   // admins are always considered onboarded
   return { role: profile.role, onboarded: true }
 }

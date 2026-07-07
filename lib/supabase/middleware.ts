@@ -58,6 +58,25 @@ export async function updateSession(request: NextRequest) {
       url.pathname = '/login'
       return NextResponse.redirect(url)
     }
+
+    if (user && !isPublicRoute) {
+      const { data: profileRow } = await supabase
+        .from('profiles')
+        .select('is_paused')
+        .eq('id', user.id)
+        .single()
+
+      if (profileRow?.is_paused) {
+        await supabase.auth.signOut()
+        const url = request.nextUrl.clone()
+        url.pathname = '/login'
+        const redirectResponse = NextResponse.redirect(url)
+        supabaseResponse.cookies.getAll().forEach(({ name, value, ...rest }) => {
+          redirectResponse.cookies.set({ name, value, ...rest })
+        })
+        return redirectResponse
+      }
+    }
   } catch {
     // If Supabase is unreachable or keys are invalid, fail open so the
     // site stays up. Individual pages enforce auth via getUser().

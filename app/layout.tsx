@@ -25,7 +25,7 @@ export default function RootLayout({
         <Navbar />
         <main>{children}</main>
         <footer className="border-t border-gray-100 mt-auto">
-          <div className="max-w-5xl mx-auto px-6 h-12 flex items-center justify-center">
+          <div className="max-w-5xl mx-auto px-6 py-3 flex flex-col items-center justify-center gap-1">
             <p className="text-sm text-gray-400">
               Questions?{' '}
               <a
@@ -34,6 +34,12 @@ export default function RootLayout({
               >
                 sammy@blossomstreetventures.com
               </a>
+            </p>
+            <p className="text-sm text-gray-400">
+              Other tools we&apos;ve built for founders:{' '}
+              <a href="https://www.softwaremultiples.com" target="_blank" rel="noopener noreferrer" className="text-[#534AB7] hover:underline">SoftwareMultiples.com</a>,{' '}
+              <a href="https://www.twofounderstalk.com" target="_blank" rel="noopener noreferrer" className="text-[#534AB7] hover:underline">TwoFoundersTalk.com</a>,{' '}
+              <a href="https://www.softwaremrrcalculator.com" target="_blank" rel="noopener noreferrer" className="text-[#534AB7] hover:underline">SoftwareMRRCalculator.com</a>.
             </p>
           </div>
         </footer>

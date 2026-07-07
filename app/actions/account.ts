@@ -107,32 +107,18 @@ export async function pauseProfile(): Promise<{ error?: string; success?: boolea
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
+  const admin = createAdminClient()
 
-  if (!profile) return { error: 'Profile not found' }
+  const { error } = await admin.from('profiles').update({ is_paused: true }).eq('id', user.id)
+  if (error) return { error: error.message }
 
-  if (profile.role === 'founder') {
-    const { error } = await supabase
-      .from('founder_profiles')
-      .update({ status: 'pending' })
-      .eq('id', user.id)
-    if (error) return { error: error.message }
-  } else if (profile.role === 'investor') {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await supabase.from('investor_profiles').update({ is_approved: false, status: 'pending' } as any).eq('id', user.id)
-    if (error) return { error: error.message }
-  } else if (profile.role === 'lender') {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await supabase.from('lender_profiles').update({ is_approved: false, status: 'pending' } as any).eq('id', user.id)
-    if (error) return { error: error.message }
-  }
+  await Promise.all([
+    admin.from('flags').delete().eq('status', 'pending').or(`founder_id.eq.${user.id},investor_id.eq.${user.id}`),
+    admin.from('lender_flags').delete().eq('status', 'pending').or(`founder_id.eq.${user.id},lender_id.eq.${user.id}`),
+  ])
 
-  revalidatePath('/account')
-  return { success: true }
+  await supabase.auth.signOut()
+  redirect('/login')
 }
 
 export async function deleteAccount(): Promise<void> {
@@ -153,12 +139,18 @@ export async function deleteAccount(): Promise<void> {
   if (profile.role === 'founder') {
     await admin.from('flags').delete().eq('founder_id', user.id)
     await admin.from('lender_flags').delete().eq('founder_id', user.id)
+    await admin.from('profile_views').delete().eq('founder_id', user.id)
+    await admin.from('investor_profile_views').delete().eq('founder_id', user.id)
+    await admin.from('lender_profile_views').delete().eq('founder_id', user.id)
     await admin.from('founder_profiles').delete().eq('id', user.id)
   } else if (profile.role === 'investor') {
     await admin.from('flags').delete().eq('investor_id', user.id)
+    await admin.from('profile_views').delete().eq('investor_id', user.id)
+    await admin.from('investor_profile_views').delete().eq('investor_id', user.id)
     await admin.from('investor_profiles').delete().eq('id', user.id)
   } else if (profile.role === 'lender') {
     await admin.from('lender_flags').delete().eq('lender_id', user.id)
+    await admin.from('lender_profile_views').delete().eq('lender_id', user.id)
     await admin.from('lender_profiles').delete().eq('id', user.id)
   }
 
@@ -166,4 +158,62 @@ export async function deleteAccount(): Promise<void> {
   await admin.auth.admin.deleteUser(user.id)
 
   redirect('/')
+}
+
+const MAX_DECK_BYTES = 15 * 1024 * 1024 // 15 MB
+
+export async function uploadFounderDeck(
+  formData: FormData
+): Promise<{ error?: string; deckUrl?: string }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+
+  const file = formData.get('deck') as File | null
+  if (!file || file.size === 0) return { error: 'No file provided.' }
+  if (file.size > MAX_DECK_BYTES) return { error: 'File must be 15 MB or smaller.' }
+  if (file.type !== 'application/pdf') return { error: 'Only PDF files are accepted.' }
+
+  const admin = createAdminClient()
+  const bytes = await file.arrayBuffer()
+  const path = `${user.id}.pdf`
+
+  const { error: uploadError } = await admin.storage
+    .from('decks')
+    .upload(path, bytes, { upsert: true, contentType: 'application/pdf' })
+
+  if (uploadError) return { error: uploadError.message }
+
+  const { data: { publicUrl } } = admin.storage.from('decks').getPublicUrl(path)
+
+  const { error: dbError } = await admin
+    .from('founder_profiles')
+    .update({ deck_url: publicUrl, updated_at: new Date().toISOString() })
+    .eq('id', user.id)
+
+  if (dbError) return { error: dbError.message }
+
+  revalidatePath('/account')
+  revalidatePath('/discover')
+  return { deckUrl: publicUrl }
+}
+
+export async function removeFounderDeck(): Promise<{ error?: string; success?: boolean }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+
+  const admin = createAdminClient()
+  await admin.storage.from('decks').remove([`${user.id}.pdf`])
+
+  const { error } = await admin
+    .from('founder_profiles')
+    .update({ deck_url: null, updated_at: new Date().toISOString() })
+    .eq('id', user.id)
+
+  if (error) return { error: error.message }
+
+  revalidatePath('/account')
+  revalidatePath('/discover')
+  return { success: true }
 }

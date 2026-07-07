@@ -1,3 +1,4 @@
+// build: 2026-06-12
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   typescript: {

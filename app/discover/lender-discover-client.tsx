@@ -28,9 +28,10 @@ const ARR_RANGE_OPTIONS = [
   { value: '5m-plus', label: '$5M+' },
 ] as const
 const GTM_OPTIONS = ['sales-led', 'product-led', 'hybrid'] as const
+const REVENUE_OPTIONS = ['seat-based', 'usage-based', 'platform-fee', 'other'] as const
 const PRODUCT_CATEGORIES = [
   'iPaaS', 'Vertical SaaS', 'DevTools', 'Security',
-  'Data & Analytics', 'HR Tech', 'FinTech', 'MarTech', 'RevOps', 'Ed Tech', 'Other',
+  'Data & Analytics', 'HR Tech', 'FinTech', 'MarTech', 'RevOps', 'Ed Tech', 'Healthcare', 'Other',
 ]
 
 type FlagState = 'idle' | 'pending_undo' | 'flagged'
@@ -81,6 +82,7 @@ export default function LenderDiscoverClient({
   const [selectedStages, setSelectedStages] = useState<string[]>([])
   const [momGrowthMin, setMomGrowthMin] = useState('')
   const [selectedGtm, setSelectedGtm] = useState<string[]>([])
+  const [selectedRevModel, setSelectedRevModel] = useState<string[]>([])
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
 
   const [flaggedIds, setFlaggedIds] = useState<Set<string>>(new Set(myFlaggedFounderIds))
@@ -95,6 +97,7 @@ export default function LenderDiscoverClient({
     setSelectedStages([])
     setMomGrowthMin('')
     setSelectedGtm([])
+    setSelectedRevModel([])
     setSelectedCategories([])
   }
 
@@ -107,6 +110,12 @@ export default function LenderDiscoverClient({
   function toggleGtm(g: string) {
     setSelectedGtm((prev) =>
       prev.includes(g) ? prev.filter((x) => x !== g) : [...prev, g]
+    )
+  }
+
+  function toggleRevModel(r: string) {
+    setSelectedRevModel((prev) =>
+      prev.includes(r) ? prev.filter((x) => x !== r) : [...prev, r]
     )
   }
 
@@ -124,6 +133,7 @@ export default function LenderDiscoverClient({
         if (selectedStages.length > 0 && !selectedStages.includes(f.stage)) return false
         if (momGrowthMin && (f.mom_growth_pct == null || f.mom_growth_pct < Number(momGrowthMin))) return false
         if (selectedGtm.length > 0 && !selectedGtm.includes(f.gtm_motion)) return false
+        if (selectedRevModel.length > 0 && !selectedRevModel.includes(f.revenue_model)) return false
         if (selectedCategories.length > 0) {
           const hasCategory = selectedCategories.some((c) =>
             f.product_categories?.includes(c)
@@ -132,7 +142,7 @@ export default function LenderDiscoverClient({
         }
         return true
       })
-  }, [founders, passedIds, arrRange, selectedStages, momGrowthMin, selectedGtm, selectedCategories])
+  }, [founders, passedIds, arrRange, selectedStages, momGrowthMin, selectedGtm, selectedRevModel, selectedCategories])
 
   async function handleFlag(founderId: string) {
     setFlaggedIds((prev) => new Set(Array.from(prev).concat(founderId)))
@@ -243,6 +253,17 @@ export default function LenderDiscoverClient({
             {GTM_OPTIONS.map((g) => (
               <button key={g} type="button" onClick={() => toggleGtm(g)} className={chipBtn(selectedGtm.includes(g))}>
                 {g.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <p className="text-xs text-gray-500 mb-2">Revenue model</p>
+          <div className="flex flex-wrap gap-2">
+            {REVENUE_OPTIONS.map((r) => (
+              <button key={r} type="button" onClick={() => toggleRevModel(r)} className={chipBtn(selectedRevModel.includes(r))}>
+                {r.replace(/-/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())}
               </button>
             ))}
           </div>

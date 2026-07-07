@@ -40,6 +40,22 @@ export default async function ProfileDetailPage({ params }: Props) {
   const admin = createAdminClient()
 
   if (profile.role === 'investor') {
+    // Check if target user is paused
+    const { data: targetProfile } = await admin
+      .from('profiles')
+      .select('is_paused')
+      .eq('id', id)
+      .single()
+
+    if (targetProfile?.is_paused) {
+      return (
+        <div className="max-w-3xl mx-auto px-6 py-12">
+          <BackButton />
+          <p className="text-sm text-gray-500">This user is no longer available.</p>
+        </div>
+      )
+    }
+
     // Investor viewing a founder profile
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: fp } = await admin
@@ -56,13 +72,14 @@ export default async function ProfileDetailPage({ params }: Props) {
       )
     }
 
-    // Check if already flagged
+    // Check if already flagged (exclude declined so user can re-flag)
     const { data: existingFlag } = await admin
       .from('flags')
       .select('id')
       .eq('investor_id', user.id)
       .eq('founder_id', id)
       .eq('flagged_by', 'investor')
+      .in('status', ['pending', 'accepted'])
       .maybeSingle()
 
     const isAlreadyFlagged = !!existingFlag
@@ -126,6 +143,25 @@ export default async function ProfileDetailPage({ params }: Props) {
           </div>
         )}
 
+        {fp.deck_url && (
+          <div className="border border-gray-200 rounded-lg p-6 mb-6">
+            <h2 className="text-sm font-semibold text-gray-900 border-b border-gray-100 pb-2 mb-4">
+              Pitch deck
+            </h2>
+            <a
+              href={fp.deck_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 text-sm text-[#534AB7] hover:underline font-medium"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              </svg>
+              View pitch deck ↗
+            </a>
+          </div>
+        )}
+
         <div className="flex items-center justify-between text-xs text-gray-400 mb-8">
           <span>Listed {fmtDate(fp.created_at)}</span>
         </div>
@@ -140,6 +176,22 @@ export default async function ProfileDetailPage({ params }: Props) {
   }
 
   if (profile.role === 'founder') {
+    // Check if target user is paused
+    const { data: targetProfile } = await admin
+      .from('profiles')
+      .select('is_paused')
+      .eq('id', id)
+      .single()
+
+    if (targetProfile?.is_paused) {
+      return (
+        <div className="max-w-3xl mx-auto px-6 py-12">
+          <BackButton />
+          <p className="text-sm text-gray-500">This user is no longer available.</p>
+        </div>
+      )
+    }
+
     // Try investor profile first
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: ip } = await admin
@@ -171,6 +223,7 @@ export default async function ProfileDetailPage({ params }: Props) {
         .eq('founder_id', user.id)
         .eq('lender_id', id)
         .eq('flagged_by', 'founder')
+        .in('status', ['pending', 'accepted'])
         .maybeSingle()
 
       return (
@@ -236,13 +289,14 @@ export default async function ProfileDetailPage({ params }: Props) {
       )
     }
 
-    // Investor profile — check if already flagged
+    // Investor profile — check if already flagged (exclude declined so user can re-flag)
     const { data: existingFlag } = await admin
       .from('flags')
       .select('id')
       .eq('founder_id', user.id)
       .eq('investor_id', id)
       .eq('flagged_by', 'founder')
+      .in('status', ['pending', 'accepted'])
       .maybeSingle()
 
     const isAlreadyFlagged = !!existingFlag
@@ -329,6 +383,22 @@ export default async function ProfileDetailPage({ params }: Props) {
   }
 
   if (profile.role === 'lender') {
+    // Check if target user is paused
+    const { data: targetProfile } = await admin
+      .from('profiles')
+      .select('is_paused')
+      .eq('id', id)
+      .single()
+
+    if (targetProfile?.is_paused) {
+      return (
+        <div className="max-w-3xl mx-auto px-6 py-12">
+          <BackButton />
+          <p className="text-sm text-gray-500">This user is no longer available.</p>
+        </div>
+      )
+    }
+
     // Lender viewing a founder profile
     const { data: fp } = await admin
       .from('founder_profiles')
@@ -350,6 +420,7 @@ export default async function ProfileDetailPage({ params }: Props) {
       .eq('lender_id', user.id)
       .eq('founder_id', id)
       .eq('flagged_by', 'lender')
+      .in('status', ['pending', 'accepted'])
       .maybeSingle()
 
     const isAlreadyFlagged = !!existingFlag
@@ -394,6 +465,23 @@ export default async function ProfileDetailPage({ params }: Props) {
           <div className="border border-gray-200 rounded-lg p-6 mb-6">
             <h2 className="text-sm font-semibold text-gray-900 border-b border-gray-100 pb-2 mb-4">In their own words and traction</h2>
             <p className="text-sm text-gray-700 italic">&ldquo;{fp.why_now}&rdquo;</p>
+          </div>
+        )}
+
+        {fp.deck_url && (
+          <div className="border border-gray-200 rounded-lg p-6 mb-6">
+            <h2 className="text-sm font-semibold text-gray-900 border-b border-gray-100 pb-2 mb-4">Pitch deck</h2>
+            <a
+              href={fp.deck_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 text-sm text-[#534AB7] hover:underline font-medium"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              </svg>
+              View pitch deck ↗
+            </a>
           </div>
         )}
 

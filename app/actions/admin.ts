@@ -180,6 +180,7 @@ export async function changeUserEmail(
   await requireAdmin()
 
   const admin = createAdminClient()
+  const trimmedNew = newEmail.trim().toLowerCase()
 
   const { data: profile } = await admin
     .from('profiles')
@@ -189,14 +190,27 @@ export async function changeUserEmail(
 
   if (!profile) return { error: 'No user found with that email' }
 
-  const { error: authError } = await admin.auth.admin.updateUserById(profile.id, {
-    email: newEmail.trim().toLowerCase(),
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
+
+  const res = await fetch(`${supabaseUrl}/auth/v1/admin/users/${profile.id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${serviceKey}`,
+      apikey: serviceKey,
+    },
+    body: JSON.stringify({ email: trimmedNew, email_confirm: true }),
   })
-  if (authError) return { error: authError.message }
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}))
+    return { error: `Auth update failed: ${body.message || body.msg || res.statusText} (status: ${res.status})` }
+  }
 
   const { error: profileError } = await admin
     .from('profiles')
-    .update({ email: newEmail.trim().toLowerCase() })
+    .update({ email: trimmedNew })
     .eq('id', profile.id)
 
   if (profileError) return { error: profileError.message }
@@ -230,6 +244,32 @@ export async function setUserPassword(
   return { success: true }
 }
 
+export async function deleteUserByEmail(email: string): Promise<{ error?: string; success?: boolean }> {
+  await requireAdmin()
+  const admin = createAdminClient()
+  const trimmed = email.trim().toLowerCase()
+
+  const { data: profile } = await admin.from('profiles').select('id, role').eq('email', trimmed).single()
+  if (!profile) return { error: 'No user found with that email' }
+
+  await admin.from('flags').delete().or(`founder_id.eq.${profile.id},investor_id.eq.${profile.id}`)
+  await admin.from('lender_flags').delete().or(`founder_id.eq.${profile.id},lender_id.eq.${profile.id}`)
+  await admin.from('profile_views').delete().or(`founder_id.eq.${profile.id},investor_id.eq.${profile.id}`)
+  await admin.from('investor_profile_views').delete().or(`founder_id.eq.${profile.id},investor_id.eq.${profile.id}`)
+  await admin.from('lender_profile_views').delete().or(`founder_id.eq.${profile.id},lender_id.eq.${profile.id}`)
+
+  await admin.from('founder_profiles').delete().eq('id', profile.id)
+  await admin.from('investor_profiles').delete().eq('id', profile.id)
+  await admin.from('lender_profiles').delete().eq('id', profile.id)
+  await admin.from('profiles').delete().eq('id', profile.id)
+
+  const { error: authError } = await admin.auth.admin.deleteUser(profile.id)
+  if (authError) return { error: `Profile deleted but auth cleanup failed: ${authError.message}` }
+
+  revalidatePath('/admin')
+  return { success: true }
+}
+
 export async function deleteFounderProfile(founderId: string) {
   await requireAdmin()
 
@@ -250,7 +290,30 @@ export async function deleteFounderProfile(founderId: string) {
   revalidatePath('/discover')
 }
 
-export async function triggerDigest(): Promise<{ emailsSent?: number; total?: number; skipped?: number; error?: string }> {
+export async function getDigestSettings(): Promise<{ openingParagraph: string; subjectLine: string }> {
+  await requireAdmin()
+  const admin = createAdminClient()
+  const [{ data: opRow }, { data: slRow }] = await Promise.all([
+    admin.from('site_settings').select('value').eq('key', 'digest_opening_paragraph').maybeSingle(),
+    admin.from('site_settings').select('value').eq('key', 'digest_subject_line').maybeSingle(),
+  ])
+  return {
+    openingParagraph: opRow?.value ?? '',
+    subjectLine: slRow?.value ?? '',
+  }
+}
+
+async function saveDigestSettings(admin: ReturnType<typeof createAdminClient>, openingParagraph?: string, subjectLine?: string) {
+  const now = new Date().toISOString()
+  if (openingParagraph !== undefined) {
+    await admin.from('site_settings').upsert({ key: 'digest_opening_paragraph', value: openingParagraph, updated_at: now }, { onConflict: 'key' })
+  }
+  if (subjectLine !== undefined) {
+    await admin.from('site_settings').upsert({ key: 'digest_subject_line', value: subjectLine, updated_at: now }, { onConflict: 'key' })
+  }
+}
+
+export async function triggerDigest(openingParagraph?: string, subjectLine?: string): Promise<{ emailsSent?: number; total?: number; skipped?: number; error?: string }> {
   await requireAdmin()
 
   const admin = createAdminClient()
@@ -286,8 +349,9 @@ export async function triggerDigest(): Promise<{ emailsSent?: number; total?: nu
     ...(investors ?? []).map((i) => i.id),
     ...(lenders ?? []).map((l) => l.id),
   ]
-  const { data: profileRows } = await admin.from('profiles').select('id, email').in('id', allProfileIds)
-  const emailMap = Object.fromEntries((profileRows ?? []).map((p) => [p.id, p.email as string]))
+  const { data: profileRows } = await admin.from('profiles').select('id, email, is_paused').in('id', allProfileIds)
+  const pausedIds = new Set((profileRows ?? []).filter((p) => p.is_paused).map((p) => p.id))
+  const emailMap = Object.fromEntries((profileRows ?? []).filter((p) => !p.is_paused).map((p) => [p.id, p.email as string]))
 
   const investorPairs = new Set((investorFlags ?? []).map((f) => `${f.founder_id}:${f.investor_id}`))
   const lenderPairs = new Set((lenderFlags ?? []).map((f) => `${f.founder_id}:${f.lender_id}`))
@@ -331,6 +395,8 @@ export async function triggerDigest(): Promise<{ emailsSent?: number; total?: nu
       matchingInvestors: matchingInvestors.map((inv) => ({ firm_name: inv.firm_name, partner_name: inv.partner_name })),
       matchingLenders: matchingLenders.map((l) => ({ institution_name: l.institution_name, contact_name: l.contact_name })),
       platformStats,
+      openingParagraph,
+      subjectLine,
     })]
   })
 
@@ -349,6 +415,8 @@ export async function triggerDigest(): Promise<{ emailsSent?: number; total?: nu
       investorEmail,
       matchingFounders: matchingFounders.map((f) => ({ company_name: f.company_name, stage: f.stage as string, product_categories: (f.product_categories ?? []) as string[] })),
       platformStats,
+      openingParagraph,
+      subjectLine,
     })]
   })
 
@@ -366,6 +434,8 @@ export async function triggerDigest(): Promise<{ emailsSent?: number; total?: nu
       lenderEmail,
       matchingFounders: matchingFounders.map((f) => ({ company_name: f.company_name, stage: f.stage as string, product_categories: (f.product_categories ?? []) as string[] })),
       platformStats,
+      openingParagraph,
+      subjectLine,
     })]
   })
 
@@ -383,10 +453,142 @@ export async function triggerDigest(): Promise<{ emailsSent?: number; total?: nu
     emailsSent += data?.data?.length ?? batch.length
   }
 
+  await saveDigestSettings(admin, openingParagraph, subjectLine)
   return { emailsSent, total, skipped }
 }
 
-export async function sendTestDigestToEmail(email: string): Promise<{ error?: string; success?: boolean }> {
+const MAX_DECK_BYTES = 15 * 1024 * 1024
+
+export async function adminUploadFounderDeck(
+  founderId: string,
+  formData: FormData
+): Promise<{ error?: string; deckUrl?: string }> {
+  await requireAdmin()
+
+  const file = formData.get('deck') as File | null
+  if (!file || file.size === 0) return { error: 'No file provided.' }
+  if (file.size > MAX_DECK_BYTES) return { error: 'File must be 15 MB or smaller.' }
+  if (file.type !== 'application/pdf') return { error: 'Only PDF files are accepted.' }
+
+  const admin = createAdminClient()
+  const bytes = await file.arrayBuffer()
+  const path = `${founderId}.pdf`
+
+  const { error: uploadError } = await admin.storage
+    .from('decks')
+    .upload(path, bytes, { upsert: true, contentType: 'application/pdf' })
+
+  if (uploadError) return { error: uploadError.message }
+
+  const { data: { publicUrl } } = admin.storage.from('decks').getPublicUrl(path)
+
+  const { error: dbError } = await admin
+    .from('founder_profiles')
+    .update({ deck_url: publicUrl, updated_at: new Date().toISOString() })
+    .eq('id', founderId)
+
+  if (dbError) return { error: dbError.message }
+
+  revalidatePath('/admin')
+  revalidatePath('/discover')
+  return { deckUrl: publicUrl }
+}
+
+export async function adminRemoveFounderDeck(
+  founderId: string
+): Promise<{ error?: string; success?: boolean }> {
+  await requireAdmin()
+
+  const admin = createAdminClient()
+  await admin.storage.from('decks').remove([`${founderId}.pdf`])
+
+  const { error } = await admin
+    .from('founder_profiles')
+    .update({ deck_url: null, updated_at: new Date().toISOString() })
+    .eq('id', founderId)
+
+  if (error) return { error: error.message }
+
+  revalidatePath('/admin')
+  revalidatePath('/discover')
+  return { success: true }
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function updateFounderProfile(founderId: string, fields: Record<string, any>): Promise<{ error?: string; success?: boolean }> {
+  await requireAdmin()
+  const admin = createAdminClient()
+  const allowed: Record<string, unknown> = {}
+  const keys = ['company_name','website','location','founded_year','stage','arr_range','mom_growth_pct','nrr_pct','acv_usd','gtm_motion','revenue_model','raising_amount_usd','why_now','product_categories']
+  for (const k of keys) { if (k in fields) allowed[k] = fields[k] }
+  if (Object.keys(allowed).length === 0) return { error: 'No valid fields to update' }
+  allowed.updated_at = new Date().toISOString()
+  const { error } = await admin.from('founder_profiles').update(allowed).eq('id', founderId)
+  if (error) return { error: error.message }
+  revalidatePath('/admin')
+  revalidatePath('/discover')
+  return { success: true }
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function updateInvestorProfile(investorId: string, fields: Record<string, any>): Promise<{ error?: string; success?: boolean }> {
+  await requireAdmin()
+  const admin = createAdminClient()
+  const allowed: Record<string, unknown> = {}
+  const keys = ['firm_name','partner_name','website','location','check_size_min_usd','check_size_max_usd','stages','leads_rounds','geography_focus','saas_subcategories','arr_sweet_spot_min','arr_sweet_spot_max','thesis_statement']
+  for (const k of keys) { if (k in fields) allowed[k] = fields[k] }
+  if (Object.keys(allowed).length === 0) return { error: 'No valid fields to update' }
+  allowed.updated_at = new Date().toISOString()
+  const { error } = await admin.from('investor_profiles').update(allowed).eq('id', investorId)
+  if (error) return { error: error.message }
+  revalidatePath('/admin')
+  revalidatePath('/discover')
+  return { success: true }
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function updateLenderProfile(lenderId: string, fields: Record<string, any>): Promise<{ error?: string; success?: boolean }> {
+  await requireAdmin()
+  const admin = createAdminClient()
+  const allowed: Record<string, unknown> = {}
+  const keys = ['institution_name','contact_name','website','location','loan_size_min_usd','loan_size_max_usd','loan_types','stages','geography_focus','saas_subcategories','arr_min_requirement','arr_max_sweet_spot','thesis_statement']
+  for (const k of keys) { if (k in fields) allowed[k] = fields[k] }
+  if (Object.keys(allowed).length === 0) return { error: 'No valid fields to update' }
+  allowed.updated_at = new Date().toISOString()
+  const { error } = await admin.from('lender_profiles').update(allowed).eq('id', lenderId)
+  if (error) return { error: error.message }
+  revalidatePath('/admin')
+  revalidatePath('/discover')
+  return { success: true }
+}
+
+export async function pauseUser(userId: string): Promise<{ error?: string; success?: boolean }> {
+  await requireAdmin()
+  const admin = createAdminClient()
+  const { error } = await admin.from('profiles').update({ is_paused: true }).eq('id', userId)
+  if (error) return { error: error.message }
+
+  await Promise.all([
+    admin.from('flags').delete().eq('status', 'pending').or(`founder_id.eq.${userId},investor_id.eq.${userId}`),
+    admin.from('lender_flags').delete().eq('status', 'pending').or(`founder_id.eq.${userId},lender_id.eq.${userId}`),
+  ])
+
+  revalidatePath('/admin')
+  revalidatePath('/dashboard')
+  revalidatePath('/discover')
+  return { success: true }
+}
+
+export async function unpauseUser(userId: string): Promise<{ error?: string; success?: boolean }> {
+  await requireAdmin()
+  const admin = createAdminClient()
+  const { error } = await admin.from('profiles').update({ is_paused: false }).eq('id', userId)
+  if (error) return { error: error.message }
+  revalidatePath('/admin')
+  return { success: true }
+}
+
+export async function sendTestDigestToEmail(email: string, openingParagraph?: string, subjectLine?: string): Promise<{ error?: string; success?: boolean }> {
   await requireAdmin()
   if (!email) return { error: 'Email is required' }
 
@@ -439,24 +641,34 @@ export async function sendTestDigestToEmail(email: string): Promise<{ error?: st
     latestConnections,
   }
 
-  await sendMonthlyFounderDigest({
-    founderEmail: email,
-    matchingInvestors: (investors ?? []).slice(0, 3).map((i) => ({ firm_name: i.firm_name, partner_name: i.partner_name })),
-    matchingLenders: (lenders ?? []).slice(0, 2).map((l) => ({ institution_name: l.institution_name, contact_name: l.contact_name })),
-    platformStats,
-  })
+  try {
+    await sendMonthlyFounderDigest({
+      founderEmail: email,
+      matchingInvestors: (investors ?? []).slice(0, 3).map((i) => ({ firm_name: i.firm_name, partner_name: i.partner_name })),
+      matchingLenders: (lenders ?? []).slice(0, 2).map((l) => ({ institution_name: l.institution_name, contact_name: l.contact_name })),
+      platformStats,
+      openingParagraph,
+      subjectLine,
+    })
 
-  await sendMonthlyInvestorDigest({
-    investorEmail: email,
-    matchingFounders: (founders ?? []).slice(0, 3).map((f) => ({ company_name: f.company_name, stage: f.stage as string, product_categories: (f.product_categories ?? []) as string[] })),
-    platformStats,
-  })
+    await sendMonthlyInvestorDigest({
+      investorEmail: email,
+      matchingFounders: (founders ?? []).slice(0, 3).map((f) => ({ company_name: f.company_name, stage: f.stage as string, product_categories: (f.product_categories ?? []) as string[] })),
+      platformStats,
+      openingParagraph,
+      subjectLine,
+    })
 
-  await sendMonthlyLenderDigest({
-    lenderEmail: email,
-    matchingFounders: (founders ?? []).slice(0, 3).map((f) => ({ company_name: f.company_name, stage: f.stage as string, product_categories: (f.product_categories ?? []) as string[] })),
-    platformStats,
-  })
+    await sendMonthlyLenderDigest({
+      lenderEmail: email,
+      matchingFounders: (founders ?? []).slice(0, 3).map((f) => ({ company_name: f.company_name, stage: f.stage as string, product_categories: (f.product_categories ?? []) as string[] })),
+      platformStats,
+      openingParagraph,
+      subjectLine,
+    })
+  } catch (err) {
+    return { error: err instanceof Error ? err.message : 'Failed to send test emails' }
+  }
 
   return { success: true }
 }

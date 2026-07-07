@@ -65,7 +65,7 @@ export default function FlagActionButton({ targetId, mode, isAlreadyFlagged }: P
       {flagged ? (
         <div className="flex items-center gap-3">
           <span className="text-sm text-green-600 font-medium">
-            {mode === 'founder-flagging-investor' ? 'Connection request sent ✓' : mode === 'founder-flagging-lender' ? 'Interest expressed ✓' : 'Interest expressed ✓'}
+            {mode === 'founder-flagging-investor' || mode === 'founder-flagging-lender' ? 'Connection request sent ✓' : 'Interest expressed ✓'}
           </span>
           <button
             onClick={handleUnflag}
@@ -83,10 +83,8 @@ export default function FlagActionButton({ targetId, mode, isAlreadyFlagged }: P
         >
           {loading
             ? 'Processing…'
-            : mode === 'founder-flagging-investor'
+            : mode === 'founder-flagging-investor' || mode === 'founder-flagging-lender'
             ? 'Send connection request'
-            : mode === 'founder-flagging-lender'
-            ? 'Express interest'
             : 'Express interest'}
         </button>
       )}

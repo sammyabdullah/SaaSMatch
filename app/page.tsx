@@ -13,14 +13,29 @@ export default async function Home() {
     { data: lastLenders },
     { data: investorConnections },
     { data: lenderConnections },
+    { count: investorFlagCount },
+    { count: lenderFlagCount },
+    { data: firstInvestorConn },
+    { data: firstLenderConn },
   ] = await Promise.all([
-    admin.from('investor_profiles').select('id', { count: 'exact', head: true }).eq('is_approved', true),
-    admin.from('lender_profiles').select('id', { count: 'exact', head: true }).eq('is_approved', true),
-    admin.from('investor_profiles').select('firm_name, partner_name').eq('is_approved', true).order('created_at', { ascending: false }).limit(5),
-    admin.from('lender_profiles').select('institution_name, contact_name').eq('is_approved', true).order('created_at', { ascending: false }).limit(5),
-    admin.from('flags').select('founder_id, investor_id, responded_at').eq('status', 'accepted').order('responded_at', { ascending: false }).limit(25),
-    admin.from('lender_flags').select('founder_id, lender_id, responded_at').eq('status', 'accepted').order('responded_at', { ascending: false }).limit(25),
+    admin.from('investor_profiles').select('id, profiles!inner(is_paused)', { count: 'exact', head: true }).eq('is_approved', true).eq('profiles.is_paused', false),
+    admin.from('lender_profiles').select('id, profiles!inner(is_paused)', { count: 'exact', head: true }).eq('is_approved', true).eq('profiles.is_paused', false),
+    admin.from('investor_profiles').select('firm_name, partner_name, profiles!inner(is_paused)').eq('is_approved', true).eq('profiles.is_paused', false).order('created_at', { ascending: false }).limit(5),
+    admin.from('lender_profiles').select('institution_name, contact_name, profiles!inner(is_paused)').eq('is_approved', true).eq('profiles.is_paused', false).order('created_at', { ascending: false }).limit(5),
+    admin.from('flags').select('founder_id, investor_id, responded_at').eq('status', 'accepted').order('responded_at', { ascending: false }).limit(50),
+    admin.from('lender_flags').select('founder_id, lender_id, responded_at').eq('status', 'accepted').order('responded_at', { ascending: false }).limit(50),
+    admin.from('flags').select('id', { count: 'exact', head: true }).eq('status', 'accepted'),
+    admin.from('lender_flags').select('id', { count: 'exact', head: true }).eq('status', 'accepted'),
+    admin.from('flags').select('responded_at').eq('status', 'accepted').order('responded_at', { ascending: true }).limit(1),
+    admin.from('lender_flags').select('responded_at').eq('status', 'accepted').order('responded_at', { ascending: true }).limit(1),
   ])
+
+  const totalConnections = (investorFlagCount ?? 0) + (lenderFlagCount ?? 0)
+  const firstInvDate = firstInvestorConn?.[0]?.responded_at
+  const firstLenDate = firstLenderConn?.[0]?.responded_at
+  const firstConnectionDate = firstInvDate && firstLenDate
+    ? (firstInvDate < firstLenDate ? firstInvDate : firstLenDate)
+    : firstInvDate ?? firstLenDate ?? null
 
   // Look up names for connections
   const founderIds = Array.from(new Set([
@@ -30,25 +45,28 @@ export default async function Home() {
   const investorIds = Array.from(new Set((investorConnections ?? []).map((c) => c.investor_id)))
   const lenderIds = Array.from(new Set((lenderConnections ?? []).map((c) => c.lender_id)))
 
-  const [{ data: founderNames }, { data: investorNames }, { data: lenderNames }] = await Promise.all([
+  const allUserIds = Array.from(new Set([...founderIds, ...investorIds, ...lenderIds]))
+  const [{ data: founderNames }, { data: investorNames }, { data: lenderNames }, { data: pauseRows }] = await Promise.all([
     founderIds.length > 0 ? admin.from('founder_profiles').select('id, company_name').in('id', founderIds) : { data: [] },
     investorIds.length > 0 ? admin.from('investor_profiles').select('id, firm_name').in('id', investorIds) : { data: [] },
     lenderIds.length > 0 ? admin.from('lender_profiles').select('id, institution_name').in('id', lenderIds) : { data: [] },
+    allUserIds.length > 0 ? admin.from('profiles').select('id, is_paused').in('id', allUserIds) : { data: [] },
   ])
 
+  const pausedIds = new Set((pauseRows ?? []).filter((p) => p.is_paused).map((p) => p.id))
   const founderMap = Object.fromEntries((founderNames ?? []).map((f) => [f.id, f.company_name]))
   const investorMap = Object.fromEntries((investorNames ?? []).map((i) => [i.id, i.firm_name]))
   const lenderMap = Object.fromEntries((lenderNames ?? []).map((l) => [l.id, l.institution_name]))
 
   type Connection = { date: string; left: string; right: string; kind: 'investor' | 'lender' }
   const latestConnections: Connection[] = [
-    ...(investorConnections ?? []).map((c) => ({
+    ...(investorConnections ?? []).filter((c) => !pausedIds.has(c.founder_id) && !pausedIds.has(c.investor_id)).map((c) => ({
       date: c.responded_at ?? '',
       left: investorMap[c.investor_id] ?? 'An investor',
       right: founderMap[c.founder_id] ?? 'A founder',
       kind: 'investor' as const,
     })),
-    ...(lenderConnections ?? []).map((c) => ({
+    ...(lenderConnections ?? []).filter((c) => !pausedIds.has(c.founder_id) && !pausedIds.has(c.lender_id)).map((c) => ({
       date: c.responded_at ?? '',
       left: lenderMap[c.lender_id] ?? 'A lender',
       right: founderMap[c.founder_id] ?? 'A founder',
@@ -56,7 +74,7 @@ export default async function Home() {
     })),
   ]
     .sort((a, b) => b.date.localeCompare(a.date))
-    .slice(0, 25)
+    .slice(0, 50)
 
   return (
     <div className="px-6 pt-8 pb-32 text-center">
@@ -131,10 +149,19 @@ export default async function Home() {
       </div>
       </div>
 
+      {totalConnections > 0 && firstConnectionDate && (
+        <div className="max-w-2xl mx-auto mt-6 mb-3">
+          <p className="text-sm text-gray-500">
+            <span className="font-semibold text-[#534AB7]">{totalConnections.toLocaleString()}</span> connection{totalConnections !== 1 ? 's' : ''} made since{' '}
+            {new Date(firstConnectionDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}.
+          </p>
+        </div>
+      )}
+
       {latestConnections.length > 0 && (
         <div className="max-w-2xl mx-auto mt-3">
           <div className="border border-gray-100 rounded-xl px-5 py-4 bg-white shadow-sm">
-          <p className="text-xs text-gray-400 mb-3 uppercase tracking-wide">Last 25 Connections</p>
+          <p className="text-xs text-gray-400 mb-3 uppercase tracking-wide">Last 50 Connections</p>
           <div className="space-y-1.5">
             {latestConnections.map((c, i) => (
               <div key={i} className={i > 0 ? 'pt-1.5 border-t border-gray-100' : ''}>

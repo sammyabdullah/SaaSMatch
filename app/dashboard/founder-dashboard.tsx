@@ -2,6 +2,7 @@
 import { createAdminClient } from '@/lib/supabase/server'
 import { fmtDate, fmtStage, fmtUsd } from '@/lib/format'
 import UnflagFounderFlag from './unflag-founder-flag'
+import UnflagFounderLenderFlag from './unflag-founder-lender-flag'
 import AcceptDeclineFlag from './accept-decline-flag'
 import AcceptDeclineLenderFlag from './accept-decline-lender-flag'
 
@@ -137,6 +138,24 @@ export default async function FounderDashboard({ userId }: Props) {
     .eq('status', 'accepted')
     .order('responded_at', { ascending: false }) as { data: any[] | null }
 
+  // Outgoing lender flags (founder flagged a lender) — pending only
+  const { data: outgoingLenderFlags } = await admin
+    .from('lender_flags')
+    .select('*, lender_profiles(institution_name, contact_name, website, location)')
+    .eq('founder_id', userId)
+    .eq('flagged_by', 'founder')
+    .eq('status', 'pending')
+    .order('created_at', { ascending: false }) as { data: any[] | null }
+
+  // Accepted lender connections where founder initiated
+  const { data: acceptedLenderOutgoing } = await admin
+    .from('lender_flags')
+    .select('*, lender_profiles!lender_flags_lender_id_fkey(institution_name, contact_name, website, location, loan_size_min_usd, loan_size_max_usd, stages, geography_focus, thesis_statement, profiles(email))')
+    .eq('founder_id', userId)
+    .eq('flagged_by', 'founder')
+    .eq('status', 'accepted')
+    .order('responded_at', { ascending: false }) as { data: any[] | null }
+
   // All lender flags for activity feed (all statuses)
   const { data: allLenderFlagsForActivity } = await admin
     .from('lender_flags')
@@ -187,7 +206,7 @@ export default async function FounderDashboard({ userId }: Props) {
     : founderProfile?.status ? fmtStage(founderProfile.status)
     : '—'
 
-  const totalConnections = (acceptedOutgoing?.length ?? 0) + (acceptedIncoming?.length ?? 0) + (acceptedLenderIncoming?.length ?? 0)
+  const totalConnections = (acceptedOutgoing?.length ?? 0) + (acceptedIncoming?.length ?? 0) + (acceptedLenderIncoming?.length ?? 0) + (acceptedLenderOutgoing?.length ?? 0)
 
   // Activity feed
   type ActivityItem = { date: string; text: string }
@@ -233,6 +252,13 @@ export default async function FounderDashboard({ userId }: Props) {
         activity.push({ date: f.created_at, text: `${institution} expressed interest in lending to your company` })
         if (f.status === 'accepted' && f.responded_at) {
           activity.push({ date: f.responded_at, text: `You connected with ${institution}` })
+        }
+      } else if (f.flagged_by === 'founder') {
+        activity.push({ date: f.created_at, text: `You flagged ${institution}` })
+        if (f.status === 'accepted' && f.responded_at) {
+          activity.push({ date: f.responded_at, text: `You connected with ${institution}` })
+        } else if (f.status === 'declined' && f.responded_at) {
+          activity.push({ date: f.responded_at, text: `${institution} declined your connection request` })
         }
       }
     }
@@ -508,6 +534,48 @@ export default async function FounderDashboard({ userId }: Props) {
                 </div>
               )
             })}
+            {(acceptedLenderOutgoing ?? []).map((flag) => {
+              const lp = flag.lender_profiles
+              const lenderEmail = (flag.lender_profiles as any)?.profiles?.email
+              return (
+                <div key={flag.id} className="px-4 py-4">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1">
+                      <InvestorNameLink name={lp?.institution_name ?? '—'} website={lp?.website} />
+                      <p className="text-xs text-gray-500">{lp?.contact_name ?? ''}</p>
+                      {lp?.location && <p className="text-xs text-gray-400">{lp.location}</p>}
+                      <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-1">
+                        {lp?.loan_size_min_usd && lp?.loan_size_max_usd && (
+                          <span className="text-xs text-gray-600">
+                            {fmtUsd(lp.loan_size_min_usd)} – {fmtUsd(lp.loan_size_max_usd)}
+                          </span>
+                        )}
+                        {lp?.stages?.length > 0 && (
+                          <span className="text-xs text-gray-500">{lp.stages.map(fmtStage).join(', ')}</span>
+                        )}
+                      </div>
+                      {lp?.geography_focus && (
+                        <p className="text-xs text-gray-400 mt-0.5">{lp.geography_focus}</p>
+                      )}
+                      {lp?.thesis_statement && (
+                        <p className="text-xs text-gray-500 italic mt-1 line-clamp-2">
+                          &ldquo;{lp.thesis_statement}&rdquo;
+                        </p>
+                      )}
+                    </div>
+                    <span className="text-xs font-medium bg-green-50 text-green-700 px-2 py-0.5 rounded-full shrink-0">
+                      Connected
+                    </span>
+                  </div>
+                  {lenderEmail && (
+                    <p className="text-sm text-[#534AB7] mt-2 font-medium">{lenderEmail}</p>
+                  )}
+                  <p className="text-xs text-gray-400 mt-1">
+                    Connected {fmtDate(flag.responded_at ?? flag.created_at)}
+                  </p>
+                </div>
+              )
+            })}
             {(acceptedLenderIncoming ?? []).map((flag) => {
               const lp = flag.lender_profiles
               const lenderEmail = (flag.lender_profiles as any)?.profiles?.email
@@ -576,6 +644,34 @@ export default async function FounderDashboard({ userId }: Props) {
                       <p className="text-xs text-amber-600 mt-0.5">Awaiting response</p>
                     </div>
                     <UnflagFounderFlag investorId={flag.investor_id} />
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </section>
+
+        {/* Outgoing lender flags — pending */}
+        <section>
+          <h2 className="text-base font-semibold text-gray-900 mb-4">Lenders you&apos;ve flagged</h2>
+          {!outgoingLenderFlags || outgoingLenderFlags.length === 0 ? (
+            <p className="text-sm text-gray-400 border border-gray-200 rounded-lg p-6 text-center">
+              No pending lender flags. Browse lenders in Discover to express interest.
+            </p>
+          ) : (
+            <div className="border border-gray-200 rounded-lg divide-y divide-gray-100">
+              {outgoingLenderFlags.map((flag) => {
+                const lp = flag.lender_profiles
+                return (
+                  <div key={flag.id} className="px-4 py-4 flex items-start justify-between gap-3">
+                    <div className="flex-1">
+                      <InvestorNameLink name={lp?.institution_name ?? '—'} website={lp?.website} />
+                      <p className="text-xs text-gray-500">{lp?.contact_name ?? ''}</p>
+                      {lp?.location && <p className="text-xs text-gray-400">{lp.location}</p>}
+                      <p className="text-xs text-gray-400 mt-0.5">Flagged {fmtDate(flag.created_at)}</p>
+                      <p className="text-xs text-amber-600 mt-0.5">Awaiting response</p>
+                    </div>
+                    <UnflagFounderLenderFlag lenderId={flag.lender_id} />
                   </div>
                 )
               })}

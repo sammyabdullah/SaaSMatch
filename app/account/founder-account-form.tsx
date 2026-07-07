@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import MultiSelect from '@/components/ui/multi-select'
 import { updateFounderProfile } from '@/app/actions/account'
+import DeckUpload from '@/components/ui/deck-upload'
 import type { FounderStage, ArrRange, GtmMotion, RevenueModel, Database } from '@/lib/supabase/types'
 
 type FounderProfileRow = Database['public']['Tables']['founder_profiles']['Row']
@@ -15,7 +16,7 @@ function normalizeUrl(url: string): string {
 
 const PRODUCT_CATEGORIES = [
   'iPaaS', 'Vertical SaaS', 'DevTools', 'Security',
-  'Data & Analytics', 'HR Tech', 'FinTech', 'MarTech', 'RevOps', 'Healthcare', 'Other',
+  'Data & Analytics', 'HR Tech', 'FinTech', 'MarTech', 'RevOps', 'Ed Tech', 'Healthcare', 'Other',
 ]
 
 const STAGES: { value: FounderStage; label: string }[] = [
@@ -51,7 +52,7 @@ const inputCls =
 const selectCls = inputCls + ' bg-white'
 
 interface Props {
-  initialData: FounderProfileRow
+  initialData: FounderProfileRow & { deck_url?: string | null }
 }
 
 export default function FounderAccountForm({ initialData }: Props) {
@@ -104,6 +105,7 @@ export default function FounderAccountForm({ initialData }: Props) {
   }
 
   return (
+    <>
     <form onSubmit={handleSubmit} className="space-y-5">
       <div className="grid grid-cols-2 gap-4">
         <div>
@@ -245,5 +247,14 @@ export default function FounderAccountForm({ initialData }: Props) {
         {loading ? 'Saving…' : 'Save changes'}
       </button>
     </form>
+
+    <div className="mt-8 pt-8 border-t border-gray-200">
+      <h2 className="text-sm font-semibold text-gray-900 mb-1">Pitch deck</h2>
+      <p className="text-xs text-gray-500 mb-4">
+        PDF only, max 15 MB. Investors and lenders will see a link to view it on your profile.
+      </p>
+      <DeckUpload currentDeckUrl={initialData.deck_url ?? null} />
+    </div>
+    </>
   )
 }
