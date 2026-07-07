@@ -18,12 +18,17 @@ export default function ForgotPasswordForm({ expiredLink }: Props) {
     e.preventDefault()
     setError('')
     setLoading(true)
-    const result = await forgotPassword(email)
-    if (result?.error) {
-      setError(result.error)
+    try {
+      const result = await forgotPassword(email)
+      if (result?.error) {
+        setError(result.error)
+      } else {
+        setSent(true)
+      }
+    } catch {
+      setError('Something went wrong. Please try again.')
+    } finally {
       setLoading(false)
-    } else {
-      setSent(true)
     }
   }
 
