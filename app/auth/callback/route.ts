@@ -30,19 +30,22 @@ export async function GET(request: NextRequest) {
     )
 
     let authError = null
+    let verified = false
 
     if (code) {
       // PKCE flow: exchange the short-lived authorization code for a session
       const { error } = await supabase.auth.exchangeCodeForSession(code)
       authError = error
+      verified = true
     } else if (token_hash && type) {
       // Token-hash flow: verify the OTP hash directly (no stored verifier needed,
       // works reliably across browsers and email clients)
       const { error } = await supabase.auth.verifyOtp({ token_hash, type })
       authError = error
+      verified = true
     }
 
-    if (!authError) {
+    if (verified && !authError) {
       if (type === 'recovery') {
         // Keep the session so the user can set a new password
         return NextResponse.redirect(`${origin}/reset-password`)

@@ -353,6 +353,10 @@ export async function triggerDigest(openingParagraph?: string, subjectLine?: str
   const pausedIds = new Set((profileRows ?? []).filter((p) => p.is_paused).map((p) => p.id))
   const emailMap = Object.fromEntries((profileRows ?? []).filter((p) => !p.is_paused).map((p) => [p.id, p.email as string]))
 
+  const activeFounders = (founders ?? []).filter((f) => !pausedIds.has(f.id))
+  const activeInvestors = (investors ?? []).filter((i) => !pausedIds.has(i.id))
+  const activeLenders = (lenders ?? []).filter((l) => !pausedIds.has(l.id))
+
   const investorPairs = new Set((investorFlags ?? []).map((f) => `${f.founder_id}:${f.investor_id}`))
   const lenderPairs = new Set((lenderFlags ?? []).map((f) => `${f.founder_id}:${f.lender_id}`))
   const investorNameMap = Object.fromEntries((investors ?? []).map((i) => [i.id, i.firm_name]))
@@ -376,16 +380,16 @@ export async function triggerDigest(openingParagraph?: string, subjectLine?: str
   let skipped = 0
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const founderPayloads = (founders ?? []).flatMap((founder: any) => {
+  const founderPayloads = activeFounders.flatMap((founder: any) => {
     const founderEmail = emailMap[founder.id]
     if (!founderEmail) { skipped++; return [] }
     const hasCategories = (founder.product_categories ?? []).length > 0
-    const matchingInvestors = !hasCategories ? [] : (investors ?? []).filter((inv) => {
+    const matchingInvestors = !hasCategories ? [] : activeInvestors.filter((inv) => {
       if (investorPairs.has(`${founder.id}:${inv.id}`)) return false
       if (!(inv.stages as string[] ?? []).length) return false
       return (inv.stages as string[] ?? []).includes(founder.stage) && (inv.saas_subcategories ?? []).some((s: string) => (founder.product_categories ?? []).includes(s))
     })
-    const matchingLenders = (lenders ?? []).filter((lender) => {
+    const matchingLenders = activeLenders.filter((lender) => {
       if (lenderPairs.has(`${founder.id}:${lender.id}`)) return false
       if (!(lender.stages ?? []).length) return false
       return (lender.stages ?? []).includes(founder.stage)
@@ -401,12 +405,12 @@ export async function triggerDigest(openingParagraph?: string, subjectLine?: str
   })
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const investorPayloads = (investors ?? []).flatMap((investor: any) => {
+  const investorPayloads = activeInvestors.flatMap((investor: any) => {
     const investorEmail = emailMap[investor.id]
     if (!investorEmail) { skipped++; return [] }
     const hasStages = (investor.stages ?? []).length > 0
     const hasCats = (investor.saas_subcategories ?? []).length > 0
-    const matchingFounders = (!hasStages || !hasCats) ? [] : (founders ?? []).filter((founder) => {
+    const matchingFounders = (!hasStages || !hasCats) ? [] : activeFounders.filter((founder) => {
       if (investorPairs.has(`${founder.id}:${investor.id}`)) return false
       if (!(founder.product_categories ?? []).length) return false
       return (investor.stages ?? []).includes(founder.stage) && (investor.saas_subcategories ?? []).some((s: string) => (founder.product_categories ?? []).includes(s))
@@ -421,11 +425,11 @@ export async function triggerDigest(openingParagraph?: string, subjectLine?: str
   })
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const lenderPayloads = (lenders ?? []).flatMap((lender: any) => {
+  const lenderPayloads = activeLenders.flatMap((lender: any) => {
     const lenderEmail = emailMap[lender.id]
     if (!lenderEmail) { skipped++; return [] }
     const hasStages = (lender.stages ?? []).length > 0
-    const matchingFounders = !hasStages ? [] : (founders ?? []).filter((founder) => {
+    const matchingFounders = !hasStages ? [] : activeFounders.filter((founder) => {
       if (lenderPairs.has(`${founder.id}:${lender.id}`)) return false
       if (!(founder.product_categories ?? []).length) return false
       return (lender.stages ?? []).includes(founder.stage)

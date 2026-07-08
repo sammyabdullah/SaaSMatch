@@ -21,7 +21,7 @@ export default function ForgotPasswordForm({ expiredLink }: Props) {
     try {
       const supabase = createClient()
       const { error: authError } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth/callback?type=recovery`,
+        redirectTo: `${process.env.NEXT_PUBLIC_APP_URL ?? window.location.origin}/auth/callback?type=recovery`,
       })
       if (authError) {
         setError(authError.message)

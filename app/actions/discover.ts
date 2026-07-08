@@ -24,21 +24,30 @@ export async function flagInvestor(investorId: string): Promise<{ error?: string
   if (myProfile?.is_paused) return { error: 'Your account has been paused. Please contact the platform.' }
   if (targetProfile?.is_paused) return { success: true }
 
-  const { error } = await admin.from('flags').insert({
-    founder_id: user.id,
-    investor_id: investorId,
-    flagged_by: 'founder',
-    status: 'pending',
-  })
+  const { data: existingFlag } = await admin.from('flags')
+    .select('status')
+    .eq('founder_id', user.id)
+    .eq('investor_id', investorId)
+    .maybeSingle()
 
-  if (error) {
-    if (error.code === '23505') {
-      // Already flagged — treat as success
+  if (existingFlag) {
+    if (existingFlag.status !== 'declined') {
       revalidatePath('/discover')
       revalidatePath('/dashboard')
       return { success: true }
     }
-    return { error: error.message }
+    await admin.from('flags')
+      .update({ status: 'pending' })
+      .eq('founder_id', user.id)
+      .eq('investor_id', investorId)
+  } else {
+    const { error } = await admin.from('flags').insert({
+      founder_id: user.id,
+      investor_id: investorId,
+      flagged_by: 'founder',
+      status: 'pending',
+    })
+    if (error) return { error: error.message }
   }
 
   // Send notification email to the investor
@@ -103,20 +112,30 @@ export async function flagFounder(founderId: string): Promise<{ error?: string; 
   if (myProfile?.is_paused) return { error: 'Your account has been paused. Please contact the platform.' }
   if (targetProfile?.is_paused) return { success: true }
 
-  const { error } = await admin.from('flags').insert({
-    founder_id: founderId,
-    investor_id: user.id,
-    flagged_by: 'investor',
-    status: 'pending',
-  })
+  const { data: existingFlag } = await admin.from('flags')
+    .select('status')
+    .eq('founder_id', founderId)
+    .eq('investor_id', user.id)
+    .maybeSingle()
 
-  if (error) {
-    if (error.code === '23505') {
+  if (existingFlag) {
+    if (existingFlag.status !== 'declined') {
       revalidatePath('/discover')
       revalidatePath('/dashboard')
       return { success: true }
     }
-    return { error: error.message }
+    await admin.from('flags')
+      .update({ status: 'pending' })
+      .eq('founder_id', founderId)
+      .eq('investor_id', user.id)
+  } else {
+    const { error } = await admin.from('flags').insert({
+      founder_id: founderId,
+      investor_id: user.id,
+      flagged_by: 'investor',
+      status: 'pending',
+    })
+    if (error) return { error: error.message }
   }
 
   // Send notification email to the founder
@@ -180,20 +199,30 @@ export async function flagLenderAsFounder(lenderId: string): Promise<{ error?: s
   if (myProfile?.is_paused) return { error: 'Your account has been paused. Please contact the platform.' }
   if (targetProfile?.is_paused) return { success: true }
 
-  const { error } = await admin.from('lender_flags').insert({
-    founder_id: user.id,
-    lender_id: lenderId,
-    flagged_by: 'founder',
-    status: 'pending',
-  })
+  const { data: existingFlag } = await admin.from('lender_flags')
+    .select('status')
+    .eq('founder_id', user.id)
+    .eq('lender_id', lenderId)
+    .maybeSingle()
 
-  if (error) {
-    if (error.code === '23505') {
+  if (existingFlag) {
+    if (existingFlag.status !== 'declined') {
       revalidatePath('/discover')
       revalidatePath('/dashboard')
       return { success: true }
     }
-    return { error: error.message }
+    await admin.from('lender_flags')
+      .update({ status: 'pending' })
+      .eq('founder_id', user.id)
+      .eq('lender_id', lenderId)
+  } else {
+    const { error } = await admin.from('lender_flags').insert({
+      founder_id: user.id,
+      lender_id: lenderId,
+      flagged_by: 'founder',
+      status: 'pending',
+    })
+    if (error) return { error: error.message }
   }
 
   // Send notification email to the lender
@@ -261,20 +290,30 @@ export async function flagFounderAsLender(founderId: string): Promise<{ error?: 
   if (myProfile?.is_paused) return { error: 'Your account has been paused. Please contact the platform.' }
   if (targetProfile?.is_paused) return { success: true }
 
-  const { error } = await admin.from('lender_flags').insert({
-    founder_id: founderId,
-    lender_id: user.id,
-    flagged_by: 'lender',
-    status: 'pending',
-  })
+  const { data: existingFlag } = await admin.from('lender_flags')
+    .select('status')
+    .eq('founder_id', founderId)
+    .eq('lender_id', user.id)
+    .maybeSingle()
 
-  if (error) {
-    if (error.code === '23505') {
+  if (existingFlag) {
+    if (existingFlag.status !== 'declined') {
       revalidatePath('/discover')
       revalidatePath('/dashboard')
       return { success: true }
     }
-    return { error: error.message }
+    await admin.from('lender_flags')
+      .update({ status: 'pending' })
+      .eq('founder_id', founderId)
+      .eq('lender_id', user.id)
+  } else {
+    const { error } = await admin.from('lender_flags').insert({
+      founder_id: founderId,
+      lender_id: user.id,
+      flagged_by: 'lender',
+      status: 'pending',
+    })
+    if (error) return { error: error.message }
   }
 
   try {

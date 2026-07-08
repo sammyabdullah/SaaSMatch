@@ -136,6 +136,10 @@ export async function deleteAccount(): Promise<void> {
 
   if (!profile) redirect('/')
 
+  // Delete auth account before profile data; if this fails, nothing is orphaned
+  const { error: deleteUserError } = await admin.auth.admin.deleteUser(user.id)
+  if (deleteUserError) throw new Error('Failed to delete account. Please contact support.')
+
   if (profile.role === 'founder') {
     await admin.from('flags').delete().eq('founder_id', user.id)
     await admin.from('lender_flags').delete().eq('founder_id', user.id)
@@ -155,7 +159,6 @@ export async function deleteAccount(): Promise<void> {
   }
 
   await admin.from('profiles').delete().eq('id', user.id)
-  await admin.auth.admin.deleteUser(user.id)
 
   redirect('/')
 }
