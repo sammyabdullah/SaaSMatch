@@ -24,13 +24,11 @@ export async function acceptLenderFlag(flagId: string): Promise<{ error?: string
 
   if (!flag) return { error: 'Flag not found or already responded to' }
 
-  // The accepting user must be the recipient
-  if (flag.flagged_by === 'lender' && flag.founder_id !== user.id) {
-    return { error: 'Not authorized' }
-  }
-  if (flag.flagged_by === 'founder' && flag.lender_id !== user.id) {
-    return { error: 'Not authorized' }
-  }
+  // The accepting user must be the recipient (default-deny)
+  const isAuthorized =
+    (flag.flagged_by === 'lender' && flag.founder_id === user.id) ||
+    (flag.flagged_by === 'founder' && flag.lender_id === user.id)
+  if (!isAuthorized) return { error: 'Not authorized' }
 
   const [{ data: founderPause }, { data: lenderPause }] = await Promise.all([
     admin.from('profiles').select('is_paused').eq('id', flag.founder_id).single(),
@@ -40,13 +38,16 @@ export async function acceptLenderFlag(flagId: string): Promise<{ error?: string
     return { error: 'This user is no longer available.' }
   }
 
-  const { error: updateError } = await admin
+  const { data: updatedRows, error: updateError } = await admin
     .from('lender_flags')
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     .update({ status: 'accepted', responded_at: new Date().toISOString() } as any)
     .eq('id', flagId)
+    .eq('status', 'pending')
+    .select('id')
 
   if (updateError) return { error: updateError.message }
+  if (!updatedRows || updatedRows.length === 0) return { error: 'Flag already processed' }
 
   try {
     const [founderProfile, founderAuthProfile, lenderProfile, lenderAuthProfile] =

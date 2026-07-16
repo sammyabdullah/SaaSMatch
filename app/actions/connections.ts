@@ -27,13 +27,11 @@ export async function acceptFlag(flagId: string): Promise<{ error?: string; succ
 
   if (!flag) return { error: 'Flag not found or already responded to' }
 
-  // Verify the accepting user is the correct recipient
-  if (flag.flagged_by === 'founder' && flag.investor_id !== user.id) {
-    return { error: 'Not authorized' }
-  }
-  if (flag.flagged_by === 'investor' && flag.founder_id !== user.id) {
-    return { error: 'Not authorized' }
-  }
+  // Verify the accepting user is the correct recipient (default-deny)
+  const isAuthorized =
+    (flag.flagged_by === 'founder' && flag.investor_id === user.id) ||
+    (flag.flagged_by === 'investor' && flag.founder_id === user.id)
+  if (!isAuthorized) return { error: 'Not authorized' }
 
   const [{ data: founderPause }, { data: investorPause }] = await Promise.all([
     admin.from('profiles').select('is_paused').eq('id', flag.founder_id).single(),
@@ -43,14 +41,17 @@ export async function acceptFlag(flagId: string): Promise<{ error?: string; succ
     return { error: 'This user is no longer available.' }
   }
 
-  // Mark the flag as accepted
-  const { error: updateError } = await admin
+  // Mark the flag as accepted — guard on status='pending' prevents duplicate emails on double-click
+  const { data: updatedRows, error: updateError } = await admin
     .from('flags')
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     .update({ status: 'accepted', responded_at: new Date().toISOString() } as any)
     .eq('id', flagId)
+    .eq('status', 'pending')
+    .select('id')
 
   if (updateError) return { error: updateError.message }
+  if (!updatedRows || updatedRows.length === 0) return { error: 'Flag already processed' }
 
   // Fetch details for notification emails
   try {

@@ -28,6 +28,7 @@ export async function flagInvestor(investorId: string): Promise<{ error?: string
     .select('status')
     .eq('founder_id', user.id)
     .eq('investor_id', investorId)
+    .eq('flagged_by', 'founder')
     .maybeSingle()
 
   if (existingFlag) {
@@ -36,10 +37,11 @@ export async function flagInvestor(investorId: string): Promise<{ error?: string
       revalidatePath('/dashboard')
       return { success: true }
     }
-    await admin.from('flags')
-      .update({ status: 'pending' })
+    const { error: updateErr } = await admin.from('flags')
+      .update({ status: 'pending', flagged_by: 'founder' })
       .eq('founder_id', user.id)
       .eq('investor_id', investorId)
+    if (updateErr) return { error: updateErr.message }
   } else {
     const { error } = await admin.from('flags').insert({
       founder_id: user.id,
@@ -116,6 +118,7 @@ export async function flagFounder(founderId: string): Promise<{ error?: string; 
     .select('status')
     .eq('founder_id', founderId)
     .eq('investor_id', user.id)
+    .eq('flagged_by', 'investor')
     .maybeSingle()
 
   if (existingFlag) {
@@ -124,10 +127,11 @@ export async function flagFounder(founderId: string): Promise<{ error?: string; 
       revalidatePath('/dashboard')
       return { success: true }
     }
-    await admin.from('flags')
-      .update({ status: 'pending' })
+    const { error: updateErr } = await admin.from('flags')
+      .update({ status: 'pending', flagged_by: 'investor' })
       .eq('founder_id', founderId)
       .eq('investor_id', user.id)
+    if (updateErr) return { error: updateErr.message }
   } else {
     const { error } = await admin.from('flags').insert({
       founder_id: founderId,
@@ -203,6 +207,7 @@ export async function flagLenderAsFounder(lenderId: string): Promise<{ error?: s
     .select('status')
     .eq('founder_id', user.id)
     .eq('lender_id', lenderId)
+    .eq('flagged_by', 'founder')
     .maybeSingle()
 
   if (existingFlag) {
@@ -211,10 +216,11 @@ export async function flagLenderAsFounder(lenderId: string): Promise<{ error?: s
       revalidatePath('/dashboard')
       return { success: true }
     }
-    await admin.from('lender_flags')
-      .update({ status: 'pending' })
+    const { error: updateErr } = await admin.from('lender_flags')
+      .update({ status: 'pending', flagged_by: 'founder' })
       .eq('founder_id', user.id)
       .eq('lender_id', lenderId)
+    if (updateErr) return { error: updateErr.message }
   } else {
     const { error } = await admin.from('lender_flags').insert({
       founder_id: user.id,
@@ -294,6 +300,7 @@ export async function flagFounderAsLender(founderId: string): Promise<{ error?: 
     .select('status')
     .eq('founder_id', founderId)
     .eq('lender_id', user.id)
+    .eq('flagged_by', 'lender')
     .maybeSingle()
 
   if (existingFlag) {
@@ -302,10 +309,11 @@ export async function flagFounderAsLender(founderId: string): Promise<{ error?: 
       revalidatePath('/dashboard')
       return { success: true }
     }
-    await admin.from('lender_flags')
-      .update({ status: 'pending' })
+    const { error: updateErr } = await admin.from('lender_flags')
+      .update({ status: 'pending', flagged_by: 'lender' })
       .eq('founder_id', founderId)
       .eq('lender_id', user.id)
+    if (updateErr) return { error: updateErr.message }
   } else {
     const { error } = await admin.from('lender_flags').insert({
       founder_id: founderId,

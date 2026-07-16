@@ -64,7 +64,7 @@ export default async function ProfileDetailPage({ params }: Props) {
       .eq('id', id)
       .single() as { data: any }
 
-    if (!fp) {
+    if (!fp || !fp.is_approved || fp.status !== 'active') {
       return (
         <div className="max-w-3xl mx-auto px-6 py-12">
           <p className="text-sm text-gray-500">Profile not found.</p>
@@ -200,7 +200,7 @@ export default async function ProfileDetailPage({ params }: Props) {
       .eq('id', id)
       .single() as { data: any }
 
-    if (!ip) {
+    if (!ip || !ip.is_approved) {
       // Try lender profile
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data: lp } = await admin
@@ -209,7 +209,7 @@ export default async function ProfileDetailPage({ params }: Props) {
         .eq('id', id)
         .single() as { data: any }
 
-      if (!lp) {
+      if (!lp || !lp.is_approved) {
         return (
           <div className="max-w-3xl mx-auto px-6 py-12">
             <p className="text-sm text-gray-500">Profile not found.</p>
@@ -406,7 +406,7 @@ export default async function ProfileDetailPage({ params }: Props) {
       .eq('id', id)
       .single() as { data: any }
 
-    if (!fp) {
+    if (!fp || !fp.is_approved || fp.status !== 'active') {
       return (
         <div className="max-w-3xl mx-auto px-6 py-12">
           <p className="text-sm text-gray-500">Profile not found.</p>
