@@ -92,6 +92,7 @@ export default function InvestorDiscoverClient({
   const [arrRange, setArrRange] = useState('')
   const [selectedStages, setSelectedStages] = useState<string[]>([])
   const [momGrowthMin, setMomGrowthMin] = useState('')
+  const [geoQuery, setGeoQuery] = useState('')
   const [selectedGtm, setSelectedGtm] = useState<string[]>([])
   const [selectedRevModel, setSelectedRevModel] = useState<string[]>([])
   const [selectedCategories, setSelectedCategories] = useState<string[]>([])
@@ -109,6 +110,7 @@ export default function InvestorDiscoverClient({
     setArrRange('')
     setSelectedStages([])
     setMomGrowthMin('')
+    setGeoQuery('')
     setSelectedGtm([])
     setSelectedRevModel([])
     setSelectedCategories([])
@@ -139,12 +141,14 @@ export default function InvestorDiscoverClient({
   }
 
   const filtered = useMemo(() => {
+    const geo = geoQuery.trim().toLowerCase()
     return founders
       .filter((f) => !passedIds.has(f.id))
       .filter((f) => {
         if (arrRange && f.arr_range !== arrRange) return false
         if (selectedStages.length > 0 && !selectedStages.includes(f.stage)) return false
         if (momGrowthMin && (f.mom_growth_pct == null || f.mom_growth_pct < Number(momGrowthMin))) return false
+        if (geo && !(f.location ?? '').toLowerCase().includes(geo)) return false
         if (selectedGtm.length > 0 && !selectedGtm.includes(f.gtm_motion)) return false
         if (selectedRevModel.length > 0 && !selectedRevModel.includes(f.revenue_model)) return false
         if (selectedCategories.length > 0) {
@@ -155,7 +159,7 @@ export default function InvestorDiscoverClient({
         }
         return true
       })
-  }, [founders, passedIds, arrRange, selectedStages, momGrowthMin, selectedGtm, selectedRevModel, selectedCategories])
+  }, [founders, passedIds, arrRange, selectedStages, momGrowthMin, geoQuery, selectedGtm, selectedRevModel, selectedCategories])
 
   async function handleFlag(founderId: string) {
     setFlaggedIds((prev) => new Set(Array.from(prev).concat(founderId)))
@@ -237,6 +241,16 @@ export default function InvestorDiscoverClient({
               className={inputCls}
               placeholder="10"
               min={0}
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-500 mb-1">Geography</label>
+            <input
+              type="text"
+              value={geoQuery}
+              onChange={(e) => setGeoQuery(e.target.value)}
+              className={inputCls}
+              placeholder="e.g. New York, MENA"
             />
           </div>
           <div className="flex items-end">
