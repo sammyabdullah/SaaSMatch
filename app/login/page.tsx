@@ -3,25 +3,39 @@
 import { useState, Suspense } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
-import { signIn } from '@/app/actions/auth'
+import { signIn, resendConfirmationEmail } from '@/app/actions/auth'
 
 function LoginForm() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [resendLoading, setResendLoading] = useState(false)
+  const [resendSent, setResendSent] = useState(false)
   const searchParams = useSearchParams()
   const justSignedUp = searchParams.get('verify') === '1'
+
+  const isUnconfirmed = error === 'email_not_confirmed'
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
+    setResendSent(false)
     setLoading(true)
 
     const result = await signIn(email, password)
     if (result?.error) {
       setError(result.error)
       setLoading(false)
+    }
+  }
+
+  async function handleResend() {
+    setResendLoading(true)
+    const result = await resendConfirmationEmail(email)
+    setResendLoading(false)
+    if (!result?.error) {
+      setResendSent(true)
     }
   }
 
@@ -67,7 +81,27 @@ function LoginForm() {
           />
         </div>
 
-        {error && <p className="text-sm text-red-600">{error}</p>}
+        {isUnconfirmed ? (
+          <div className="rounded-md bg-amber-50 border border-amber-200 px-4 py-3 space-y-2">
+            <p className="text-sm text-amber-800">
+              Your email address hasn&apos;t been confirmed yet. Check your inbox for the confirmation link we sent when you signed up.
+            </p>
+            {resendSent ? (
+              <p className="text-sm text-green-700 font-medium">Confirmation email resent — check your inbox.</p>
+            ) : (
+              <button
+                type="button"
+                onClick={handleResend}
+                disabled={resendLoading}
+                className="text-sm text-amber-900 underline underline-offset-2 disabled:opacity-50"
+              >
+                {resendLoading ? 'Sending…' : 'Resend confirmation email'}
+              </button>
+            )}
+          </div>
+        ) : error ? (
+          <p className="text-sm text-red-600">{error}</p>
+        ) : null}
 
         <button
           type="submit"

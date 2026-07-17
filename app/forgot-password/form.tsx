@@ -56,7 +56,14 @@ export default function ForgotPasswordForm({ expiredLink }: Props) {
         <div className="mb-6 rounded-md bg-green-50 border border-green-200 px-4 py-3">
           <p className="text-sm text-green-800 font-medium">Reset link sent!</p>
           <p className="text-sm text-green-700 mt-0.5">
-            Check your inbox at <span className="font-medium">{email}</span> and click the link to set a new password.
+            Check your inbox at <span className="font-medium">{email}</span> and click the link to set a new password. If you don&apos;t see it within a few minutes, check your spam folder.
+          </p>
+          <p className="text-sm text-green-700 mt-2">
+            Still no email?{' '}
+            <a href="mailto:sammy@blossomstreetventures.com" className="underline underline-offset-2">
+              Contact support
+            </a>
+            {' '}and we&apos;ll get you sorted.
           </p>
         </div>
       )}

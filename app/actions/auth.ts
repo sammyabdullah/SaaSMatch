@@ -43,6 +43,9 @@ export async function signIn(email: string, password: string) {
     if (msg.includes('invalid login') || msg.includes('invalid credentials') || msg.includes('user not found')) {
       return { error: 'Email not registered or incorrect password.' }
     }
+    if (msg.includes('email not confirmed')) {
+      return { error: 'email_not_confirmed' }
+    }
     return { error: error.message }
   }
 
@@ -105,6 +108,22 @@ export async function forgotPassword(email: string) {
 
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: `${siteUrl}/auth/callback?type=recovery`,
+  })
+
+  if (error) return { error: error.message }
+  return { success: true }
+}
+
+export async function resendConfirmationEmail(email: string) {
+  const supabase = await createClient()
+  const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://founderinvited.com'
+
+  const { error } = await supabase.auth.resend({
+    type: 'signup',
+    email,
+    options: {
+      emailRedirectTo: `${siteUrl}/auth/callback`,
+    },
   })
 
   if (error) return { error: error.message }
