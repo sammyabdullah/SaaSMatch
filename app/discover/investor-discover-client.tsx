@@ -172,6 +172,7 @@ export default function InvestorDiscoverClient({
       return
     }
 
+    router.refresh()
     const t = setTimeout(() => {
       setFlagStates((prev) => ({ ...prev, [founderId]: 'flagged' }))
     }, 5000)
@@ -188,6 +189,7 @@ export default function InvestorDiscoverClient({
       return next
     })
     await unflagFounder(founderId)
+    router.refresh()
   }
 
   function handlePass(founderId: string) {

@@ -96,7 +96,13 @@ export async function updateLenderProfile(
 export async function changePassword(
   password: string
 ): Promise<{ error?: string; success?: boolean }> {
+  if (password.length < 8) return { error: 'Password must be at least 8 characters.' }
+  if (password.length > 72) return { error: 'Password must be 72 characters or fewer.' }
+
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated' }
+
   const { error } = await supabase.auth.updateUser({ password })
   if (error) return { error: error.message }
   return { success: true }
@@ -172,6 +178,9 @@ export async function uploadFounderDeck(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
 
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+  if (profile?.role !== 'founder') return { error: 'Not authorized' }
+
   const file = formData.get('deck') as File | null
   if (!file || file.size === 0) return { error: 'No file provided.' }
   if (file.size > MAX_DECK_BYTES) return { error: 'File must be 15 MB or smaller.' }
@@ -206,8 +215,12 @@ export async function removeFounderDeck(): Promise<{ error?: string; success?: b
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Not authenticated' }
 
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+  if (profile?.role !== 'founder') return { error: 'Not authorized' }
+
   const admin = createAdminClient()
-  await admin.storage.from('decks').remove([`${user.id}.pdf`])
+  const { error: storageError } = await admin.storage.from('decks').remove([`${user.id}.pdf`])
+  if (storageError) return { error: storageError.message }
 
   const { error } = await admin
     .from('founder_profiles')

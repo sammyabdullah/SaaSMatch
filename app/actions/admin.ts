@@ -48,7 +48,7 @@ export async function approveInvestor(investorId: string) {
   const admin = createAdminClient()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await (admin.from('investor_profiles') as any)
-    .update({ is_approved: true, status: 'active' })
+    .update({ is_approved: true, status: 'active', approved_at: new Date().toISOString() })
     .eq('id', investorId)
 
   if (error) throw new Error(error.message)
@@ -85,6 +85,8 @@ export async function deleteInvestorProfile(investorId: string) {
 
   const admin = createAdminClient()
   await admin.from('flags').delete().eq('investor_id', investorId)
+  await admin.from('profile_views').delete().eq('investor_id', investorId)
+  await admin.from('investor_profile_views').delete().eq('investor_id', investorId)
 
   const { error } = await admin
     .from('investor_profiles')
@@ -123,7 +125,7 @@ export async function approveLender(lenderId: string) {
   const admin = createAdminClient()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await (admin.from('lender_profiles') as any)
-    .update({ is_approved: true, status: 'active' })
+    .update({ is_approved: true, status: 'active', approved_at: new Date().toISOString() })
     .eq('id', lenderId)
 
   if (error) throw new Error(error.message)
@@ -161,6 +163,7 @@ export async function deleteLenderProfile(lenderId: string) {
   const admin = createAdminClient()
 
   await admin.from('lender_flags').delete().eq('lender_id', lenderId)
+  await admin.from('lender_profile_views').delete().eq('lender_id', lenderId)
 
   const { error } = await admin
     .from('lender_profiles')
@@ -190,23 +193,12 @@ export async function changeUserEmail(
 
   if (!profile) return { error: 'No user found with that email' }
 
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
-
-  const res = await fetch(`${supabaseUrl}/auth/v1/admin/users/${profile.id}`, {
-    method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${serviceKey}`,
-      apikey: serviceKey,
-    },
-    body: JSON.stringify({ email: trimmedNew, email_confirm: true }),
+  const { error: authError } = await admin.auth.admin.updateUserById(profile.id, {
+    email: trimmedNew,
+    email_confirm: true,
   })
 
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}))
-    return { error: `Auth update failed: ${body.message || body.msg || res.statusText} (status: ${res.status})` }
-  }
+  if (authError) return { error: authError.message }
 
   const { error: profileError } = await admin
     .from('profiles')
@@ -252,6 +244,10 @@ export async function deleteUserByEmail(email: string): Promise<{ error?: string
   const { data: profile } = await admin.from('profiles').select('id, role').eq('email', trimmed).single()
   if (!profile) return { error: 'No user found with that email' }
 
+  // Delete auth account first; if this fails nothing is orphaned
+  const { error: authError } = await admin.auth.admin.deleteUser(profile.id)
+  if (authError) return { error: authError.message }
+
   await admin.from('flags').delete().or(`founder_id.eq.${profile.id},investor_id.eq.${profile.id}`)
   await admin.from('lender_flags').delete().or(`founder_id.eq.${profile.id},lender_id.eq.${profile.id}`)
   await admin.from('profile_views').delete().or(`founder_id.eq.${profile.id},investor_id.eq.${profile.id}`)
@@ -263,10 +259,9 @@ export async function deleteUserByEmail(email: string): Promise<{ error?: string
   await admin.from('lender_profiles').delete().eq('id', profile.id)
   await admin.from('profiles').delete().eq('id', profile.id)
 
-  const { error: authError } = await admin.auth.admin.deleteUser(profile.id)
-  if (authError) return { error: `Profile deleted but auth cleanup failed: ${authError.message}` }
-
   revalidatePath('/admin')
+  revalidatePath('/discover')
+  revalidatePath('/dashboard')
   return { success: true }
 }
 
@@ -275,9 +270,11 @@ export async function deleteFounderProfile(founderId: string) {
 
   const admin = createAdminClient()
 
-  // Delete related flags first to avoid FK constraint errors
   await admin.from('flags').delete().eq('founder_id', founderId)
   await admin.from('lender_flags').delete().eq('founder_id', founderId)
+  await admin.from('profile_views').delete().eq('founder_id', founderId)
+  await admin.from('investor_profile_views').delete().eq('founder_id', founderId)
+  await admin.from('lender_profile_views').delete().eq('founder_id', founderId)
 
   const { error } = await admin
     .from('founder_profiles')

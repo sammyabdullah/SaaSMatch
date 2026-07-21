@@ -56,6 +56,15 @@ export default async function ProfileDetailPage({ params }: Props) {
       )
     }
 
+    // Ensure the viewing investor is approved
+    const { data: myInvestorProfile } = await admin
+      .from('investor_profiles')
+      .select('is_approved')
+      .eq('id', user.id)
+      .single()
+
+    if (!myInvestorProfile?.is_approved) redirect('/dashboard')
+
     // Investor viewing a founder profile
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: fp } = await admin
@@ -67,6 +76,7 @@ export default async function ProfileDetailPage({ params }: Props) {
     if (!fp || !fp.is_approved || fp.status !== 'active') {
       return (
         <div className="max-w-3xl mx-auto px-6 py-12">
+          <BackButton />
           <p className="text-sm text-gray-500">Profile not found.</p>
         </div>
       )
@@ -212,6 +222,7 @@ export default async function ProfileDetailPage({ params }: Props) {
       if (!lp || !lp.is_approved) {
         return (
           <div className="max-w-3xl mx-auto px-6 py-12">
+            <BackButton />
             <p className="text-sm text-gray-500">Profile not found.</p>
           </div>
         )
@@ -399,6 +410,15 @@ export default async function ProfileDetailPage({ params }: Props) {
       )
     }
 
+    // Ensure the viewing lender is approved
+    const { data: myLenderProfile } = await admin
+      .from('lender_profiles')
+      .select('is_approved')
+      .eq('id', user.id)
+      .single()
+
+    if (!myLenderProfile?.is_approved) redirect('/dashboard')
+
     // Lender viewing a founder profile
     const { data: fp } = await admin
       .from('founder_profiles')
@@ -409,6 +429,7 @@ export default async function ProfileDetailPage({ params }: Props) {
     if (!fp || !fp.is_approved || fp.status !== 'active') {
       return (
         <div className="max-w-3xl mx-auto px-6 py-12">
+          <BackButton />
           <p className="text-sm text-gray-500">Profile not found.</p>
         </div>
       )

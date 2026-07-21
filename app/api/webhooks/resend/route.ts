@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { Resend } from 'resend'
 
-const NOTIFY_EMAIL = 'sammy@blossomstreetventures.com'
+const NOTIFY_EMAIL = process.env.ADMIN_EMAIL ?? 'sammy@blossomstreetventures.com'
 const FROM = 'FounderInvited <noreply@founderinvited.com>'
 
 export async function POST(req: NextRequest) {

@@ -159,6 +159,7 @@ export default function LenderDiscoverClient({
       return
     }
 
+    router.refresh()
     const t = setTimeout(() => {
       setFlagStates((prev) => ({ ...prev, [founderId]: 'flagged' }))
     }, 5000)
@@ -175,6 +176,7 @@ export default function LenderDiscoverClient({
       return next
     })
     await unflagFounderAsLender(founderId)
+    router.refresh()
   }
 
   function handlePass(founderId: string) {

@@ -13,6 +13,17 @@ export async function updateSession(request: NextRequest) {
     return supabaseResponse
   }
 
+  const { pathname } = request.nextUrl
+  const isPublicRoute =
+    pathname === '/' ||
+    pathname.startsWith('/login') ||
+    pathname.startsWith('/signup') ||
+    pathname.startsWith('/forgot-password') ||
+    pathname.startsWith('/auth/') ||
+    pathname.startsWith('/_next') ||
+    pathname.startsWith('/favicon') ||
+    pathname.startsWith('/api/webhooks/')
+
   try {
     const supabase = createServerClient<Database>(
       process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -40,18 +51,6 @@ export async function updateSession(request: NextRequest) {
       data: { user },
     } = await supabase.auth.getUser()
 
-    // Redirect unauthenticated users away from protected routes
-    const { pathname } = request.nextUrl
-    const isPublicRoute =
-      pathname === '/' ||
-      pathname.startsWith('/login') ||
-      pathname.startsWith('/signup') ||
-      pathname.startsWith('/forgot-password') ||
-      pathname.startsWith('/auth/') ||
-      pathname.startsWith('/_next') ||
-      pathname.startsWith('/favicon') ||
-      pathname.startsWith('/api/cron/')
-
     if (!user && !isPublicRoute) {
       const url = request.nextUrl.clone()
       url.pathname = '/login'
@@ -77,8 +76,12 @@ export async function updateSession(request: NextRequest) {
       }
     }
   } catch {
-    // If Supabase is unreachable or keys are invalid, fail open so the
-    // site stays up. Individual pages enforce auth via getUser().
+    // If Supabase is unreachable, protect private routes rather than fail open.
+    if (!isPublicRoute) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/login'
+      return NextResponse.redirect(url)
+    }
   }
 
   return supabaseResponse

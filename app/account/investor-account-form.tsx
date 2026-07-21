@@ -50,7 +50,7 @@ export default function InvestorAccountForm({ initialData }: Props) {
   )
   const [arr_sweet_spot_min, setArrMin] = useState(String(initialData.arr_sweet_spot_min))
   const [arr_sweet_spot_max, setArrMax] = useState(String(initialData.arr_sweet_spot_max))
-  const [thesis_statement, setThesis] = useState(initialData.thesis_statement)
+  const [thesis_statement, setThesis] = useState(initialData.thesis_statement ?? '')
 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')

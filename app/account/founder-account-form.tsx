@@ -68,8 +68,8 @@ export default function FounderAccountForm({ initialData }: Props) {
   const [mom_growth_pct, setMomGrowth] = useState(initialData.mom_growth_pct != null ? String(initialData.mom_growth_pct) : '')
   const [gtm_motion, setGtmMotion] = useState<string>(initialData.gtm_motion)
   const [revenue_model, setRevenueModel] = useState<string>(initialData.revenue_model)
-  const [raising_amount_usd, setRaising] = useState(String(initialData.raising_amount_usd))
-  const [why_now, setWhyNow] = useState(initialData.why_now)
+  const [raising_amount_usd, setRaising] = useState(initialData.raising_amount_usd != null ? String(initialData.raising_amount_usd) : '')
+  const [why_now, setWhyNow] = useState(initialData.why_now ?? '')
 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')

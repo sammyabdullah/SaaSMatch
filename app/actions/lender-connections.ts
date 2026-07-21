@@ -176,14 +176,18 @@ export async function declineLenderFlag(flagId: string): Promise<{ error?: strin
     return { error: 'Not authorized' }
   }
 
-  const { error } = await admin
+  const { data: updatedRows, error } = await admin
     .from('lender_flags')
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     .update({ status: 'declined', responded_at: new Date().toISOString() } as any)
     .eq('id', flagId)
+    .eq('status', 'pending')
+    .select('id')
 
   if (error) return { error: error.message }
+  if (!updatedRows || updatedRows.length === 0) return { error: 'Flag already processed' }
 
   revalidatePath('/dashboard')
+  revalidatePath('/discover')
   return { success: true }
 }

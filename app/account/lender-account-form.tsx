@@ -52,7 +52,7 @@ export default function LenderAccountForm({ initialData }: Props) {
   const [saas_subcategories, setSaasSubcategories] = useState<string[]>(initialData.saas_subcategories ?? [])
   const [arr_min_requirement, setArrMin] = useState(String(initialData.arr_min_requirement))
   const [arr_max_sweet_spot, setArrMax] = useState(String(initialData.arr_max_sweet_spot))
-  const [thesis_statement, setThesis] = useState(initialData.thesis_statement)
+  const [thesis_statement, setThesis] = useState(initialData.thesis_statement ?? '')
 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')

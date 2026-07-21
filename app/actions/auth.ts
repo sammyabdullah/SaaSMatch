@@ -4,6 +4,9 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 
 export async function signUp(email: string, password: string, role: string) {
+  const ALLOWED_ROLES = ['founder', 'investor', 'lender']
+  if (!ALLOWED_ROLES.includes(role)) return { error: 'Invalid role.' }
+
   const supabase = await createClient()
 
   const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://founderinvited.com'
@@ -46,7 +49,7 @@ export async function signIn(email: string, password: string) {
     if (msg.includes('email not confirmed')) {
       return { error: 'email_not_confirmed' }
     }
-    return { error: error.message }
+    return { error: 'Sign in failed. Please try again.' }
   }
 
   const userId = data.user.id
@@ -58,6 +61,7 @@ export async function signIn(email: string, password: string) {
     .single()
 
   if (!profile) {
+    await supabase.auth.signOut()
     return { error: 'Account setup incomplete. Please contact support.' }
   }
 

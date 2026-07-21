@@ -1,9 +1,10 @@
 import ForgotPasswordForm from './form'
 
 interface Props {
-  searchParams: { error?: string }
+  searchParams: Promise<{ error?: string }>
 }
 
-export default function ForgotPasswordPage({ searchParams }: Props) {
-  return <ForgotPasswordForm expiredLink={searchParams.error === 'link_expired'} />
+export default async function ForgotPasswordPage({ searchParams }: Props) {
+  const params = await searchParams
+  return <ForgotPasswordForm expiredLink={params.error === 'link_expired'} />
 }

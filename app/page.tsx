@@ -60,13 +60,13 @@ export default async function Home() {
 
   type Connection = { date: string; left: string; right: string; kind: 'investor' | 'lender' }
   const latestConnections: Connection[] = [
-    ...(investorConnections ?? []).filter((c) => !pausedIds.has(c.founder_id) && !pausedIds.has(c.investor_id)).map((c) => ({
+    ...(investorConnections ?? []).filter((c) => c.responded_at != null && !pausedIds.has(c.founder_id) && !pausedIds.has(c.investor_id)).map((c) => ({
       date: c.responded_at ?? '',
       left: investorMap[c.investor_id] ?? 'An investor',
       right: founderMap[c.founder_id] ?? 'A founder',
       kind: 'investor' as const,
     })),
-    ...(lenderConnections ?? []).filter((c) => !pausedIds.has(c.founder_id) && !pausedIds.has(c.lender_id)).map((c) => ({
+    ...(lenderConnections ?? []).filter((c) => c.responded_at != null && !pausedIds.has(c.founder_id) && !pausedIds.has(c.lender_id)).map((c) => ({
       date: c.responded_at ?? '',
       left: lenderMap[c.lender_id] ?? 'A lender',
       right: founderMap[c.founder_id] ?? 'A founder',
