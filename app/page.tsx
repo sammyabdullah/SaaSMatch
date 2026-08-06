@@ -9,8 +9,10 @@ export default async function Home() {
   const [
     { count: investorCount },
     { count: lenderCount },
+    { count: founderCount },
     { data: lastInvestors },
     { data: lastLenders },
+    { data: lastFounders },
     { data: investorConnections },
     { data: lenderConnections },
     { count: investorFlagCount },
@@ -20,8 +22,10 @@ export default async function Home() {
   ] = await Promise.all([
     admin.from('investor_profiles').select('id, profiles!inner(is_paused)', { count: 'exact', head: true }).eq('is_approved', true).eq('profiles.is_paused', false),
     admin.from('lender_profiles').select('id, profiles!inner(is_paused)', { count: 'exact', head: true }).eq('is_approved', true).eq('profiles.is_paused', false),
+    admin.from('founder_profiles').select('id, profiles!inner(is_paused)', { count: 'exact', head: true }).eq('is_approved', true).eq('status', 'active').eq('profiles.is_paused', false),
     admin.from('investor_profiles').select('firm_name, partner_name, profiles!inner(is_paused)').eq('is_approved', true).eq('profiles.is_paused', false).order('created_at', { ascending: false }).limit(5),
     admin.from('lender_profiles').select('institution_name, contact_name, profiles!inner(is_paused)').eq('is_approved', true).eq('profiles.is_paused', false).order('created_at', { ascending: false }).limit(5),
+    admin.from('founder_profiles').select('company_name, location, profiles!inner(is_paused)').eq('is_approved', true).eq('status', 'active').eq('profiles.is_paused', false).order('created_at', { ascending: false }).limit(5),
     admin.from('flags').select('founder_id, investor_id, responded_at').eq('status', 'accepted').order('responded_at', { ascending: false, nullsFirst: false }).limit(50),
     admin.from('lender_flags').select('founder_id, lender_id, responded_at').eq('status', 'accepted').order('responded_at', { ascending: false, nullsFirst: false }).limit(50),
     admin.from('flags').select('id', { count: 'exact', head: true }).eq('status', 'accepted'),
@@ -78,7 +82,7 @@ export default async function Home() {
 
   return (
     <div className="px-6 pt-8 pb-32 text-center">
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-4xl mx-auto">
       <p className="text-gray-500 text-base mb-12">
         FounderInvited connects SaaS founders with investors and lenders. It&apos;s free and simple: build a profile in 15 seconds, browse the other side, and flag interest. Contact details are shared only when both parties opt in. Welcome.
       </p>
@@ -104,7 +108,7 @@ export default async function Home() {
       </div>
 
       {/* Live stats */}
-      <div className="grid grid-cols-2 gap-3 mb-3">
+      <div className="grid grid-cols-3 gap-3 mb-3">
         <div className="border border-gray-100 rounded-xl p-5 bg-white shadow-sm text-center">
           <p className="text-xs text-gray-400 mb-1 uppercase tracking-wide">Live Investors on FounderInvited</p>
           <p className="text-3xl font-bold text-[#534AB7]">{investorCount ?? 0}</p>
@@ -113,9 +117,13 @@ export default async function Home() {
           <p className="text-xs text-gray-400 mb-1 uppercase tracking-wide">Live Lenders on FounderInvited</p>
           <p className="text-3xl font-bold text-[#534AB7]">{lenderCount ?? 0}</p>
         </div>
+        <div className="border border-gray-100 rounded-xl p-5 bg-white shadow-sm text-center">
+          <p className="text-xs text-gray-400 mb-1 uppercase tracking-wide">Live B2B Founders on FounderInvited</p>
+          <p className="text-3xl font-bold text-[#534AB7]">{founderCount ?? 0}</p>
+        </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-3 gap-3">
         <div className="border border-gray-100 rounded-xl p-5 bg-white shadow-sm text-left">
           <p className="text-xs text-gray-400 mb-3 uppercase tracking-wide">Latest Investors to Join</p>
           {lastInvestors && lastInvestors.length > 0 ? (
@@ -139,6 +147,21 @@ export default async function Home() {
                 <div key={i} className={i > 0 ? 'pt-3 border-t border-gray-100' : ''}>
                   <p className="text-sm font-semibold text-gray-900 leading-tight">{lender.institution_name}</p>
                   <p className="text-xs text-gray-500 mt-0.5">{lender.contact_name}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-gray-400">—</p>
+          )}
+        </div>
+        <div className="border border-gray-100 rounded-xl p-5 bg-white shadow-sm text-left">
+          <p className="text-xs text-gray-400 mb-3 uppercase tracking-wide">Latest B2B Founders to Join</p>
+          {lastFounders && lastFounders.length > 0 ? (
+            <div className="space-y-3">
+              {lastFounders.map((founder, i) => (
+                <div key={i} className={i > 0 ? 'pt-3 border-t border-gray-100' : ''}>
+                  <p className="text-sm font-semibold text-gray-900 leading-tight">{founder.company_name}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">{founder.location}</p>
                 </div>
               ))}
             </div>
