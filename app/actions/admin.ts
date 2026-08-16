@@ -248,16 +248,20 @@ export async function deleteUserByEmail(email: string): Promise<{ error?: string
   const { error: authError } = await admin.auth.admin.deleteUser(profile.id)
   if (authError) return { error: authError.message }
 
-  await admin.from('flags').delete().or(`founder_id.eq.${profile.id},investor_id.eq.${profile.id}`)
-  await admin.from('lender_flags').delete().or(`founder_id.eq.${profile.id},lender_id.eq.${profile.id}`)
-  await admin.from('profile_views').delete().or(`founder_id.eq.${profile.id},investor_id.eq.${profile.id}`)
-  await admin.from('investor_profile_views').delete().or(`founder_id.eq.${profile.id},investor_id.eq.${profile.id}`)
-  await admin.from('lender_profile_views').delete().or(`founder_id.eq.${profile.id},lender_id.eq.${profile.id}`)
+  // Best-effort cleanup: relational records first, then the profile row itself
+  await Promise.all([
+    admin.from('flags').delete().or(`founder_id.eq.${profile.id},investor_id.eq.${profile.id}`),
+    admin.from('lender_flags').delete().or(`founder_id.eq.${profile.id},lender_id.eq.${profile.id}`),
+    admin.from('profile_views').delete().or(`founder_id.eq.${profile.id},investor_id.eq.${profile.id}`),
+    admin.from('investor_profile_views').delete().or(`founder_id.eq.${profile.id},investor_id.eq.${profile.id}`),
+    admin.from('lender_profile_views').delete().or(`founder_id.eq.${profile.id},lender_id.eq.${profile.id}`),
+    admin.from('founder_profiles').delete().eq('id', profile.id),
+    admin.from('investor_profiles').delete().eq('id', profile.id),
+    admin.from('lender_profiles').delete().eq('id', profile.id),
+  ])
 
-  await admin.from('founder_profiles').delete().eq('id', profile.id)
-  await admin.from('investor_profiles').delete().eq('id', profile.id)
-  await admin.from('lender_profiles').delete().eq('id', profile.id)
-  await admin.from('profiles').delete().eq('id', profile.id)
+  const { error: profileDeleteError } = await admin.from('profiles').delete().eq('id', profile.id)
+  if (profileDeleteError) return { error: `Auth account deleted but profile cleanup failed: ${profileDeleteError.message}` }
 
   revalidatePath('/admin')
   revalidatePath('/discover')

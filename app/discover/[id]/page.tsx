@@ -40,6 +40,15 @@ export default async function ProfileDetailPage({ params }: Props) {
   const admin = createAdminClient()
 
   if (profile.role === 'investor') {
+    // Ensure the viewing investor is approved before revealing anything about the target
+    const { data: myInvestorProfile } = await admin
+      .from('investor_profiles')
+      .select('is_approved')
+      .eq('id', user.id)
+      .single()
+
+    if (!myInvestorProfile?.is_approved) redirect('/dashboard')
+
     // Check if target user is paused
     const { data: targetProfile } = await admin
       .from('profiles')
@@ -55,15 +64,6 @@ export default async function ProfileDetailPage({ params }: Props) {
         </div>
       )
     }
-
-    // Ensure the viewing investor is approved
-    const { data: myInvestorProfile } = await admin
-      .from('investor_profiles')
-      .select('is_approved')
-      .eq('id', user.id)
-      .single()
-
-    if (!myInvestorProfile?.is_approved) redirect('/dashboard')
 
     // Investor viewing a founder profile
     // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -108,11 +108,13 @@ export async function flagFounder(founderId: string): Promise<{ error?: string; 
 
   const admin = createAdminClient()
 
-  const [{ data: myProfile }, { data: targetProfile }] = await Promise.all([
+  const [{ data: myProfile }, { data: targetProfile }, { data: myInvestorProfile }] = await Promise.all([
     admin.from('profiles').select('is_paused, role').eq('id', user.id).single(),
     admin.from('profiles').select('is_paused').eq('id', founderId).single(),
+    admin.from('investor_profiles').select('is_approved').eq('id', user.id).single(),
   ])
   if (myProfile?.role !== 'investor') return { error: 'Not authorized' }
+  if (!myInvestorProfile?.is_approved) return { error: 'Not authorized' }
   if (myProfile?.is_paused) return { error: 'Your account has been paused. Please contact the platform.' }
   if (targetProfile?.is_paused) return { success: true }
 
@@ -198,11 +200,13 @@ export async function flagLenderAsFounder(lenderId: string): Promise<{ error?: s
 
   const admin = createAdminClient()
 
-  const [{ data: myProfile }, { data: targetProfile }] = await Promise.all([
+  const [{ data: myProfile }, { data: targetProfile }, { data: myFounderProfile }] = await Promise.all([
     admin.from('profiles').select('is_paused, role').eq('id', user.id).single(),
     admin.from('profiles').select('is_paused').eq('id', lenderId).single(),
+    admin.from('founder_profiles').select('is_approved').eq('id', user.id).single(),
   ])
   if (myProfile?.role !== 'founder') return { error: 'Not authorized' }
+  if (!myFounderProfile?.is_approved) return { error: 'Not authorized' }
   if (myProfile?.is_paused) return { error: 'Your account has been paused. Please contact the platform.' }
   if (targetProfile?.is_paused) return { success: true }
 

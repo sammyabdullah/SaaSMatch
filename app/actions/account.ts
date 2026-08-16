@@ -219,8 +219,8 @@ export async function removeFounderDeck(): Promise<{ error?: string; success?: b
   if (profile?.role !== 'founder') return { error: 'Not authorized' }
 
   const admin = createAdminClient()
-  const { error: storageError } = await admin.storage.from('decks').remove([`${user.id}.pdf`])
-  if (storageError) return { error: storageError.message }
+  // Best-effort: remove from storage but don't block the DB clear if the file is already gone
+  await admin.storage.from('decks').remove([`${user.id}.pdf`])
 
   const { error } = await admin
     .from('founder_profiles')
