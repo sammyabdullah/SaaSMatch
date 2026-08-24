@@ -46,7 +46,6 @@ export async function approveInvestor(investorId: string) {
   await requireAdmin()
 
   const admin = createAdminClient()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await (admin.from('investor_profiles') as any)
     .update({ is_approved: true, status: 'active', approved_at: new Date().toISOString() })
     .eq('id', investorId)
@@ -123,7 +122,6 @@ export async function approveLender(lenderId: string) {
   await requireAdmin()
 
   const admin = createAdminClient()
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { error } = await (admin.from('lender_profiles') as any)
     .update({ is_approved: true, status: 'active', approved_at: new Date().toISOString() })
     .eq('id', lenderId)
