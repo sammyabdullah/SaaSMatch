@@ -158,30 +158,11 @@ async function sendFounderSample() {
 }
 
 async function sendInvestorSample() {
-  const matchingFounders = [
-    { company_name: 'Acme Corp', stage: 'seed', product_categories: ['Vertical SaaS', 'AI/ML'] },
-    { company_name: 'TechFlow Inc', stage: 'series-a', product_categories: ['FinTech', 'Payments'] },
-    { company_name: 'DataStream AI', stage: 'pre-seed', product_categories: ['AI/ML', 'Analytics'] },
-    { company_name: 'GrowthPulse', stage: 'seed', product_categories: ['MarTech', 'Vertical SaaS'] },
-  ]
-
-  const founderRows = matchingFounders.map(f =>
-    `<tr>
-      <td style="padding:2px 16px 2px 0;font-size:13px;width:200px"><strong>${f.company_name}</strong></td>
-      <td style="padding:2px 16px 2px 0;font-size:13px;color:#555">${fmtStage(f.stage)}</td>
-      <td style="padding:2px 0;font-size:13px;color:#888">${f.product_categories.join(', ')}</td>
-    </tr>`
-  ).join('')
-
   const r2 = await resend.emails.send({
     from: FROM,
     to: TO_EMAIL,
     subject: 'FounderInvited update (investor sample)',
     html: `
-      <p>Here are active founders on FounderInvited that match your thesis this month.</p>
-
-      <table style="border-collapse:collapse;margin:8px 0">${founderRows}</table>
-
       <p style="margin-top:28px"><a href="${APP_URL}/login" style="background:#534AB7;color:white;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block">Log In</a></p>
 
       ${buildPlatformStatsHtml(samplePlatformStats)}
@@ -194,29 +175,11 @@ async function sendInvestorSample() {
 }
 
 async function sendLenderSample() {
-  const matchingFounders = [
-    { company_name: 'Acme Corp', stage: 'seed', product_categories: ['Vertical SaaS', 'AI/ML'] },
-    { company_name: 'NexGen SaaS', stage: 'series-a', product_categories: ['DevTools', 'Infrastructure'] },
-    { company_name: 'CloudBase', stage: 'series-b', product_categories: ['Security', 'DevTools'] },
-  ]
-
-  const founderRows = matchingFounders.map(f =>
-    `<tr>
-      <td style="padding:2px 16px 2px 0;font-size:13px;width:200px"><strong>${f.company_name}</strong></td>
-      <td style="padding:2px 16px 2px 0;font-size:13px;color:#555">${fmtStage(f.stage)}</td>
-      <td style="padding:2px 0;font-size:13px;color:#888">${f.product_categories.join(', ')}</td>
-    </tr>`
-  ).join('')
-
   const r3 = await resend.emails.send({
     from: FROM,
     to: TO_EMAIL,
     subject: 'FounderInvited update (lender sample)',
     html: `
-      <p>Here are active founders on FounderInvited that match your lending criteria this month.</p>
-
-      <table style="border-collapse:collapse;margin:8px 0">${founderRows}</table>
-
       <p style="margin-top:28px"><a href="${APP_URL}/login" style="background:#534AB7;color:white;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block">Log In</a></p>
 
       ${buildPlatformStatsHtml(samplePlatformStats)}

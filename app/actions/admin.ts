@@ -416,7 +416,6 @@ export async function triggerDigest(openingParagraph?: string, subjectLine?: str
     })
     return [buildMonthlyInvestorDigestEmail({
       investorEmail,
-      matchingFounders: matchingFounders.map((f) => ({ company_name: f.company_name, stage: f.stage as string, product_categories: (f.product_categories ?? []) as string[] })),
       platformStats,
       openingParagraph,
       subjectLine,
@@ -435,7 +434,6 @@ export async function triggerDigest(openingParagraph?: string, subjectLine?: str
     })
     return [buildMonthlyLenderDigestEmail({
       lenderEmail,
-      matchingFounders: matchingFounders.map((f) => ({ company_name: f.company_name, stage: f.stage as string, product_categories: (f.product_categories ?? []) as string[] })),
       platformStats,
       openingParagraph,
       subjectLine,
@@ -654,7 +652,6 @@ export async function sendTestDigestToEmail(email: string, openingParagraph?: st
 
     await sendMonthlyInvestorDigest({
       investorEmail: email,
-      matchingFounders: (founders ?? []).slice(0, 3).map((f) => ({ company_name: f.company_name, stage: f.stage as string, product_categories: (f.product_categories ?? []) as string[] })),
       platformStats,
       openingParagraph,
       subjectLine,
@@ -662,7 +659,6 @@ export async function sendTestDigestToEmail(email: string, openingParagraph?: st
 
     await sendMonthlyLenderDigest({
       lenderEmail: email,
-      matchingFounders: (founders ?? []).slice(0, 3).map((f) => ({ company_name: f.company_name, stage: f.stage as string, product_categories: (f.product_categories ?? []) as string[] })),
       platformStats,
       openingParagraph,
       subjectLine,

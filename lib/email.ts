@@ -706,19 +706,11 @@ export async function sendMonthlyFounderDigest(params: FounderDigestParams) {
 // ─── Monthly digest: investor ─────────────────────────────────────────────────
 type InvestorDigestParams = {
   investorEmail: string
-  matchingFounders: { company_name: string; stage: string; product_categories: string[] }[]
   platformStats: PlatformStats
   openingParagraph?: string
   subjectLine?: string
 }
-export function buildMonthlyInvestorDigestEmail({ investorEmail, matchingFounders, platformStats, openingParagraph, subjectLine }: InvestorDigestParams) {
-  const founderRows = matchingFounders.map(f =>
-    `<tr>
-      <td style="padding:2px 16px 2px 0;font-size:13px;width:200px"><strong>${f.company_name}</strong></td>
-      <td style="padding:2px 16px 2px 0;font-size:13px;color:#555">${fmtStage(f.stage)}</td>
-      <td style="padding:2px 0;font-size:13px;color:#888">${f.product_categories.join(', ')}</td>
-    </tr>`
-  ).join('')
+export function buildMonthlyInvestorDigestEmail({ investorEmail, platformStats, openingParagraph, subjectLine }: InvestorDigestParams) {
   return {
     from: FROM,
     to: investorEmail,
@@ -726,12 +718,6 @@ export function buildMonthlyInvestorDigestEmail({ investorEmail, matchingFounder
     html: `<div style="margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
       ${openingParagraph ? formatOpeningParagraph(openingParagraph) : ''}
       <div style="max-width:600px">
-      ${matchingFounders.length > 0
-        ? '<p>Here are active founders on FounderInvited that match your thesis this month.</p>'
-        : '<p>No new matches this month — here\'s what\'s happening on FounderInvited.</p>'
-      }
-
-      ${matchingFounders.length > 0 ? `<table style="border-collapse:collapse;margin:8px 0">${founderRows}</table>` : ''}
 
       <p style="margin-top:28px"><a href="${APP_URL}/login" style="background:#534AB7;color:white;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block">Log In</a></p>
 
@@ -750,19 +736,11 @@ export async function sendMonthlyInvestorDigest(params: InvestorDigestParams) {
 // ─── Monthly digest: lender ──────────────────────────────────────────────────
 type LenderDigestParams = {
   lenderEmail: string
-  matchingFounders: { company_name: string; stage: string; product_categories: string[] }[]
   platformStats: PlatformStats
   openingParagraph?: string
   subjectLine?: string
 }
-export function buildMonthlyLenderDigestEmail({ lenderEmail, matchingFounders, platformStats, openingParagraph, subjectLine }: LenderDigestParams) {
-  const founderRows = matchingFounders.map(f =>
-    `<tr>
-      <td style="padding:2px 16px 2px 0;font-size:13px;width:200px"><strong>${f.company_name}</strong></td>
-      <td style="padding:2px 16px 2px 0;font-size:13px;color:#555">${fmtStage(f.stage)}</td>
-      <td style="padding:2px 0;font-size:13px;color:#888">${f.product_categories.join(', ')}</td>
-    </tr>`
-  ).join('')
+export function buildMonthlyLenderDigestEmail({ lenderEmail, platformStats, openingParagraph, subjectLine }: LenderDigestParams) {
   return {
     from: FROM,
     to: lenderEmail,
@@ -770,12 +748,6 @@ export function buildMonthlyLenderDigestEmail({ lenderEmail, matchingFounders, p
     html: `<div style="margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
       ${openingParagraph ? formatOpeningParagraph(openingParagraph) : ''}
       <div style="max-width:600px">
-      ${matchingFounders.length > 0
-        ? '<p>Here are active founders on FounderInvited that match your lending criteria this month.</p>'
-        : '<p>No new matches this month — here\'s what\'s happening on FounderInvited.</p>'
-      }
-
-      ${matchingFounders.length > 0 ? `<table style="border-collapse:collapse;margin:8px 0">${founderRows}</table>` : ''}
 
       <p style="margin-top:28px"><a href="${APP_URL}/login" style="background:#534AB7;color:white;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block">Log In</a></p>
 
