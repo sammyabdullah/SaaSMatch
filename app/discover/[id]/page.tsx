@@ -40,21 +40,14 @@ export default async function ProfileDetailPage({ params }: Props) {
   const admin = createAdminClient()
 
   if (profile.role === 'investor') {
-    // Ensure the viewing investor is approved before revealing anything about the target
-    const { data: myInvestorProfile } = await admin
-      .from('investor_profiles')
-      .select('is_approved')
-      .eq('id', user.id)
-      .single()
+    // Fetch approval status and target paused state in parallel
+    const [{ data: myInvestorProfile }, { data: targetProfile }] = await Promise.all([
+      admin.from('investor_profiles').select('is_approved').eq('id', user.id).single(),
+      admin.from('profiles').select('is_paused').eq('id', id).single(),
+    ])
 
+    // Approval check first — don't reveal target existence to unapproved investors
     if (!myInvestorProfile?.is_approved) redirect('/dashboard')
-
-    // Check if target user is paused
-    const { data: targetProfile } = await admin
-      .from('profiles')
-      .select('is_paused')
-      .eq('id', id)
-      .single()
 
     if (targetProfile?.is_paused) {
       return (

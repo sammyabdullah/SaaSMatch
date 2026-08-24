@@ -305,17 +305,23 @@ export async function getDigestSettings(): Promise<{ openingParagraph: string; s
 async function saveDigestSettings(admin: ReturnType<typeof createAdminClient>, openingParagraph?: string, subjectLine?: string) {
   const now = new Date().toISOString()
   if (openingParagraph !== undefined) {
-    await admin.from('site_settings').upsert({ key: 'digest_opening_paragraph', value: openingParagraph, updated_at: now }, { onConflict: 'key' })
+    const { error } = await admin.from('site_settings').upsert({ key: 'digest_opening_paragraph', value: openingParagraph, updated_at: now }, { onConflict: 'key' })
+    if (error) throw new Error(error.message)
   }
   if (subjectLine !== undefined) {
-    await admin.from('site_settings').upsert({ key: 'digest_subject_line', value: subjectLine, updated_at: now }, { onConflict: 'key' })
+    const { error } = await admin.from('site_settings').upsert({ key: 'digest_subject_line', value: subjectLine, updated_at: now }, { onConflict: 'key' })
+    if (error) throw new Error(error.message)
   }
 }
 
 export async function saveDigestSettingsAction(openingParagraph: string, subjectLine: string): Promise<{ error?: string; success?: boolean }> {
   await requireAdmin()
   const admin = createAdminClient()
-  await saveDigestSettings(admin, openingParagraph, subjectLine)
+  try {
+    await saveDigestSettings(admin, openingParagraph, subjectLine)
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : 'Failed to save settings' }
+  }
   revalidatePath('/admin')
   return { success: true }
 }
@@ -390,60 +396,21 @@ export async function triggerDigest(openingParagraph?: string, subjectLine?: str
   const founderPayloads = activeFounders.flatMap((founder: any) => {
     const founderEmail = emailMap[founder.id]
     if (!founderEmail) { skipped++; return [] }
-    const hasCategories = (founder.product_categories ?? []).length > 0
-    const matchingInvestors = !hasCategories ? [] : activeInvestors.filter((inv) => {
-      if (investorPairs.has(`${founder.id}:${inv.id}`)) return false
-      if (!(inv.stages as string[] ?? []).length) return false
-      return (inv.stages as string[] ?? []).includes(founder.stage) && (inv.saas_subcategories ?? []).some((s: string) => (founder.product_categories ?? []).includes(s))
-    })
-    const matchingLenders = activeLenders.filter((lender) => {
-      if (lenderPairs.has(`${founder.id}:${lender.id}`)) return false
-      if (!(lender.stages ?? []).length) return false
-      return (lender.stages ?? []).includes(founder.stage)
-    })
-    return [buildMonthlyFounderDigestEmail({
-      founderEmail,
-      platformStats,
-      openingParagraph,
-      subjectLine,
-    })]
+    return [buildMonthlyFounderDigestEmail({ founderEmail, platformStats, openingParagraph, subjectLine })]
   })
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const investorPayloads = activeInvestors.flatMap((investor: any) => {
     const investorEmail = emailMap[investor.id]
     if (!investorEmail) { skipped++; return [] }
-    const hasStages = (investor.stages ?? []).length > 0
-    const hasCats = (investor.saas_subcategories ?? []).length > 0
-    const matchingFounders = (!hasStages || !hasCats) ? [] : activeFounders.filter((founder) => {
-      if (investorPairs.has(`${founder.id}:${investor.id}`)) return false
-      if (!(founder.product_categories ?? []).length) return false
-      return (investor.stages ?? []).includes(founder.stage) && (investor.saas_subcategories ?? []).some((s: string) => (founder.product_categories ?? []).includes(s))
-    })
-    return [buildMonthlyInvestorDigestEmail({
-      investorEmail,
-      platformStats,
-      openingParagraph,
-      subjectLine,
-    })]
+    return [buildMonthlyInvestorDigestEmail({ investorEmail, platformStats, openingParagraph, subjectLine })]
   })
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const lenderPayloads = activeLenders.flatMap((lender: any) => {
     const lenderEmail = emailMap[lender.id]
     if (!lenderEmail) { skipped++; return [] }
-    const hasStages = (lender.stages ?? []).length > 0
-    const matchingFounders = !hasStages ? [] : activeFounders.filter((founder) => {
-      if (lenderPairs.has(`${founder.id}:${lender.id}`)) return false
-      if (!(founder.product_categories ?? []).length) return false
-      return (lender.stages ?? []).includes(founder.stage)
-    })
-    return [buildMonthlyLenderDigestEmail({
-      lenderEmail,
-      platformStats,
-      openingParagraph,
-      subjectLine,
-    })]
+    return [buildMonthlyLenderDigestEmail({ lenderEmail, platformStats, openingParagraph, subjectLine })]
   })
 
   const allPayloads = [...founderPayloads, ...investorPayloads, ...lenderPayloads]
@@ -602,9 +569,6 @@ export async function sendTestDigestToEmail(email: string, openingParagraph?: st
   const admin = createAdminClient()
 
   const [
-    { data: founders },
-    { data: investors },
-    { data: lenders },
     { count: investorCount },
     { count: lenderCount },
     { data: latestInvestors },
@@ -615,9 +579,6 @@ export async function sendTestDigestToEmail(email: string, openingParagraph?: st
     { data: allInvestorsForMap },
     { data: allLendersForMap },
   ] = await Promise.all([
-    admin.from('founder_profiles').select('id, stage, product_categories, company_name').eq('is_approved', true).eq('status', 'active').limit(5),
-    admin.from('investor_profiles').select('id, firm_name, partner_name, stages, saas_subcategories').eq('is_approved', true).limit(5),
-    admin.from('lender_profiles').select('id, institution_name, contact_name, stages').eq('is_approved', true).limit(3),
     admin.from('investor_profiles').select('id', { count: 'exact', head: true }).eq('is_approved', true),
     admin.from('lender_profiles').select('id', { count: 'exact', head: true }).eq('is_approved', true),
     admin.from('investor_profiles').select('firm_name, partner_name').eq('is_approved', true).order('created_at', { ascending: false }).limit(5),
