@@ -314,6 +314,14 @@ async function saveDigestSettings(admin: ReturnType<typeof createAdminClient>, o
   }
 }
 
+export async function saveDigestSettingsAction(openingParagraph: string, subjectLine: string): Promise<{ error?: string; success?: boolean }> {
+  await requireAdmin()
+  const admin = createAdminClient()
+  await saveDigestSettings(admin, openingParagraph, subjectLine)
+  revalidatePath('/admin')
+  return { success: true }
+}
+
 export async function triggerDigest(openingParagraph?: string, subjectLine?: string): Promise<{ emailsSent?: number; total?: number; skipped?: number; error?: string }> {
   await requireAdmin()
 

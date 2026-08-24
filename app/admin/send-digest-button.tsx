@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { triggerDigest, sendTestDigestToEmail } from '@/app/actions/admin'
+import { triggerDigest, sendTestDigestToEmail, saveDigestSettingsAction } from '@/app/actions/admin'
 
 const btnCls = 'px-4 py-2 bg-[#534AB7] text-white text-sm font-medium rounded-md hover:bg-[#4339A0] transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
 const inputCls = 'border border-gray-200 rounded-md px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[#534AB7] focus:border-transparent w-64'
@@ -24,6 +24,21 @@ export default function SendDigestButton({ savedOpeningParagraph, savedSubjectLi
 
   const [openingParagraph, setOpeningParagraph] = useState(savedOpeningParagraph)
   const [subjectLine, setSubjectLine] = useState(savedSubjectLine)
+  const [saveLoading, setSaveLoading] = useState(false)
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saved' | 'error'>('idle')
+
+  async function handleSave() {
+    setSaveLoading(true)
+    setSaveStatus('idle')
+    try {
+      const res = await saveDigestSettingsAction(openingParagraph.trim(), subjectLine.trim())
+      setSaveStatus(res.error ? 'error' : 'saved')
+    } catch {
+      setSaveStatus('error')
+    } finally {
+      setSaveLoading(false)
+    }
+  }
 
   async function handleSend() {
     if (!confirm('Send the monthly digest to all founders, investors, and lenders now?')) return
@@ -88,7 +103,14 @@ export default function SendDigestButton({ savedOpeningParagraph, savedSubjectLi
           className={textareaCls}
           placeholder="Write your opening message here. Leave blank to send without one."
         />
-        <p className="text-xs text-gray-400 mt-1">Appears as plain text at the top of every digest email.</p>
+        <div className="flex items-center gap-3 mt-2">
+          <button onClick={handleSave} disabled={saveLoading} className={btnCls}>
+            {saveLoading ? 'Saving…' : 'Save'}
+          </button>
+          {saveStatus === 'saved' && <p className="text-sm text-green-600">Saved.</p>}
+          {saveStatus === 'error' && <p className="text-sm text-red-500">Failed to save.</p>}
+        </div>
+        <p className="text-xs text-gray-400 mt-2">Appears as plain text at the top of every digest email.</p>
       </div>
 
       {/* Send to everyone */}
