@@ -397,8 +397,6 @@ export async function triggerDigest(openingParagraph?: string, subjectLine?: str
     })
     return [buildMonthlyFounderDigestEmail({
       founderEmail,
-      matchingInvestors: matchingInvestors.map((inv) => ({ firm_name: inv.firm_name, partner_name: inv.partner_name })),
-      matchingLenders: matchingLenders.map((l) => ({ institution_name: l.institution_name, contact_name: l.contact_name })),
       platformStats,
       openingParagraph,
       subjectLine,
@@ -649,8 +647,6 @@ export async function sendTestDigestToEmail(email: string, openingParagraph?: st
   try {
     await sendMonthlyFounderDigest({
       founderEmail: email,
-      matchingInvestors: (investors ?? []).slice(0, 3).map((i) => ({ firm_name: i.firm_name, partner_name: i.partner_name })),
-      matchingLenders: (lenders ?? []).slice(0, 2).map((l) => ({ institution_name: l.institution_name, contact_name: l.contact_name })),
       platformStats,
       openingParagraph,
       subjectLine,

@@ -676,19 +676,11 @@ function formatOpeningParagraph(text: string): string {
 
 type FounderDigestParams = {
   founderEmail: string
-  matchingInvestors: { firm_name: string; partner_name: string }[]
-  matchingLenders: { institution_name: string; contact_name: string }[]
   platformStats: PlatformStats
   openingParagraph?: string
   subjectLine?: string
 }
-export function buildMonthlyFounderDigestEmail({ founderEmail, matchingInvestors, matchingLenders, platformStats, openingParagraph, subjectLine }: FounderDigestParams) {
-  const investorRows = matchingInvestors.map(inv =>
-    `<tr><td style="padding:2px 16px 2px 0;font-size:13px;width:200px"><strong>${inv.firm_name}</strong></td><td style="padding:2px 0;font-size:13px;color:#555">${inv.partner_name}</td></tr>`
-  ).join('')
-  const lenderRows = matchingLenders.map(l =>
-    `<tr><td style="padding:2px 16px 2px 0;font-size:13px;width:200px"><strong>${l.institution_name}</strong></td><td style="padding:2px 0;font-size:13px;color:#555">${l.contact_name}</td></tr>`
-  ).join('')
+export function buildMonthlyFounderDigestEmail({ founderEmail, platformStats, openingParagraph, subjectLine }: FounderDigestParams) {
   return {
     from: FROM,
     to: founderEmail,
@@ -696,20 +688,6 @@ export function buildMonthlyFounderDigestEmail({ founderEmail, matchingInvestors
     html: `<div style="margin:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
       ${openingParagraph ? formatOpeningParagraph(openingParagraph) : ''}
       <div style="max-width:600px">
-      ${matchingInvestors.length > 0 || matchingLenders.length > 0
-        ? '<p>Here are investors and lenders on FounderInvited that match your profile.</p>'
-        : '<p>No new matches this month — here\'s what\'s happening on FounderInvited.</p>'
-      }
-
-      ${matchingInvestors.length > 0 ? `
-        <p style="font-weight:600;margin:20px 0 6px">Matching investors (${matchingInvestors.length})</p>
-        <table style="border-collapse:collapse">${investorRows}</table>
-      ` : ''}
-
-      ${matchingLenders.length > 0 ? `
-        <p style="font-weight:600;margin:20px 0 6px">Matching lenders (${matchingLenders.length})</p>
-        <table style="border-collapse:collapse">${lenderRows}</table>
-      ` : ''}
 
       <p style="margin-top:28px"><a href="${APP_URL}/login" style="background:#534AB7;color:white;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block">Log In</a></p>
 

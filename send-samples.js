@@ -141,37 +141,11 @@ function buildPlatformStatsHtml(s) {
 // ── Email senders ─────────────────────────────────────────────────────────────
 
 async function sendFounderSample() {
-  const matchingInvestors = [
-    { firm_name: 'Sequoia Capital', partner_name: 'Roelof Botha' },
-    { firm_name: 'Benchmark', partner_name: 'Bill Gurley' },
-    { firm_name: 'Andreessen Horowitz', partner_name: 'Marc Andreessen' },
-  ]
-  const matchingLenders = [
-    { institution_name: 'Silicon Valley Bank', contact_name: 'Jennifer Park' },
-    { institution_name: 'Lighter Capital', contact_name: 'BJ Lackland' },
-  ]
-
-  const investorRows = matchingInvestors.map(inv =>
-    `<tr><td style="padding:2px 16px 2px 0;font-size:13px;width:200px"><strong>${inv.firm_name}</strong></td><td style="padding:2px 0;font-size:13px;color:#555">${inv.partner_name}</td></tr>`
-  ).join('')
-
-  const lenderRows = matchingLenders.map(l =>
-    `<tr><td style="padding:2px 16px 2px 0;font-size:13px;width:200px"><strong>${l.institution_name}</strong></td><td style="padding:2px 0;font-size:13px;color:#555">${l.contact_name}</td></tr>`
-  ).join('')
-
   const r1 = await resend.emails.send({
     from: FROM,
     to: TO_EMAIL,
     subject: 'FounderInvited update (founder sample)',
     html: `
-      <p>Here are investors and lenders on FounderInvited that match your profile.</p>
-
-      <p style="font-weight:600;margin:20px 0 6px">Matching investors (${matchingInvestors.length})</p>
-      <table style="border-collapse:collapse">${investorRows}</table>
-
-      <p style="font-weight:600;margin:20px 0 6px">Matching lenders (${matchingLenders.length})</p>
-      <table style="border-collapse:collapse">${lenderRows}</table>
-
       <p style="margin-top:28px"><a href="${APP_URL}/login" style="background:#534AB7;color:white;padding:10px 20px;border-radius:6px;text-decoration:none;display:inline-block">Log In</a></p>
 
       ${buildPlatformStatsHtml(samplePlatformStats)}
