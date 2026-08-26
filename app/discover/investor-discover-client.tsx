@@ -424,6 +424,23 @@ export default function InvestorDiscoverClient({
                   </div>
                 )}
 
+                {f.deck_url && (
+                  <div className="mb-3">
+                    <a
+                      href={f.deck_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      className="inline-flex items-center gap-1 text-xs text-[#534AB7] hover:text-[#4339A0] hover:underline"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      View Pitch Deck
+                    </a>
+                  </div>
+                )}
+
                 {/* Action buttons */}
                 <div
                   className="flex gap-2 mt-2"
