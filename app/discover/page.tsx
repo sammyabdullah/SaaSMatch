@@ -32,6 +32,11 @@ export default async function DiscoverPage() {
 
   if (profile.role === 'founder') {
     // Fetch investors, lenders, founder profile, and all flag states in parallel
+    const monthStart = new Date()
+    monthStart.setDate(1)
+    monthStart.setHours(0, 0, 0, 0)
+    const monthStartIso = monthStart.toISOString()
+
     const [
       { data: investors },
       { data: lenders },
@@ -40,6 +45,8 @@ export default async function DiscoverPage() {
       { data: connectedInvestorFlags },
       { data: myLenderFlags },
       { data: connectedLenderFlags },
+      { count: monthlyInvestorCount },
+      { count: monthlyLenderCount },
     ] = await Promise.all([
       admin.from('investor_profiles').select('*, profiles!inner(email, is_paused)').eq('is_approved', true).eq('profiles.is_paused', false).order('created_at', { ascending: false }),
       admin.from('lender_profiles').select('*, profiles!inner(email, is_paused)').eq('is_approved', true).eq('profiles.is_paused', false).order('created_at', { ascending: false }),
@@ -48,7 +55,11 @@ export default async function DiscoverPage() {
       admin.from('flags').select('investor_id').eq('founder_id', user.id).eq('status', 'accepted'),
       admin.from('lender_flags').select('lender_id').eq('founder_id', user.id).eq('flagged_by', 'founder').eq('status', 'pending'),
       admin.from('lender_flags').select('lender_id').eq('founder_id', user.id).eq('status', 'accepted'),
+      admin.from('flags').select('id', { count: 'exact', head: true }).eq('founder_id', user.id).eq('flagged_by', 'founder').neq('status', 'accepted').gte('created_at', monthStartIso),
+      admin.from('lender_flags').select('id', { count: 'exact', head: true }).eq('founder_id', user.id).eq('flagged_by', 'founder').neq('status', 'accepted').gte('created_at', monthStartIso),
     ])
+
+    const monthlyConnectionsUsed = (monthlyInvestorCount ?? 0) + (monthlyLenderCount ?? 0)
 
     if (!myProfile) {
       return (
@@ -87,6 +98,7 @@ export default async function DiscoverPage() {
         myProfile={myProfile as FounderProfileRow}
         myFlaggedInvestorIds={myFlaggedInvestorIds}
         myFlaggedLenderIds={myFlaggedLenderIds}
+        monthlyConnectionsUsed={monthlyConnectionsUsed}
       />
     )
   }

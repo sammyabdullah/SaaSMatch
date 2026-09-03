@@ -9,6 +9,32 @@ import {
   sendFounderFlaggedLenderEmail,
 } from '@/lib/email'
 
+const MONTHLY_CONNECTION_LIMIT = 20
+
+async function getFounderMonthlyUsage(admin: ReturnType<typeof createAdminClient>, founderId: string): Promise<number> {
+  const monthStart = new Date()
+  monthStart.setDate(1)
+  monthStart.setHours(0, 0, 0, 0)
+  const monthStartIso = monthStart.toISOString()
+
+  const [{ count: investorCount }, { count: lenderCount }] = await Promise.all([
+    admin.from('flags')
+      .select('id', { count: 'exact', head: true })
+      .eq('founder_id', founderId)
+      .eq('flagged_by', 'founder')
+      .neq('status', 'accepted')
+      .gte('created_at', monthStartIso),
+    admin.from('lender_flags')
+      .select('id', { count: 'exact', head: true })
+      .eq('founder_id', founderId)
+      .eq('flagged_by', 'founder')
+      .neq('status', 'accepted')
+      .gte('created_at', monthStartIso),
+  ])
+
+  return (investorCount ?? 0) + (lenderCount ?? 0)
+}
+
 // ─── Founder flags an investor ────────────────────────────────────────────────
 export async function flagInvestor(investorId: string): Promise<{ error?: string; success?: boolean }> {
   const supabase = await createClient()
@@ -28,7 +54,7 @@ export async function flagInvestor(investorId: string): Promise<{ error?: string
   if (targetProfile?.is_paused) return { success: true }
 
   const { data: existingFlag } = await admin.from('flags')
-    .select('status')
+    .select('status, created_at')
     .eq('founder_id', user.id)
     .eq('investor_id', investorId)
     .eq('flagged_by', 'founder')
@@ -40,12 +66,24 @@ export async function flagInvestor(investorId: string): Promise<{ error?: string
       revalidatePath('/dashboard')
       return { success: true }
     }
-    const { error: updateErr } = await admin.from('flags')
-      .update({ status: 'pending', flagged_by: 'founder' })
-      .eq('founder_id', user.id)
-      .eq('investor_id', investorId)
-    if (updateErr) return { error: updateErr.message }
+    // Re-requesting a declined connection — check monthly limit then delete + re-insert
+    const monthlyUsed = await getFounderMonthlyUsage(admin, user.id)
+    if (monthlyUsed >= MONTHLY_CONNECTION_LIMIT) {
+      return { error: `You've reached your limit of ${MONTHLY_CONNECTION_LIMIT} connection requests for this month. Your limit resets at the start of next month.` }
+    }
+    await admin.from('flags').delete().eq('founder_id', user.id).eq('investor_id', investorId).eq('flagged_by', 'founder')
+    const { error: insertErr } = await admin.from('flags').insert({
+      founder_id: user.id,
+      investor_id: investorId,
+      flagged_by: 'founder',
+      status: 'pending',
+    })
+    if (insertErr) return { error: insertErr.message }
   } else {
+    const monthlyUsed = await getFounderMonthlyUsage(admin, user.id)
+    if (monthlyUsed >= MONTHLY_CONNECTION_LIMIT) {
+      return { error: `You've reached your limit of ${MONTHLY_CONNECTION_LIMIT} connection requests for this month. Your limit resets at the start of next month.` }
+    }
     const { error } = await admin.from('flags').insert({
       founder_id: user.id,
       investor_id: investorId,
@@ -213,7 +251,7 @@ export async function flagLenderAsFounder(lenderId: string): Promise<{ error?: s
   if (targetProfile?.is_paused) return { success: true }
 
   const { data: existingFlag } = await admin.from('lender_flags')
-    .select('status')
+    .select('status, created_at')
     .eq('founder_id', user.id)
     .eq('lender_id', lenderId)
     .eq('flagged_by', 'founder')
@@ -225,12 +263,24 @@ export async function flagLenderAsFounder(lenderId: string): Promise<{ error?: s
       revalidatePath('/dashboard')
       return { success: true }
     }
-    const { error: updateErr } = await admin.from('lender_flags')
-      .update({ status: 'pending', flagged_by: 'founder' })
-      .eq('founder_id', user.id)
-      .eq('lender_id', lenderId)
-    if (updateErr) return { error: updateErr.message }
+    // Re-requesting a declined connection — check monthly limit then delete + re-insert
+    const monthlyUsed = await getFounderMonthlyUsage(admin, user.id)
+    if (monthlyUsed >= MONTHLY_CONNECTION_LIMIT) {
+      return { error: `You've reached your limit of ${MONTHLY_CONNECTION_LIMIT} connection requests for this month. Your limit resets at the start of next month.` }
+    }
+    await admin.from('lender_flags').delete().eq('founder_id', user.id).eq('lender_id', lenderId).eq('flagged_by', 'founder')
+    const { error: insertErr } = await admin.from('lender_flags').insert({
+      founder_id: user.id,
+      lender_id: lenderId,
+      flagged_by: 'founder',
+      status: 'pending',
+    })
+    if (insertErr) return { error: insertErr.message }
   } else {
+    const monthlyUsed = await getFounderMonthlyUsage(admin, user.id)
+    if (monthlyUsed >= MONTHLY_CONNECTION_LIMIT) {
+      return { error: `You've reached your limit of ${MONTHLY_CONNECTION_LIMIT} connection requests for this month. Your limit resets at the start of next month.` }
+    }
     const { error } = await admin.from('lender_flags').insert({
       founder_id: user.id,
       lender_id: lenderId,
