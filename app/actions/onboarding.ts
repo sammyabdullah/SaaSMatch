@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { sendAdminNewFounderEmail, sendAdminNewInvestorEmail, sendAdminNewLenderEmail } from '@/lib/email'
+import { friendlyError } from '@/lib/errors'
 import type {
   FounderStage,
   ArrRange,
@@ -65,7 +66,7 @@ export async function submitFounderProfile(data: FounderProfileInput) {
   })
 
   if (error) {
-    return { error: error.message }
+    return { error: friendlyError(error.message) }
   }
 
   try {
@@ -103,7 +104,7 @@ export async function submitInvestorProfile(data: InvestorProfileInput) {
   })
 
   if (error) {
-    return { error: error.message }
+    return { error: friendlyError(error.message) }
   }
 
   try {
@@ -157,7 +158,7 @@ export async function submitLenderProfile(data: LenderProfileInput) {
   })
 
   if (error) {
-    return { error: error.message }
+    return { error: friendlyError(error.message) }
   }
 
   try {

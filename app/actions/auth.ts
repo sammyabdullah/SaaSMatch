@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import { friendlyError } from '@/lib/errors'
 
 export async function signUp(email: string, password: string, role: string) {
   const ALLOWED_ROLES = ['founder', 'investor', 'lender']
@@ -21,7 +22,7 @@ export async function signUp(email: string, password: string, role: string) {
   })
 
   if (error) {
-    return { error: error.message }
+    return { error: friendlyError(error.message) }
   }
 
   // If a session was created the project has email confirmation disabled —
@@ -114,7 +115,7 @@ export async function forgotPassword(email: string) {
     redirectTo: `${siteUrl}/auth/reset-redirect`,
   })
 
-  if (error) return { error: error.message }
+  if (error) return { error: friendlyError(error.message) }
   return { success: true }
 }
 
@@ -130,6 +131,6 @@ export async function resendConfirmationEmail(email: string) {
     },
   })
 
-  if (error) return { error: error.message }
+  if (error) return { error: friendlyError(error.message) }
   return { success: true }
 }

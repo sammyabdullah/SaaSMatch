@@ -24,7 +24,12 @@ export default function ForgotPasswordForm({ expiredLink }: Props) {
         redirectTo: `${process.env.NEXT_PUBLIC_APP_URL ?? window.location.origin}/auth/reset-redirect`,
       })
       if (authError) {
-        setError(authError.message)
+        const msg = authError.message.toLowerCase()
+        if (msg.includes('for security purposes') || msg.includes('after 60 seconds') || msg.includes('rate limit')) {
+          setError('Please wait a moment before requesting another reset email.')
+        } else {
+          setError('Something went wrong. Please try again.')
+        }
       } else {
         setSent(true)
       }
@@ -47,7 +52,7 @@ export default function ForgotPasswordForm({ expiredLink }: Props) {
       {expiredLink && (
         <div className="mb-6 rounded-md bg-amber-50 border border-amber-200 px-4 py-3">
           <p className="text-sm text-amber-800">
-            That reset link has expired or has already been used. Enter your email below to get a new one.
+            Your password reset link has expired or was already used. Enter your email below and we&apos;ll send you a fresh one.
           </p>
         </div>
       )}

@@ -32,7 +32,7 @@ export default function ResetPasswordPage() {
     const { error } = await supabase.auth.updateUser({ password })
 
     if (error) {
-      setError(error.message)
+      setError('Your session has expired. Please go back and request a new password reset link.')
       setLoading(false)
     } else {
       await supabase.auth.signOut()

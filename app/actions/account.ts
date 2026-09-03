@@ -4,6 +4,7 @@ import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import type { FounderProfileInput, InvestorProfileInput, LenderProfileInput } from '@/app/actions/onboarding'
+import { friendlyError } from '@/lib/errors'
 
 export async function updateFounderProfile(
   data: FounderProfileInput
@@ -31,7 +32,7 @@ export async function updateFounderProfile(
     })
     .eq('id', user.id)
 
-  if (error) return { error: error.message }
+  if (error) return { error: friendlyError(error.message) }
   revalidatePath('/account')
   revalidatePath('/dashboard')
   return { success: true }
@@ -64,7 +65,7 @@ export async function updateInvestorProfile(
     })
     .eq('id', user.id)
 
-  if (error) return { error: error.message }
+  if (error) return { error: friendlyError(error.message) }
   revalidatePath('/account')
   revalidatePath('/dashboard')
   return { success: true }
@@ -97,7 +98,7 @@ export async function updateLenderProfile(
     })
     .eq('id', user.id)
 
-  if (error) return { error: error.message }
+  if (error) return { error: friendlyError(error.message) }
   revalidatePath('/account')
   revalidatePath('/dashboard')
   return { success: true }
@@ -115,7 +116,7 @@ export async function changePassword(
   if (!user) return { error: 'Not authenticated' }
 
   const { error } = await supabase.auth.updateUser({ password })
-  if (error) return { error: error.message }
+  if (error) return { error: friendlyError(error.message) }
   return { success: true }
 }
 

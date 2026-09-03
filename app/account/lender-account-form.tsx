@@ -70,27 +70,27 @@ export default function LenderAccountForm({ initialData }: Props) {
     const arrMax = Number(arr_max_sweet_spot)
 
     if (!loan_size_min_usd || isNaN(minVal) || minVal < 0) {
-      setError('Loan size min must be a valid number')
+      setError('Please enter a valid minimum loan size.')
       setLoading(false)
       return
     }
     if (!loan_size_max_usd || isNaN(maxVal) || maxVal < 0) {
-      setError('Loan size max must be a valid number')
+      setError('Please enter a valid maximum loan size.')
       setLoading(false)
       return
     }
     if (maxVal < minVal) {
-      setError('Loan size max must be greater than or equal to min')
+      setError('Maximum loan size must be greater than or equal to the minimum.')
       setLoading(false)
       return
     }
     if (arr_min_requirement && (isNaN(arrMin) || arrMin < 0)) {
-      setError('ARR minimum must be a valid number')
+      setError('Please enter a valid ARR minimum requirement.')
       setLoading(false)
       return
     }
     if (arr_max_sweet_spot && (isNaN(arrMax) || arrMax < 0)) {
-      setError('ARR sweet spot max must be a valid number')
+      setError('Please enter a valid ARR sweet spot maximum.')
       setLoading(false)
       return
     }

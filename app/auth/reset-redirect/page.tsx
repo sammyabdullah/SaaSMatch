@@ -30,7 +30,7 @@ function ResetRedirectContent() {
     }
 
     if (authError) {
-      setError('This link has expired or has already been used.')
+      setError('This password reset link has expired or was already used.')
       setLoading(false)
     } else {
       router.push('/reset-password')
