@@ -15,7 +15,18 @@ export async function updateFounderProfile(
   const { error } = await supabase
     .from('founder_profiles')
     .update({
-      ...data,
+      company_name: data.company_name,
+      website: data.website,
+      location: data.location,
+      founded_year: data.founded_year,
+      stage: data.stage,
+      product_categories: data.product_categories,
+      arr_range: data.arr_range,
+      mom_growth_pct: data.mom_growth_pct ?? null,
+      gtm_motion: data.gtm_motion,
+      revenue_model: data.revenue_model,
+      raising_amount_usd: data.raising_amount_usd,
+      why_now: data.why_now,
       updated_at: new Date().toISOString(),
     })
     .eq('id', user.id)

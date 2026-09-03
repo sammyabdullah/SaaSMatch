@@ -179,12 +179,14 @@ export default async function ProfileDetailPage({ params }: Props) {
   }
 
   if (profile.role === 'founder') {
-    // Check if target user is paused
-    const { data: targetProfile } = await admin
-      .from('profiles')
-      .select('is_paused')
-      .eq('id', id)
-      .single()
+    // Check approval and target paused state in parallel
+    const [{ data: myFounderProfile }, { data: targetProfile }] = await Promise.all([
+      admin.from('founder_profiles').select('is_approved').eq('id', user.id).single(),
+      admin.from('profiles').select('is_paused').eq('id', id).single(),
+    ])
+
+    // Approval check first — don't reveal target existence to unapproved founders
+    if (!myFounderProfile?.is_approved) redirect('/dashboard')
 
     if (targetProfile?.is_paused) {
       return (
@@ -387,12 +389,14 @@ export default async function ProfileDetailPage({ params }: Props) {
   }
 
   if (profile.role === 'lender') {
-    // Check if target user is paused
-    const { data: targetProfile } = await admin
-      .from('profiles')
-      .select('is_paused')
-      .eq('id', id)
-      .single()
+    // Check approval and target paused state in parallel
+    const [{ data: myLenderProfile }, { data: targetProfile }] = await Promise.all([
+      admin.from('lender_profiles').select('is_approved').eq('id', user.id).single(),
+      admin.from('profiles').select('is_paused').eq('id', id).single(),
+    ])
+
+    // Approval check first — don't reveal target existence to unapproved lenders
+    if (!myLenderProfile?.is_approved) redirect('/dashboard')
 
     if (targetProfile?.is_paused) {
       return (
@@ -402,15 +406,6 @@ export default async function ProfileDetailPage({ params }: Props) {
         </div>
       )
     }
-
-    // Ensure the viewing lender is approved
-    const { data: myLenderProfile } = await admin
-      .from('lender_profiles')
-      .select('is_approved')
-      .eq('id', user.id)
-      .single()
-
-    if (!myLenderProfile?.is_approved) redirect('/dashboard')
 
     // Lender viewing a founder profile
     const { data: fp } = await admin

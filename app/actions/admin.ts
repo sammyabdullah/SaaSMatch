@@ -103,15 +103,18 @@ export async function rejectFounder(founderId: string) {
 
   const admin = createAdminClient()
 
-  await admin.from('flags').delete().eq('founder_id', founderId)
-  await admin.from('lender_flags').delete().eq('founder_id', founderId)
+  await Promise.all([
+    admin.from('flags').delete().eq('founder_id', founderId),
+    admin.from('lender_flags').delete().eq('founder_id', founderId),
+  ])
 
-  const { error } = await admin
-    .from('founder_profiles')
-    .update({ status: 'closed' })
-    .eq('id', founderId)
+  const [{ error: profileError }, { error: pauseError }] = await Promise.all([
+    admin.from('founder_profiles').update({ status: 'closed' }).eq('id', founderId),
+    admin.from('profiles').update({ is_paused: true }).eq('id', founderId),
+  ])
 
-  if (error) throw new Error(error.message)
+  if (profileError) throw new Error(profileError.message)
+  if (pauseError) throw new Error(pauseError.message)
 
   revalidatePath('/admin')
   revalidatePath('/discover')
@@ -215,6 +218,7 @@ export async function setUserPassword(
   await requireAdmin()
 
   if (newPassword.length < 8) return { error: 'Password must be at least 8 characters' }
+  if (newPassword.length > 72) return { error: 'Password must be 72 characters or fewer' }
 
   const admin = createAdminClient()
 

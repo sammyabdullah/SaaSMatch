@@ -4,6 +4,17 @@ function getResend() {
   return new Resend(process.env.RESEND_API_KEY)
 }
 
+function esc(s: string | null | undefined): string {
+  return (s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+}
+
+function safeHref(url: string | null | undefined): string | null {
+  if (!url) return null
+  const lower = url.trim().toLowerCase()
+  if (!lower.startsWith('http://') && !lower.startsWith('https://')) return null
+  return url.trim()
+}
+
 const FROM = 'FounderInvited <noreply@founderinvited.com>'
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? 'sammy@blossomstreetventures.com'
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://founderinvited.com'
@@ -28,11 +39,12 @@ export async function sendFounderFlaggedInvestorEmail({
     location: string
   }
 }) {
-  const categoryList = founder.product_categories.join(', ')
+  const categoryList = founder.product_categories.map(esc).join(', ')
   const raise = formatUsd(founder.raising_amount_usd)
-  const companyLink = founder.website
-    ? `<a href="${founder.website}" style="color:#534AB7;text-decoration:none">${founder.company_name}</a>`
-    : `<strong>${founder.company_name}</strong>`
+  const websiteHref = safeHref(founder.website)
+  const companyLink = websiteHref
+    ? `<a href="${websiteHref}" style="color:#534AB7;text-decoration:none">${esc(founder.company_name)}</a>`
+    : `<strong>${esc(founder.company_name)}</strong>`
 
   await getResend().emails.send({
     from: FROM,
@@ -42,17 +54,17 @@ export async function sendFounderFlaggedInvestorEmail({
       <p>${companyLink} has flagged your profile on FounderInvited and would like to connect.</p>
 
       <table style="border-collapse:collapse;margin:16px 0">
-        <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Company</td><td style="font-size:13px">${founder.company_name}</td></tr>
-        ${founder.website ? `<tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Website</td><td style="font-size:13px"><a href="${founder.website}" style="color:#534AB7">${founder.website}</a></td></tr>` : ''}
+        <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Company</td><td style="font-size:13px">${esc(founder.company_name)}</td></tr>
+        ${websiteHref ? `<tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Website</td><td style="font-size:13px"><a href="${websiteHref}" style="color:#534AB7">${esc(founder.website)}</a></td></tr>` : ''}
         <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Stage</td><td style="font-size:13px">${fmtStage(founder.stage)}</td></tr>
         <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">ARR range</td><td style="font-size:13px">${fmtArr(founder.arr_range)}</td></tr>
         <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Raising</td><td style="font-size:13px">${raise}</td></tr>
         ${founder.mom_growth_pct != null ? `<tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">YOY growth</td><td style="font-size:13px">${founder.mom_growth_pct}%</td></tr>` : ''}
         <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Categories</td><td style="font-size:13px">${categoryList}</td></tr>
-        <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Location</td><td style="font-size:13px">${founder.location}</td></tr>
+        <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Location</td><td style="font-size:13px">${esc(founder.location)}</td></tr>
       </table>
 
-      ${founder.why_now ? `<p style="font-style:italic;color:#444">"${founder.why_now}"</p>` : ''}
+      ${founder.why_now ? `<p style="font-style:italic;color:#444">"${esc(founder.why_now)}"</p>` : ''}
 
       <p>Log in to your dashboard to accept or decline this introduction.</p>
 
@@ -88,17 +100,17 @@ export async function sendInvestorFlaggedFounderEmail({
     to: founderEmail,
     subject: 'FounderInvited request',
     html: `
-      <p><strong>${investor.firm_name}</strong> (${investor.partner_name}) has flagged your profile on FounderInvited and would like to connect.</p>
+      <p><strong>${esc(investor.firm_name)}</strong> (${esc(investor.partner_name)}) has flagged your profile on FounderInvited and would like to connect.</p>
 
       <table style="border-collapse:collapse;margin:16px 0">
-        <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Firm</td><td style="font-size:13px">${investor.firm_name}</td></tr>
-        <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Partner</td><td style="font-size:13px">${investor.partner_name}</td></tr>
+        <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Firm</td><td style="font-size:13px">${esc(investor.firm_name)}</td></tr>
+        <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Partner</td><td style="font-size:13px">${esc(investor.partner_name)}</td></tr>
         <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Check size</td><td style="font-size:13px">${checkRange}</td></tr>
         <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Stages</td><td style="font-size:13px">${stages}</td></tr>
-        <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Geography</td><td style="font-size:13px">${investor.geography_focus}</td></tr>
+        <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Geography</td><td style="font-size:13px">${esc(investor.geography_focus)}</td></tr>
       </table>
 
-      ${investor.thesis_statement ? `<p style="font-style:italic;color:#444">"${investor.thesis_statement}"</p>` : ''}
+      ${investor.thesis_statement ? `<p style="font-style:italic;color:#444">"${esc(investor.thesis_statement)}"</p>` : ''}
 
       <p>Log in to your dashboard to accept or decline this introduction.</p>
 
@@ -135,9 +147,10 @@ export async function sendConnectionAcceptedFounderEmail({
   investorThesis?: string | null
   investorEmail: string
 }) {
-  const firmLink = investorWebsite
-    ? `<a href="${investorWebsite}" style="color:#534AB7;text-decoration:none">${investorFirmName}</a>`
-    : `<strong>${investorFirmName}</strong>`
+  const firmHref = safeHref(investorWebsite)
+  const firmLink = firmHref
+    ? `<a href="${firmHref}" style="color:#534AB7;text-decoration:none">${esc(investorFirmName)}</a>`
+    : `<strong>${esc(investorFirmName)}</strong>`
 
   const checkRange = investorCheckSizeMin && investorCheckSizeMax
     ? `${formatUsd(investorCheckSizeMin)} – ${formatUsd(investorCheckSizeMax)}`
@@ -151,16 +164,16 @@ export async function sendConnectionAcceptedFounderEmail({
     to: founderEmail,
     subject: 'Connection request confirmed',
     html: `
-      <p>You're now connected with ${firmLink} (${investorPartnerName}) on FounderInvited.</p>
+      <p>You're now connected with ${firmLink} (${esc(investorPartnerName)}) on FounderInvited.</p>
 
       <table style="border-collapse:collapse;margin:16px 0">
-        ${investorLocation ? `<tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Location</td><td style="font-size:13px">${investorLocation}</td></tr>` : ''}
+        ${investorLocation ? `<tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Location</td><td style="font-size:13px">${esc(investorLocation)}</td></tr>` : ''}
         ${checkRange ? `<tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Check size</td><td style="font-size:13px">${checkRange}</td></tr>` : ''}
         ${stages ? `<tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Stages</td><td style="font-size:13px">${stages}</td></tr>` : ''}
-        ${investorGeography ? `<tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Geography</td><td style="font-size:13px">${investorGeography}</td></tr>` : ''}
+        ${investorGeography ? `<tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Geography</td><td style="font-size:13px">${esc(investorGeography)}</td></tr>` : ''}
       </table>
 
-      ${investorThesis ? `<p style="font-style:italic;color:#444;font-size:13px">"${investorThesis}"</p>` : ''}
+      ${investorThesis ? `<p style="font-style:italic;color:#444;font-size:13px">"${esc(investorThesis)}"</p>` : ''}
 
       <p>You can now reach them directly:</p>
       <p style="font-size:16px"><strong>${investorEmail}</strong></p>
@@ -200,10 +213,11 @@ export async function sendConnectionAcceptedInvestorEmail({
   founderRaisingAmount?: number | null
   founderWhyNow?: string | null
 }) {
-  const companyLink = founderWebsite
-    ? `<a href="${founderWebsite}" style="color:#534AB7;text-decoration:none">${founderCompanyName ?? 'the company'}</a>`
+  const founderHref2 = safeHref(founderWebsite)
+  const companyLink = founderHref2
+    ? `<a href="${founderHref2}" style="color:#534AB7;text-decoration:none">${esc(founderCompanyName ?? 'the company')}</a>`
     : founderCompanyName
-      ? `<strong>${founderCompanyName}</strong>`
+      ? `<strong>${esc(founderCompanyName)}</strong>`
       : 'A founder'
 
   await getResend().emails.send({
@@ -214,15 +228,15 @@ export async function sendConnectionAcceptedInvestorEmail({
       <p>You're now connected with ${companyLink} on FounderInvited.</p>
 
       <table style="border-collapse:collapse;margin:16px 0">
-        ${founderLocation ? `<tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Location</td><td style="font-size:13px">${founderLocation}</td></tr>` : ''}
+        ${founderLocation ? `<tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Location</td><td style="font-size:13px">${esc(founderLocation)}</td></tr>` : ''}
         <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Stage</td><td style="font-size:13px">${fmtStage(founderStage)}</td></tr>
         ${founderArrRange ? `<tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">ARR range</td><td style="font-size:13px">${fmtArr(founderArrRange)}</td></tr>` : ''}
         ${founderMomGrowthPct != null ? `<tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">YOY growth</td><td style="font-size:13px">${founderMomGrowthPct}%</td></tr>` : ''}
         ${founderRaisingAmount ? `<tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Raising</td><td style="font-size:13px">${formatUsd(founderRaisingAmount)}</td></tr>` : ''}
-        ${founderCategories.length > 0 ? `<tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Categories</td><td style="font-size:13px">${founderCategories.join(', ')}</td></tr>` : ''}
+        ${founderCategories.length > 0 ? `<tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Categories</td><td style="font-size:13px">${founderCategories.map(esc).join(', ')}</td></tr>` : ''}
       </table>
 
-      ${founderWhyNow ? `<p style="font-style:italic;color:#444;font-size:13px">"${founderWhyNow}"</p>` : ''}
+      ${founderWhyNow ? `<p style="font-style:italic;color:#444;font-size:13px">"${esc(founderWhyNow)}"</p>` : ''}
 
       <p>You can now reach them directly:</p>
       <p style="font-size:16px"><strong>${founderEmail}</strong></p>
@@ -435,11 +449,12 @@ export async function sendFounderFlaggedLenderEmail({
     location: string
   }
 }) {
-  const categoryList = founder.product_categories.join(', ')
+  const categoryList = founder.product_categories.map(esc).join(', ')
   const raise = formatUsd(founder.raising_amount_usd)
-  const companyLink = founder.website
-    ? `<a href="${founder.website}" style="color:#534AB7;text-decoration:none">${founder.company_name}</a>`
-    : `<strong>${founder.company_name}</strong>`
+  const lenderWebsiteHref = safeHref(founder.website)
+  const companyLink = lenderWebsiteHref
+    ? `<a href="${lenderWebsiteHref}" style="color:#534AB7;text-decoration:none">${esc(founder.company_name)}</a>`
+    : `<strong>${esc(founder.company_name)}</strong>`
 
   await getResend().emails.send({
     from: FROM,
@@ -449,17 +464,17 @@ export async function sendFounderFlaggedLenderEmail({
       <p>${companyLink} has expressed interest in connecting with you on FounderInvited.</p>
 
       <table style="border-collapse:collapse;margin:16px 0">
-        <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Company</td><td style="font-size:13px">${founder.company_name}</td></tr>
-        ${founder.website ? `<tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Website</td><td style="font-size:13px"><a href="${founder.website}" style="color:#534AB7">${founder.website}</a></td></tr>` : ''}
+        <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Company</td><td style="font-size:13px">${esc(founder.company_name)}</td></tr>
+        ${lenderWebsiteHref ? `<tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Website</td><td style="font-size:13px"><a href="${lenderWebsiteHref}" style="color:#534AB7">${esc(founder.website)}</a></td></tr>` : ''}
         <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Stage</td><td style="font-size:13px">${fmtStage(founder.stage)}</td></tr>
         <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">ARR range</td><td style="font-size:13px">${fmtArr(founder.arr_range)}</td></tr>
         <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Raising</td><td style="font-size:13px">${raise}</td></tr>
         ${founder.mom_growth_pct != null ? `<tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">YOY growth</td><td style="font-size:13px">${founder.mom_growth_pct}%</td></tr>` : ''}
         <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Categories</td><td style="font-size:13px">${categoryList}</td></tr>
-        <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Location</td><td style="font-size:13px">${founder.location}</td></tr>
+        <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Location</td><td style="font-size:13px">${esc(founder.location)}</td></tr>
       </table>
 
-      ${founder.why_now ? `<p style="font-style:italic;color:#444">"${founder.why_now}"</p>` : ''}
+      ${founder.why_now ? `<p style="font-style:italic;color:#444">"${esc(founder.why_now)}"</p>` : ''}
 
       <p>Log in to your dashboard to accept or decline this introduction.</p>
 
@@ -494,17 +509,17 @@ export async function sendLenderFlaggedFounderEmail({
     to: founderEmail,
     subject: 'FounderInvited request',
     html: `
-      <p><strong>${lender.institution_name}</strong> (${lender.contact_name}) has expressed interest in your company on FounderInvited.</p>
+      <p><strong>${esc(lender.institution_name)}</strong> (${esc(lender.contact_name)}) has expressed interest in your company on FounderInvited.</p>
 
       <table style="border-collapse:collapse;margin:16px 0">
-        <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Institution</td><td style="font-size:13px">${lender.institution_name}</td></tr>
-        <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Contact</td><td style="font-size:13px">${lender.contact_name}</td></tr>
+        <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Institution</td><td style="font-size:13px">${esc(lender.institution_name)}</td></tr>
+        <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Contact</td><td style="font-size:13px">${esc(lender.contact_name)}</td></tr>
         <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Loan size</td><td style="font-size:13px">${loanRange}</td></tr>
         <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Stages</td><td style="font-size:13px">${stages}</td></tr>
-        <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Geography</td><td style="font-size:13px">${lender.geography_focus}</td></tr>
+        <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Geography</td><td style="font-size:13px">${esc(lender.geography_focus)}</td></tr>
       </table>
 
-      ${lender.thesis_statement ? `<p style="font-style:italic;color:#444">"${lender.thesis_statement}"</p>` : ''}
+      ${lender.thesis_statement ? `<p style="font-style:italic;color:#444">"${esc(lender.thesis_statement)}"</p>` : ''}
 
       <p>Log in to your dashboard to accept or decline this introduction.</p>
 
@@ -543,10 +558,11 @@ export async function sendConnectionAcceptedLenderEmail({
   founderRaisingAmount?: number | null
   founderWhyNow?: string | null
 }) {
-  const companyLink = founderWebsite
-    ? `<a href="${founderWebsite}" style="color:#534AB7;text-decoration:none">${founderCompanyName ?? 'the company'}</a>`
+  const lenderConnHref = safeHref(founderWebsite)
+  const companyLink = lenderConnHref
+    ? `<a href="${lenderConnHref}" style="color:#534AB7;text-decoration:none">${esc(founderCompanyName ?? 'the company')}</a>`
     : founderCompanyName
-      ? `<strong>${founderCompanyName}</strong>`
+      ? `<strong>${esc(founderCompanyName)}</strong>`
       : 'A founder'
 
   await getResend().emails.send({
@@ -559,15 +575,15 @@ export async function sendConnectionAcceptedLenderEmail({
       <p>${companyLink} has accepted your introduction request on FounderInvited.</p>
 
       <table style="border-collapse:collapse;margin:16px 0">
-        ${founderLocation ? `<tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Location</td><td style="font-size:13px">${founderLocation}</td></tr>` : ''}
+        ${founderLocation ? `<tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Location</td><td style="font-size:13px">${esc(founderLocation)}</td></tr>` : ''}
         <tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Stage</td><td style="font-size:13px">${fmtStage(founderStage)}</td></tr>
         ${founderArrRange ? `<tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">ARR range</td><td style="font-size:13px">${fmtArr(founderArrRange)}</td></tr>` : ''}
         ${founderMomGrowthPct != null ? `<tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">YOY growth</td><td style="font-size:13px">${founderMomGrowthPct}%</td></tr>` : ''}
         ${founderRaisingAmount ? `<tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Raising</td><td style="font-size:13px">${formatUsd(founderRaisingAmount)}</td></tr>` : ''}
-        ${founderCategories.length > 0 ? `<tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Categories</td><td style="font-size:13px">${founderCategories.join(', ')}</td></tr>` : ''}
+        ${founderCategories.length > 0 ? `<tr><td style="padding:4px 12px 4px 0;color:#666;font-size:13px">Categories</td><td style="font-size:13px">${founderCategories.map(esc).join(', ')}</td></tr>` : ''}
       </table>
 
-      ${founderWhyNow ? `<p style="font-style:italic;color:#444;font-size:13px">"${founderWhyNow}"</p>` : ''}
+      ${founderWhyNow ? `<p style="font-style:italic;color:#444;font-size:13px">"${esc(founderWhyNow)}"</p>` : ''}
 
       <p>You can now reach them directly:</p>
       <p style="font-size:16px"><strong>${founderEmail}</strong></p>
