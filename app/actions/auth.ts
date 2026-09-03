@@ -111,7 +111,7 @@ export async function forgotPassword(email: string) {
   const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://founderinvited.com'
 
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${siteUrl}/auth/callback?type=recovery`,
+    redirectTo: `${siteUrl}/auth/reset-redirect`,
   })
 
   if (error) return { error: error.message }
