@@ -9,6 +9,32 @@ import {
   sendFounderFlaggedLenderEmail,
 } from '@/lib/email'
 
+const MONTHLY_CONNECTION_LIMIT = 20
+
+async function getFounderMonthlyUsage(admin: ReturnType<typeof createAdminClient>, founderId: string): Promise<number> {
+  const monthStart = new Date()
+  monthStart.setDate(1)
+  monthStart.setHours(0, 0, 0, 0)
+  const monthStartIso = monthStart.toISOString()
+
+  const [{ count: investorCount }, { count: lenderCount }] = await Promise.all([
+    admin.from('flags')
+      .select('id', { count: 'exact', head: true })
+      .eq('founder_id', founderId)
+      .eq('flagged_by', 'founder')
+      .neq('status', 'accepted')
+      .gte('created_at', monthStartIso),
+    admin.from('lender_flags')
+      .select('id', { count: 'exact', head: true })
+      .eq('founder_id', founderId)
+      .eq('flagged_by', 'founder')
+      .neq('status', 'accepted')
+      .gte('created_at', monthStartIso),
+  ])
+
+  return (investorCount ?? 0) + (lenderCount ?? 0)
+}
+
 // ─── Founder flags an investor ────────────────────────────────────────────────
 export async function flagInvestor(investorId: string): Promise<{ error?: string; success?: boolean }> {
   const supabase = await createClient()
@@ -17,28 +43,54 @@ export async function flagInvestor(investorId: string): Promise<{ error?: string
 
   const admin = createAdminClient()
 
-  const [{ data: myProfile }, { data: targetProfile }] = await Promise.all([
-    admin.from('profiles').select('is_paused').eq('id', user.id).single(),
+  const [{ data: myProfile }, { data: targetProfile }, { data: myFounderProfile }] = await Promise.all([
+    admin.from('profiles').select('is_paused, role').eq('id', user.id).single(),
     admin.from('profiles').select('is_paused').eq('id', investorId).single(),
+    admin.from('founder_profiles').select('is_approved').eq('id', user.id).single(),
   ])
+  if (myProfile?.role !== 'founder') return { error: 'Not authorized' }
+  if (!myFounderProfile?.is_approved) return { error: 'Not authorized' }
   if (myProfile?.is_paused) return { error: 'Your account has been paused. Please contact the platform.' }
   if (targetProfile?.is_paused) return { success: true }
 
-  const { error } = await admin.from('flags').insert({
-    founder_id: user.id,
-    investor_id: investorId,
-    flagged_by: 'founder',
-    status: 'pending',
-  })
+  const { data: existingFlag } = await admin.from('flags')
+    .select('status, created_at')
+    .eq('founder_id', user.id)
+    .eq('investor_id', investorId)
+    .eq('flagged_by', 'founder')
+    .maybeSingle()
 
-  if (error) {
-    if (error.code === '23505') {
-      // Already flagged — treat as success
+  if (existingFlag) {
+    if (existingFlag.status !== 'declined') {
       revalidatePath('/discover')
       revalidatePath('/dashboard')
       return { success: true }
     }
-    return { error: error.message }
+    // Re-requesting a declined connection — check monthly limit then delete + re-insert
+    const monthlyUsed = await getFounderMonthlyUsage(admin, user.id)
+    if (monthlyUsed >= MONTHLY_CONNECTION_LIMIT) {
+      return { error: `You've reached your limit of ${MONTHLY_CONNECTION_LIMIT} connection requests for this month. Your limit resets at the start of next month.` }
+    }
+    await admin.from('flags').delete().eq('founder_id', user.id).eq('investor_id', investorId).eq('flagged_by', 'founder')
+    const { error: insertErr } = await admin.from('flags').insert({
+      founder_id: user.id,
+      investor_id: investorId,
+      flagged_by: 'founder',
+      status: 'pending',
+    })
+    if (insertErr) return { error: insertErr.message }
+  } else {
+    const monthlyUsed = await getFounderMonthlyUsage(admin, user.id)
+    if (monthlyUsed >= MONTHLY_CONNECTION_LIMIT) {
+      return { error: `You've reached your limit of ${MONTHLY_CONNECTION_LIMIT} connection requests for this month. Your limit resets at the start of next month.` }
+    }
+    const { error } = await admin.from('flags').insert({
+      founder_id: user.id,
+      investor_id: investorId,
+      flagged_by: 'founder',
+      status: 'pending',
+    })
+    if (error) return { error: error.message }
   }
 
   // Send notification email to the investor
@@ -96,27 +148,42 @@ export async function flagFounder(founderId: string): Promise<{ error?: string; 
 
   const admin = createAdminClient()
 
-  const [{ data: myProfile }, { data: targetProfile }] = await Promise.all([
-    admin.from('profiles').select('is_paused').eq('id', user.id).single(),
+  const [{ data: myProfile }, { data: targetProfile }, { data: myInvestorProfile }] = await Promise.all([
+    admin.from('profiles').select('is_paused, role').eq('id', user.id).single(),
     admin.from('profiles').select('is_paused').eq('id', founderId).single(),
+    admin.from('investor_profiles').select('is_approved').eq('id', user.id).single(),
   ])
+  if (myProfile?.role !== 'investor') return { error: 'Not authorized' }
+  if (!myInvestorProfile?.is_approved) return { error: 'Not authorized' }
   if (myProfile?.is_paused) return { error: 'Your account has been paused. Please contact the platform.' }
   if (targetProfile?.is_paused) return { success: true }
 
-  const { error } = await admin.from('flags').insert({
-    founder_id: founderId,
-    investor_id: user.id,
-    flagged_by: 'investor',
-    status: 'pending',
-  })
+  const { data: existingFlag } = await admin.from('flags')
+    .select('status')
+    .eq('founder_id', founderId)
+    .eq('investor_id', user.id)
+    .eq('flagged_by', 'investor')
+    .maybeSingle()
 
-  if (error) {
-    if (error.code === '23505') {
+  if (existingFlag) {
+    if (existingFlag.status !== 'declined') {
       revalidatePath('/discover')
       revalidatePath('/dashboard')
       return { success: true }
     }
-    return { error: error.message }
+    const { error: updateErr } = await admin.from('flags')
+      .update({ status: 'pending', flagged_by: 'investor' })
+      .eq('founder_id', founderId)
+      .eq('investor_id', user.id)
+    if (updateErr) return { error: updateErr.message }
+  } else {
+    const { error } = await admin.from('flags').insert({
+      founder_id: founderId,
+      investor_id: user.id,
+      flagged_by: 'investor',
+      status: 'pending',
+    })
+    if (error) return { error: error.message }
   }
 
   // Send notification email to the founder
@@ -173,27 +240,54 @@ export async function flagLenderAsFounder(lenderId: string): Promise<{ error?: s
 
   const admin = createAdminClient()
 
-  const [{ data: myProfile }, { data: targetProfile }] = await Promise.all([
-    admin.from('profiles').select('is_paused').eq('id', user.id).single(),
+  const [{ data: myProfile }, { data: targetProfile }, { data: myFounderProfile }] = await Promise.all([
+    admin.from('profiles').select('is_paused, role').eq('id', user.id).single(),
     admin.from('profiles').select('is_paused').eq('id', lenderId).single(),
+    admin.from('founder_profiles').select('is_approved').eq('id', user.id).single(),
   ])
+  if (myProfile?.role !== 'founder') return { error: 'Not authorized' }
+  if (!myFounderProfile?.is_approved) return { error: 'Not authorized' }
   if (myProfile?.is_paused) return { error: 'Your account has been paused. Please contact the platform.' }
   if (targetProfile?.is_paused) return { success: true }
 
-  const { error } = await admin.from('lender_flags').insert({
-    founder_id: user.id,
-    lender_id: lenderId,
-    flagged_by: 'founder',
-    status: 'pending',
-  })
+  const { data: existingFlag } = await admin.from('lender_flags')
+    .select('status, created_at')
+    .eq('founder_id', user.id)
+    .eq('lender_id', lenderId)
+    .eq('flagged_by', 'founder')
+    .maybeSingle()
 
-  if (error) {
-    if (error.code === '23505') {
+  if (existingFlag) {
+    if (existingFlag.status !== 'declined') {
       revalidatePath('/discover')
       revalidatePath('/dashboard')
       return { success: true }
     }
-    return { error: error.message }
+    // Re-requesting a declined connection — check monthly limit then delete + re-insert
+    const monthlyUsed = await getFounderMonthlyUsage(admin, user.id)
+    if (monthlyUsed >= MONTHLY_CONNECTION_LIMIT) {
+      return { error: `You've reached your limit of ${MONTHLY_CONNECTION_LIMIT} connection requests for this month. Your limit resets at the start of next month.` }
+    }
+    await admin.from('lender_flags').delete().eq('founder_id', user.id).eq('lender_id', lenderId).eq('flagged_by', 'founder')
+    const { error: insertErr } = await admin.from('lender_flags').insert({
+      founder_id: user.id,
+      lender_id: lenderId,
+      flagged_by: 'founder',
+      status: 'pending',
+    })
+    if (insertErr) return { error: insertErr.message }
+  } else {
+    const monthlyUsed = await getFounderMonthlyUsage(admin, user.id)
+    if (monthlyUsed >= MONTHLY_CONNECTION_LIMIT) {
+      return { error: `You've reached your limit of ${MONTHLY_CONNECTION_LIMIT} connection requests for this month. Your limit resets at the start of next month.` }
+    }
+    const { error } = await admin.from('lender_flags').insert({
+      founder_id: user.id,
+      lender_id: lenderId,
+      flagged_by: 'founder',
+      status: 'pending',
+    })
+    if (error) return { error: error.message }
   }
 
   // Send notification email to the lender
@@ -254,27 +348,42 @@ export async function flagFounderAsLender(founderId: string): Promise<{ error?: 
 
   const admin = createAdminClient()
 
-  const [{ data: myProfile }, { data: targetProfile }] = await Promise.all([
-    admin.from('profiles').select('is_paused').eq('id', user.id).single(),
+  const [{ data: myProfile }, { data: targetProfile }, { data: myLenderProfile }] = await Promise.all([
+    admin.from('profiles').select('is_paused, role').eq('id', user.id).single(),
     admin.from('profiles').select('is_paused').eq('id', founderId).single(),
+    admin.from('lender_profiles').select('is_approved').eq('id', user.id).single(),
   ])
+  if (myProfile?.role !== 'lender') return { error: 'Not authorized' }
+  if (!myLenderProfile?.is_approved) return { error: 'Not authorized' }
   if (myProfile?.is_paused) return { error: 'Your account has been paused. Please contact the platform.' }
   if (targetProfile?.is_paused) return { success: true }
 
-  const { error } = await admin.from('lender_flags').insert({
-    founder_id: founderId,
-    lender_id: user.id,
-    flagged_by: 'lender',
-    status: 'pending',
-  })
+  const { data: existingFlag } = await admin.from('lender_flags')
+    .select('status')
+    .eq('founder_id', founderId)
+    .eq('lender_id', user.id)
+    .eq('flagged_by', 'lender')
+    .maybeSingle()
 
-  if (error) {
-    if (error.code === '23505') {
+  if (existingFlag) {
+    if (existingFlag.status !== 'declined') {
       revalidatePath('/discover')
       revalidatePath('/dashboard')
       return { success: true }
     }
-    return { error: error.message }
+    const { error: updateErr } = await admin.from('lender_flags')
+      .update({ status: 'pending', flagged_by: 'lender' })
+      .eq('founder_id', founderId)
+      .eq('lender_id', user.id)
+    if (updateErr) return { error: updateErr.message }
+  } else {
+    const { error } = await admin.from('lender_flags').insert({
+      founder_id: founderId,
+      lender_id: user.id,
+      flagged_by: 'lender',
+      status: 'pending',
+    })
+    if (error) return { error: error.message }
   }
 
   try {

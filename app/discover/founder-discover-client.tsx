@@ -15,6 +15,7 @@ interface Props {
   myProfile: any
   myFlaggedInvestorIds: string[]
   myFlaggedLenderIds: string[]
+  monthlyConnectionsUsed: number
 }
 
 const STAGE_OPTIONS = ['pre-seed', 'seed', 'series-a', 'series-b', 'series-c'] as const
@@ -57,10 +58,23 @@ function MatchBadge({ score }: { score: number }) {
   )
 }
 
-function FlagDots({ used }: { used: number }) {
+const MONTHLY_LIMIT = 20
+
+function MonthlyUsageBadge({ used }: { used: number }) {
+  const remaining = MONTHLY_LIMIT - used
+  const isLow = remaining <= 5
+  const isExhausted = remaining <= 0
   return (
-    <div className="flex items-center gap-1.5">
-      <span className="text-xs text-gray-500">{used} requests sent</span>
+    <div className={`flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border ${
+      isExhausted
+        ? 'bg-red-50 border-red-200 text-red-700'
+        : isLow
+          ? 'bg-amber-50 border-amber-200 text-amber-700'
+          : 'bg-gray-50 border-gray-200 text-gray-500'
+    }`}>
+      {isExhausted
+        ? 'No requests left this month'
+        : `${remaining} of ${MONTHLY_LIMIT} requests left this month`}
     </div>
   )
 }
@@ -71,6 +85,7 @@ export default function FounderDiscoverClient({
   myProfile,
   myFlaggedInvestorIds,
   myFlaggedLenderIds,
+  monthlyConnectionsUsed,
 }: Props) {
   const router = useRouter()
 
@@ -88,7 +103,8 @@ export default function FounderDiscoverClient({
   const timeoutRefs = useRef<Record<string, ReturnType<typeof setTimeout>>>({})
   const [expandedThesis, setExpandedThesis] = useState<Record<string, boolean>>({})
 
-  const totalFlagsUsed = investorFlaggedIds.size + lenderFlaggedIds.size
+  // Local optimistic count on top of server-side monthly count
+  const [optimisticMonthlyCount, setOptimisticMonthlyCount] = useState(monthlyConnectionsUsed)
 
   function resetFilters() {
     setTypeFilter('all')
@@ -146,6 +162,7 @@ export default function FounderDiscoverClient({
       setFlagErrors((prev) => ({ ...prev, [investorId]: result.error! }))
       return
     }
+    setOptimisticMonthlyCount((c) => c + 1)
     router.refresh()
     const t = setTimeout(() => setFlagStates((prev) => ({ ...prev, [investorId]: 'flagged' })), 5000)
     timeoutRefs.current[investorId] = t
@@ -156,6 +173,7 @@ export default function FounderDiscoverClient({
     delete timeoutRefs.current[investorId]
     setFlagStates((prev) => ({ ...prev, [investorId]: 'idle' }))
     setInvestorFlaggedIds((prev) => { const next = new Set(prev); next.delete(investorId); return next })
+    setOptimisticMonthlyCount((c) => Math.max(0, c - 1))
     await unflagInvestor(investorId)
     router.refresh()
   }
@@ -171,6 +189,7 @@ export default function FounderDiscoverClient({
       setFlagErrors((prev) => ({ ...prev, [lenderId]: result.error! }))
       return
     }
+    setOptimisticMonthlyCount((c) => c + 1)
     router.refresh()
     const t = setTimeout(() => setFlagStates((prev) => ({ ...prev, [lenderId]: 'flagged' })), 5000)
     timeoutRefs.current[lenderId] = t
@@ -181,6 +200,7 @@ export default function FounderDiscoverClient({
     delete timeoutRefs.current[lenderId]
     setFlagStates((prev) => ({ ...prev, [lenderId]: 'idle' }))
     setLenderFlaggedIds((prev) => { const next = new Set(prev); next.delete(lenderId); return next })
+    setOptimisticMonthlyCount((c) => Math.max(0, c - 1))
     await unflagLenderAsFounder(lenderId)
     router.refresh()
   }
@@ -194,7 +214,7 @@ export default function FounderDiscoverClient({
           <h1 className="text-2xl font-semibold text-gray-900">Discover</h1>
           <p className="text-sm text-gray-500 mt-1">{merged.length} {merged.length !== 1 ? 'matches' : 'match'}</p>
         </div>
-        <FlagDots used={totalFlagsUsed} />
+        <MonthlyUsageBadge used={optimisticMonthlyCount} />
       </div>
 
       {/* Filter bar */}
