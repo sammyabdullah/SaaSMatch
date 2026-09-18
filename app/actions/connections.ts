@@ -175,12 +175,10 @@ export async function declineFlag(flagId: string): Promise<{ error?: string; suc
 
   if (!flag) return { error: 'Flag not found or already responded to' }
 
-  if (flag.flagged_by === 'founder' && flag.investor_id !== user.id) {
-    return { error: 'Not authorized' }
-  }
-  if (flag.flagged_by === 'investor' && flag.founder_id !== user.id) {
-    return { error: 'Not authorized' }
-  }
+  const isAuthorized =
+    (flag.flagged_by === 'founder' && flag.investor_id === user.id) ||
+    (flag.flagged_by === 'investor' && flag.founder_id === user.id)
+  if (!isAuthorized) return { error: 'Not authorized' }
 
   const { data: updatedRows, error } = await admin
     .from('flags')

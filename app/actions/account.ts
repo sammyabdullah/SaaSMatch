@@ -158,25 +158,29 @@ export async function deleteAccount(): Promise<void> {
   const { error: deleteUserError } = await admin.auth.admin.deleteUser(user.id)
   if (deleteUserError) throw new Error('Failed to delete account. Please contact support.')
 
-  if (profile.role === 'founder') {
-    await admin.from('flags').delete().eq('founder_id', user.id)
-    await admin.from('lender_flags').delete().eq('founder_id', user.id)
-    await admin.from('profile_views').delete().eq('founder_id', user.id)
-    await admin.from('investor_profile_views').delete().eq('founder_id', user.id)
-    await admin.from('lender_profile_views').delete().eq('founder_id', user.id)
-    await admin.from('founder_profiles').delete().eq('id', user.id)
-  } else if (profile.role === 'investor') {
-    await admin.from('flags').delete().eq('investor_id', user.id)
-    await admin.from('profile_views').delete().eq('investor_id', user.id)
-    await admin.from('investor_profile_views').delete().eq('investor_id', user.id)
-    await admin.from('investor_profiles').delete().eq('id', user.id)
-  } else if (profile.role === 'lender') {
-    await admin.from('lender_flags').delete().eq('lender_id', user.id)
-    await admin.from('lender_profile_views').delete().eq('lender_id', user.id)
-    await admin.from('lender_profiles').delete().eq('id', user.id)
+  // Best-effort DB cleanup — auth is already gone so the user cannot be harmed by orphaned rows
+  try {
+    if (profile.role === 'founder') {
+      await admin.from('flags').delete().eq('founder_id', user.id)
+      await admin.from('lender_flags').delete().eq('founder_id', user.id)
+      await admin.from('profile_views').delete().eq('founder_id', user.id)
+      await admin.from('investor_profile_views').delete().eq('founder_id', user.id)
+      await admin.from('lender_profile_views').delete().eq('founder_id', user.id)
+      await admin.from('founder_profiles').delete().eq('id', user.id)
+    } else if (profile.role === 'investor') {
+      await admin.from('flags').delete().eq('investor_id', user.id)
+      await admin.from('profile_views').delete().eq('investor_id', user.id)
+      await admin.from('investor_profile_views').delete().eq('investor_id', user.id)
+      await admin.from('investor_profiles').delete().eq('id', user.id)
+    } else if (profile.role === 'lender') {
+      await admin.from('lender_flags').delete().eq('lender_id', user.id)
+      await admin.from('lender_profile_views').delete().eq('lender_id', user.id)
+      await admin.from('lender_profiles').delete().eq('id', user.id)
+    }
+    await admin.from('profiles').delete().eq('id', user.id)
+  } catch {
+    // Cleanup errors are non-fatal: the auth account is gone so no data is accessible
   }
-
-  await admin.from('profiles').delete().eq('id', user.id)
 
   redirect('/')
 }

@@ -40,16 +40,16 @@ export default function InvestorAccountForm({ initialData }: Props) {
   const [partner_name, setPartnerName] = useState(initialData.partner_name)
   const [website, setWebsite] = useState(initialData.website ?? '')
   const [location, setLocation] = useState(initialData.location)
-  const [check_size_min_usd, setCheckMin] = useState(String(initialData.check_size_min_usd))
-  const [check_size_max_usd, setCheckMax] = useState(String(initialData.check_size_max_usd))
+  const [check_size_min_usd, setCheckMin] = useState(initialData.check_size_min_usd != null ? String(initialData.check_size_min_usd) : '')
+  const [check_size_max_usd, setCheckMax] = useState(initialData.check_size_max_usd != null ? String(initialData.check_size_max_usd) : '')
   const [stages, setStages] = useState<FounderStage[]>(initialData.stages ?? [])
   const [leads_rounds, setLeadsRounds] = useState(initialData.leads_rounds)
   const [geography_focus, setGeographyFocus] = useState(initialData.geography_focus)
   const [saas_subcategories, setSaasSubcategories] = useState<string[]>(
     initialData.saas_subcategories ?? []
   )
-  const [arr_sweet_spot_min, setArrMin] = useState(String(initialData.arr_sweet_spot_min))
-  const [arr_sweet_spot_max, setArrMax] = useState(String(initialData.arr_sweet_spot_max))
+  const [arr_sweet_spot_min, setArrMin] = useState(initialData.arr_sweet_spot_min != null ? String(initialData.arr_sweet_spot_min) : '')
+  const [arr_sweet_spot_max, setArrMax] = useState(initialData.arr_sweet_spot_max != null ? String(initialData.arr_sweet_spot_max) : '')
   const [thesis_statement, setThesis] = useState(initialData.thesis_statement ?? '')
 
   const [loading, setLoading] = useState(false)

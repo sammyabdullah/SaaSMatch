@@ -266,9 +266,9 @@ export async function sendAdminConnectionEmail({
     subject: `New connection: ${founderEmail} ↔ ${investorFirmName}`,
     html: `
       <p>A new connection was made on FounderInvited.</p>
-      <p><strong>Founder:</strong> ${founderEmail}<br>
-      <strong>Investor:</strong> ${investorFirmName} (${investorEmail})<br>
-      <strong>Initiated by:</strong> ${initiatedBy}</p>
+      <p><strong>Founder:</strong> ${esc(founderEmail)}<br>
+      <strong>Investor:</strong> ${esc(investorFirmName)} (${esc(investorEmail)})<br>
+      <strong>Initiated by:</strong> ${esc(initiatedBy)}</p>
     `,
   })
 }
@@ -676,9 +676,9 @@ export async function sendAdminLenderConnectionEmail({
     subject: `New lender connection: ${founderEmail} ↔ ${lenderInstitutionName}`,
     html: `
       <p>A new lender connection was made on FounderInvited.</p>
-      <p><strong>Founder:</strong> ${founderEmail}<br>
-      <strong>Lender:</strong> ${lenderInstitutionName} (${lenderEmail})<br>
-      <strong>Initiated by:</strong> ${initiatedBy}</p>
+      <p><strong>Founder:</strong> ${esc(founderEmail)}<br>
+      <strong>Lender:</strong> ${esc(lenderInstitutionName)} (${esc(lenderEmail)})<br>
+      <strong>Initiated by:</strong> ${esc(initiatedBy)}</p>
     `,
   })
 }

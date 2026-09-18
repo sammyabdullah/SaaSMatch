@@ -29,7 +29,7 @@ export function friendlyError(raw: string): string {
     return 'Email or password is incorrect.'
   }
   if (msg.includes('email not confirmed')) {
-    return 'email_not_confirmed'
+    return 'Please confirm your email address before signing in. Check your inbox for a confirmation link.'
   }
   if (msg.includes('password should be at least')) {
     return 'Password must be at least 8 characters.'
