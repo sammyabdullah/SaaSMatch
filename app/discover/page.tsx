@@ -31,11 +31,19 @@ export default async function DiscoverPage() {
   const admin = createAdminClient()
 
   if (profile.role === 'founder') {
-    // Fetch investors, lenders, founder profile, and all flag states in parallel
+    // Compute the credits window start: max(1st of month, last admin reset)
     const monthStart = new Date()
     monthStart.setDate(1)
     monthStart.setHours(0, 0, 0, 0)
     const monthStartIso = monthStart.toISOString()
+
+    const { data: creditResetRow } = await admin
+      .from('site_settings')
+      .select('value')
+      .eq('key', 'founder_credits_reset_at')
+      .maybeSingle()
+    const resetIso = creditResetRow?.value ?? ''
+    const windowStartIso = resetIso > monthStartIso ? resetIso : monthStartIso
 
     const [
       { data: investors },
@@ -55,8 +63,8 @@ export default async function DiscoverPage() {
       admin.from('flags').select('investor_id').eq('founder_id', user.id).eq('status', 'accepted'),
       admin.from('lender_flags').select('lender_id').eq('founder_id', user.id).eq('flagged_by', 'founder').eq('status', 'pending'),
       admin.from('lender_flags').select('lender_id').eq('founder_id', user.id).eq('status', 'accepted'),
-      admin.from('flags').select('id', { count: 'exact', head: true }).eq('founder_id', user.id).eq('flagged_by', 'founder').neq('status', 'accepted').gte('created_at', monthStartIso),
-      admin.from('lender_flags').select('id', { count: 'exact', head: true }).eq('founder_id', user.id).eq('flagged_by', 'founder').neq('status', 'accepted').gte('created_at', monthStartIso),
+      admin.from('flags').select('id', { count: 'exact', head: true }).eq('founder_id', user.id).eq('flagged_by', 'founder').neq('status', 'accepted').gte('created_at', windowStartIso),
+      admin.from('lender_flags').select('id', { count: 'exact', head: true }).eq('founder_id', user.id).eq('flagged_by', 'founder').neq('status', 'accepted').gte('created_at', windowStartIso),
     ])
 
     const monthlyConnectionsUsed = (monthlyInvestorCount ?? 0) + (monthlyLenderCount ?? 0)

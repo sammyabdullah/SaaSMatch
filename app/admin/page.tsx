@@ -6,6 +6,7 @@ import { redirect } from 'next/navigation'
 import { ApproveButton, RejectButton, ApproveInvestorButton, RejectInvestorButton, DeleteFounderButton, DeleteInvestorButton, ApproveLenderButton, RejectLenderButton, DeleteLenderButton } from './approve-button'
 import ChangeEmailForm from './change-email-form'
 import SendDigestButton from './send-digest-button'
+import ResetCreditsButton from './reset-credits-button'
 import AdminDeckUpload from './admin-deck-upload'
 import { PauseUserButton } from './pause-button'
 import { EditFounderButton, EditInvestorButton, EditLenderButton } from './admin-edit-form'
@@ -125,6 +126,15 @@ export default async function AdminPage() {
         <h2 className="text-base font-semibold text-gray-900 mb-1">Change user email</h2>
         <p className="text-sm text-gray-500 mb-4">Updates both the auth account and profile record.</p>
         <ChangeEmailForm />
+      </section>
+
+      {/* Founder credits */}
+      <section className="mb-12 border border-gray-200 rounded-lg p-6">
+        <h2 className="text-base font-semibold text-gray-900 mb-1">Founder connection credits</h2>
+        <p className="text-sm text-gray-500 mb-4">
+          Each founder gets 50 connection requests per month, resetting automatically on the 1st. Use this to give everyone a fresh 50 immediately.
+        </p>
+        <ResetCreditsButton />
       </section>
 
       {/* Platform stats */}

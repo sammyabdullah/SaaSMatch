@@ -11,11 +11,25 @@ import {
 
 const MONTHLY_CONNECTION_LIMIT = 50
 
-async function getFounderMonthlyUsage(admin: ReturnType<typeof createAdminClient>, founderId: string): Promise<number> {
+async function getCreditsWindowStart(admin: ReturnType<typeof createAdminClient>): Promise<string> {
   const monthStart = new Date()
   monthStart.setDate(1)
   monthStart.setHours(0, 0, 0, 0)
   const monthStartIso = monthStart.toISOString()
+
+  const { data: resetRow } = await admin
+    .from('site_settings')
+    .select('value')
+    .eq('key', 'founder_credits_reset_at')
+    .maybeSingle()
+
+  // Use whichever is later: start of current month or last manual admin reset
+  const resetIso = resetRow?.value ?? ''
+  return resetIso > monthStartIso ? resetIso : monthStartIso
+}
+
+async function getFounderMonthlyUsage(admin: ReturnType<typeof createAdminClient>, founderId: string): Promise<number> {
+  const windowStart = await getCreditsWindowStart(admin)
 
   const [{ count: investorCount }, { count: lenderCount }] = await Promise.all([
     admin.from('flags')
@@ -23,13 +37,13 @@ async function getFounderMonthlyUsage(admin: ReturnType<typeof createAdminClient
       .eq('founder_id', founderId)
       .eq('flagged_by', 'founder')
       .neq('status', 'accepted')
-      .gte('created_at', monthStartIso),
+      .gte('created_at', windowStart),
     admin.from('lender_flags')
       .select('id', { count: 'exact', head: true })
       .eq('founder_id', founderId)
       .eq('flagged_by', 'founder')
       .neq('status', 'accepted')
-      .gte('created_at', monthStartIso),
+      .gte('created_at', windowStart),
   ])
 
   return (investorCount ?? 0) + (lenderCount ?? 0)

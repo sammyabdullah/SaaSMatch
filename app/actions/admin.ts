@@ -540,6 +540,19 @@ export async function updateLenderProfile(lenderId: string, fields: Record<strin
   return { success: true }
 }
 
+export async function resetFounderCredits(): Promise<{ error?: string; success?: boolean }> {
+  await requireAdmin()
+  const admin = createAdminClient()
+  const now = new Date().toISOString()
+  const { error } = await admin
+    .from('site_settings')
+    .upsert({ key: 'founder_credits_reset_at', value: now, updated_at: now }, { onConflict: 'key' })
+  if (error) return { error: error.message }
+  revalidatePath('/discover')
+  revalidatePath('/admin')
+  return { success: true }
+}
+
 export async function pauseUser(userId: string): Promise<{ error?: string; success?: boolean }> {
   await requireAdmin()
   const admin = createAdminClient()
