@@ -9,7 +9,7 @@ import {
   sendFounderFlaggedLenderEmail,
 } from '@/lib/email'
 
-const MONTHLY_CONNECTION_LIMIT = 50
+const MONTHLY_CONNECTION_LIMIT = 80
 
 async function getCreditsWindowStart(admin: ReturnType<typeof createAdminClient>): Promise<string> {
   const monthStart = new Date()

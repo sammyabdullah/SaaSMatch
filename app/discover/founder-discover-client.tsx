@@ -58,7 +58,7 @@ function MatchBadge({ score }: { score: number }) {
   )
 }
 
-const MONTHLY_LIMIT = 50
+const MONTHLY_LIMIT = 80
 
 function MonthlyUsageBadge({ used }: { used: number }) {
   const remaining = MONTHLY_LIMIT - used
