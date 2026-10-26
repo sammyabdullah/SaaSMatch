@@ -32,9 +32,8 @@ export default async function DiscoverPage() {
 
   if (profile.role === 'founder') {
     // Compute the credits window start: max(1st of month, last admin reset)
-    const monthStart = new Date()
-    monthStart.setDate(1)
-    monthStart.setHours(0, 0, 0, 0)
+    const now = new Date()
+    const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1))
     const monthStartIso = monthStart.toISOString()
 
     const { data: creditResetRow } = await admin

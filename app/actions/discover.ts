@@ -12,9 +12,8 @@ import {
 const MONTHLY_CONNECTION_LIMIT = 80
 
 async function getCreditsWindowStart(admin: ReturnType<typeof createAdminClient>): Promise<string> {
-  const monthStart = new Date()
-  monthStart.setDate(1)
-  monthStart.setHours(0, 0, 0, 0)
+  const now = new Date()
+  const monthStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1))
   const monthStartIso = monthStart.toISOString()
 
   const { data: resetRow } = await admin
@@ -80,19 +79,15 @@ export async function flagInvestor(investorId: string): Promise<{ error?: string
       revalidatePath('/dashboard')
       return { success: true }
     }
-    // Re-requesting a declined connection — check monthly limit then delete + re-insert
+    // Re-requesting a declined connection — check monthly limit then update atomically
     const monthlyUsed = await getFounderMonthlyUsage(admin, user.id)
     if (monthlyUsed >= MONTHLY_CONNECTION_LIMIT) {
       return { error: `You've reached your limit of ${MONTHLY_CONNECTION_LIMIT} connection requests for this month. Your limit resets at the start of next month.` }
     }
-    await admin.from('flags').delete().eq('founder_id', user.id).eq('investor_id', investorId).eq('flagged_by', 'founder')
-    const { error: insertErr } = await admin.from('flags').insert({
-      founder_id: user.id,
-      investor_id: investorId,
-      flagged_by: 'founder',
-      status: 'pending',
-    })
-    if (insertErr) return { error: insertErr.message }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error: updateErr } = await admin.from('flags').update({ status: 'pending', created_at: new Date().toISOString() } as any)
+      .eq('founder_id', user.id).eq('investor_id', investorId).eq('flagged_by', 'founder')
+    if (updateErr) return { error: updateErr.message }
   } else {
     const monthlyUsed = await getFounderMonthlyUsage(admin, user.id)
     if (monthlyUsed >= MONTHLY_CONNECTION_LIMIT) {
@@ -104,6 +99,7 @@ export async function flagInvestor(investorId: string): Promise<{ error?: string
       flagged_by: 'founder',
       status: 'pending',
     })
+    if (error?.code === '23505') return { success: true }
     if (error) return { error: error.message }
   }
 
@@ -189,6 +185,7 @@ export async function flagFounder(founderId: string): Promise<{ error?: string; 
       .update({ status: 'pending', flagged_by: 'investor' })
       .eq('founder_id', founderId)
       .eq('investor_id', user.id)
+      .eq('flagged_by', 'investor')
     if (updateErr) return { error: updateErr.message }
   } else {
     const { error } = await admin.from('flags').insert({
@@ -277,19 +274,15 @@ export async function flagLenderAsFounder(lenderId: string): Promise<{ error?: s
       revalidatePath('/dashboard')
       return { success: true }
     }
-    // Re-requesting a declined connection — check monthly limit then delete + re-insert
+    // Re-requesting a declined connection — check monthly limit then update atomically
     const monthlyUsed = await getFounderMonthlyUsage(admin, user.id)
     if (monthlyUsed >= MONTHLY_CONNECTION_LIMIT) {
       return { error: `You've reached your limit of ${MONTHLY_CONNECTION_LIMIT} connection requests for this month. Your limit resets at the start of next month.` }
     }
-    await admin.from('lender_flags').delete().eq('founder_id', user.id).eq('lender_id', lenderId).eq('flagged_by', 'founder')
-    const { error: insertErr } = await admin.from('lender_flags').insert({
-      founder_id: user.id,
-      lender_id: lenderId,
-      flagged_by: 'founder',
-      status: 'pending',
-    })
-    if (insertErr) return { error: insertErr.message }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error: updateErr } = await admin.from('lender_flags').update({ status: 'pending', created_at: new Date().toISOString() } as any)
+      .eq('founder_id', user.id).eq('lender_id', lenderId).eq('flagged_by', 'founder')
+    if (updateErr) return { error: updateErr.message }
   } else {
     const monthlyUsed = await getFounderMonthlyUsage(admin, user.id)
     if (monthlyUsed >= MONTHLY_CONNECTION_LIMIT) {
@@ -301,6 +294,7 @@ export async function flagLenderAsFounder(lenderId: string): Promise<{ error?: s
       flagged_by: 'founder',
       status: 'pending',
     })
+    if (error?.code === '23505') return { success: true }
     if (error) return { error: error.message }
   }
 
@@ -389,6 +383,7 @@ export async function flagFounderAsLender(founderId: string): Promise<{ error?: 
       .update({ status: 'pending', flagged_by: 'lender' })
       .eq('founder_id', founderId)
       .eq('lender_id', user.id)
+      .eq('flagged_by', 'lender')
     if (updateErr) return { error: updateErr.message }
   } else {
     const { error } = await admin.from('lender_flags').insert({

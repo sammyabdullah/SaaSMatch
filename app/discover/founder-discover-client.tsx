@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 'use client'
 
-import { useState, useMemo, useRef } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { flagInvestor, unflagInvestor, flagLenderAsFounder, unflagLenderAsFounder } from '@/app/actions/discover'
 import { fmtUsd, fmtStage } from '@/lib/format'
@@ -105,6 +105,7 @@ export default function FounderDiscoverClient({
 
   // Local optimistic count on top of server-side monthly count
   const [optimisticMonthlyCount, setOptimisticMonthlyCount] = useState(monthlyConnectionsUsed)
+  useEffect(() => { setOptimisticMonthlyCount(monthlyConnectionsUsed) }, [monthlyConnectionsUsed])
 
   function resetFilters() {
     setTypeFilter('all')
