@@ -99,7 +99,7 @@ export default function SendDigestButton({ savedOpeningParagraph, savedSubjectLi
         <textarea
           value={openingParagraph}
           onChange={(e) => setOpeningParagraph(e.target.value)}
-          rows={4}
+          rows={14}
           className={textareaCls}
           placeholder="Write your opening message here. Leave blank to send without one."
         />
