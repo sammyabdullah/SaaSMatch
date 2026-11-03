@@ -11,6 +11,15 @@ export async function GET(request: NextRequest) {
   const token_hash = searchParams.get('token_hash')
   const type = searchParams.get('type') as EmailOtpType | null
 
+  // For password recovery: pass the token to the client page where hCaptcha
+  // can be completed before verifyOtp is called (Attack Protection requires it)
+  if (type === 'recovery' && (code || token_hash)) {
+    const params = new URLSearchParams()
+    if (token_hash) params.set('token_hash', token_hash)
+    if (code) params.set('code', code)
+    return NextResponse.redirect(`${origin}/auth/reset-redirect?${params.toString()}`)
+  }
+
   if (code || token_hash) {
     const cookieStore = await cookies()
     const supabase = createServerClient<Database>(
@@ -30,37 +39,20 @@ export async function GET(request: NextRequest) {
       }
     )
 
-    let authError = null
-    let verified = false
-
-    if (code) {
-      // PKCE flow: exchange the short-lived authorization code for a session
-      const { error } = await supabase.auth.exchangeCodeForSession(code)
-      authError = error
-      verified = true
-    } else if (token_hash && type) {
-      // Token-hash flow: verify the OTP hash directly (no stored verifier needed,
-      // works reliably across browsers and email clients)
+    if (token_hash && type) {
       const { error } = await supabase.auth.verifyOtp({ token_hash, type })
-      authError = error
-      verified = true
-    }
-
-    if (verified && !authError) {
-      if (type === 'recovery') {
-        // Keep the session so the user can set a new password
-        return NextResponse.redirect(`${origin}/reset-password`)
+      if (!error) {
+        await supabase.auth.signOut()
+        return NextResponse.redirect(`${origin}/auth/confirmed?verified=1`)
       }
-      // Email confirmation — sign out and show confirmed page
-      await supabase.auth.signOut()
-      return NextResponse.redirect(`${origin}/auth/confirmed?verified=1`)
+    } else if (code) {
+      const { error } = await supabase.auth.exchangeCodeForSession(code)
+      if (!error) {
+        await supabase.auth.signOut()
+        return NextResponse.redirect(`${origin}/auth/confirmed?verified=1`)
+      }
     }
   }
 
-  // Auth failed or no token present — redirect with context so the user
-  // sees a helpful message rather than silently landing on the login page
-  if (type === 'recovery') {
-    return NextResponse.redirect(`${origin}/forgot-password?error=link_expired`)
-  }
   return NextResponse.redirect(`${origin}/login`)
 }
