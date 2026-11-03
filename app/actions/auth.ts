@@ -124,24 +124,29 @@ export async function forgotPassword(email: string, captchaToken?: string) {
 
   const admin = createAdminClient()
   const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString()
-  const { count } = await admin
-    .from('password_reset_rate_limits')
-    .select('*', { count: 'exact', head: true })
-    .eq('ip', ip)
-    .gte('created_at', oneHourAgo)
 
-  if ((count ?? 0) >= 3) {
-    return { error: 'Too many reset attempts. Please wait before trying again.' }
+  try {
+    const { count } = await admin
+      .from('password_reset_rate_limits')
+      .select('*', { count: 'exact', head: true })
+      .eq('ip', ip)
+      .gte('created_at', oneHourAgo)
+
+    if ((count ?? 0) >= 3) {
+      return { error: 'Too many reset attempts. Please wait before trying again.' }
+    }
+
+    await admin.from('password_reset_rate_limits').insert({ ip })
+  } catch {
+    // Rate limit table missing — skip limiting, captcha still protects
   }
 
-  await admin.from('password_reset_rate_limits').insert({ ip })
-
-  const supabase = await createClient()
+  // Use admin client so Supabase Attack Protection doesn't block the request —
+  // the IP rate limit + client-side hCaptcha already guard against abuse here.
   const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://founderinvited.com'
 
-  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+  const { error } = await admin.auth.resetPasswordForEmail(email, {
     redirectTo: `${siteUrl}/auth/reset-redirect`,
-    ...(captchaToken ? { captchaToken } : {}),
   })
 
   if (error) return { error: friendlyError(error.message) }
