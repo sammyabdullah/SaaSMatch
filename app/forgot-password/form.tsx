@@ -6,7 +6,7 @@ import { forgotPassword } from '@/app/actions/auth'
 
 declare global {
   interface Window {
-    turnstile?: {
+    hcaptcha?: {
       render: (container: string | HTMLElement, options: Record<string, unknown>) => string
       reset: (widgetId: string) => void
     }
@@ -25,17 +25,17 @@ export default function ForgotPasswordForm({ expiredLink }: Props) {
   const [captchaToken, setCaptchaToken] = useState('')
   const widgetIdRef = useRef<string | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
-  const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
+  const siteKey = process.env.NEXT_PUBLIC_HCAPTCHA_SITE_KEY
 
   useEffect(() => {
     if (!siteKey || !containerRef.current) return
     const script = document.createElement('script')
-    script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit'
+    script.src = 'https://js.hcaptcha.com/1/api.js?render=explicit'
     script.async = true
     script.defer = true
     script.onload = () => {
-      if (window.turnstile && containerRef.current) {
-        widgetIdRef.current = window.turnstile.render(containerRef.current, {
+      if (window.hcaptcha && containerRef.current) {
+        widgetIdRef.current = window.hcaptcha.render(containerRef.current, {
           sitekey: siteKey,
           callback: (token: string) => setCaptchaToken(token),
           'expired-callback': () => setCaptchaToken(''),
@@ -61,8 +61,8 @@ export default function ForgotPasswordForm({ expiredLink }: Props) {
       const result = await forgotPassword(email, captchaToken || undefined)
       if (result?.error) {
         setError(result.error)
-        if (widgetIdRef.current && window.turnstile) {
-          window.turnstile.reset(widgetIdRef.current)
+        if (widgetIdRef.current && window.hcaptcha) {
+          window.hcaptcha.reset(widgetIdRef.current)
           setCaptchaToken('')
         }
       } else {
