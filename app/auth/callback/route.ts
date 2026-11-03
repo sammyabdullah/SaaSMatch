@@ -3,6 +3,7 @@ import { cookies } from 'next/headers'
 import { NextResponse, type NextRequest } from 'next/server'
 import type { Database } from '@/lib/supabase/types'
 import type { EmailOtpType } from '@supabase/supabase-js'
+import { createAdminClient } from '@/lib/supabase/server'
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
@@ -21,31 +22,34 @@ export async function GET(request: NextRequest) {
   }
 
   if (code || token_hash) {
-    const cookieStore = await cookies()
-    const supabase = createServerClient<Database>(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return cookieStore.getAll()
-          },
-          setAll(cookiesToSet) {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
-            )
-          },
-        },
-      }
-    )
+    // Use the admin client for server-side token verification so Supabase
+    // Attack Protection (hCaptcha) doesn't block the callback — the user
+    // clicking the email link is already their proof of identity here.
+    const admin = createAdminClient()
 
     if (token_hash && type) {
-      const { error } = await supabase.auth.verifyOtp({ token_hash, type })
+      const { error } = await admin.auth.verifyOtp({ token_hash, type })
       if (!error) {
-        await supabase.auth.signOut()
         return NextResponse.redirect(`${origin}/auth/confirmed?verified=1`)
       }
     } else if (code) {
+      const cookieStore = await cookies()
+      const supabase = createServerClient<Database>(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        {
+          cookies: {
+            getAll() {
+              return cookieStore.getAll()
+            },
+            setAll(cookiesToSet) {
+              cookiesToSet.forEach(({ name, value, options }) =>
+                cookieStore.set(name, value, options)
+              )
+            },
+          },
+        }
+      )
       const { error } = await supabase.auth.exchangeCodeForSession(code)
       if (!error) {
         await supabase.auth.signOut()

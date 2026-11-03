@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation'
 import { friendlyError } from '@/lib/errors'
 import { headers } from 'next/headers'
 
-export async function signUp(email: string, password: string, role: string) {
+export async function signUp(email: string, password: string, role: string, captchaToken?: string) {
   const ALLOWED_ROLES = ['founder', 'investor', 'lender']
   if (!ALLOWED_ROLES.includes(role)) return { error: 'Invalid role.' }
 
@@ -19,6 +19,7 @@ export async function signUp(email: string, password: string, role: string) {
     options: {
       data: { role },
       emailRedirectTo: `${siteUrl}/auth/callback`,
+      ...(captchaToken ? { captchaToken } : {}),
     },
   })
 
@@ -148,10 +149,11 @@ export async function forgotPassword(email: string, captchaToken?: string) {
 }
 
 export async function resendConfirmationEmail(email: string) {
-  const supabase = await createClient()
+  // Use admin client so Supabase Attack Protection doesn't reject the resend
+  const admin = createAdminClient()
   const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://founderinvited.com'
 
-  const { error } = await supabase.auth.resend({
+  const { error } = await admin.auth.resend({
     type: 'signup',
     email,
     options: {
