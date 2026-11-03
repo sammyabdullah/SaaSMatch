@@ -59,13 +59,14 @@ export default function ForgotPasswordForm({ expiredLink }: Props) {
     setLoading(true)
     try {
       const result = await forgotPassword(email, captchaToken || undefined)
-      if (result?.error) {
+      if (result?.error && !result.error.toLowerCase().includes('rate limit')) {
         setError(result.error)
         if (widgetIdRef.current && window.hcaptcha) {
           window.hcaptcha.reset(widgetIdRef.current)
           setCaptchaToken('')
         }
       } else {
+        // Always show the confirmation — avoid leaking whether the email exists
         setSent(true)
       }
     } catch {
