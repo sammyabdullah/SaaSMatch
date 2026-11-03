@@ -1,12 +1,11 @@
 'use client'
 
 import { useState, Suspense } from 'react'
-import { useSearchParams, useRouter } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
 function ResetRedirectContent() {
   const searchParams = useSearchParams()
-  const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -33,7 +32,8 @@ function ResetRedirectContent() {
       setError('This password reset link has expired or was already used.')
       setLoading(false)
     } else {
-      router.push('/reset-password')
+      // Hard redirect so the browser sends the new session cookies with the next request
+      window.location.href = '/reset-password'
     }
   }
 
