@@ -1,8 +1,17 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { forgotPassword } from '@/app/actions/auth'
+
+declare global {
+  interface Window {
+    turnstile?: {
+      render: (container: string | HTMLElement, options: Record<string, unknown>) => string
+      reset: (widgetId: string) => void
+    }
+  }
+}
 
 interface Props {
   expiredLink?: boolean
@@ -13,15 +22,49 @@ export default function ForgotPasswordForm({ expiredLink }: Props) {
   const [loading, setLoading] = useState(false)
   const [sent, setSent] = useState(false)
   const [error, setError] = useState('')
+  const [captchaToken, setCaptchaToken] = useState('')
+  const widgetIdRef = useRef<string | null>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
+
+  useEffect(() => {
+    if (!siteKey || !containerRef.current) return
+    const script = document.createElement('script')
+    script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit'
+    script.async = true
+    script.defer = true
+    script.onload = () => {
+      if (window.turnstile && containerRef.current) {
+        widgetIdRef.current = window.turnstile.render(containerRef.current, {
+          sitekey: siteKey,
+          callback: (token: string) => setCaptchaToken(token),
+          'expired-callback': () => setCaptchaToken(''),
+          'error-callback': () => setCaptchaToken(''),
+        })
+      }
+    }
+    document.head.appendChild(script)
+    return () => {
+      if (document.head.contains(script)) document.head.removeChild(script)
+    }
+  }, [siteKey])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
+    if (siteKey && !captchaToken) {
+      setError('Please complete the security check.')
+      return
+    }
     setLoading(true)
     try {
-      const result = await forgotPassword(email)
+      const result = await forgotPassword(email, captchaToken || undefined)
       if (result?.error) {
         setError(result.error)
+        if (widgetIdRef.current && window.turnstile) {
+          window.turnstile.reset(widgetIdRef.current)
+          setCaptchaToken('')
+        }
       } else {
         setSent(true)
       }
@@ -79,11 +122,13 @@ export default function ForgotPasswordForm({ expiredLink }: Props) {
             />
           </div>
 
+          {siteKey && <div ref={containerRef} />}
+
           {error && <p className="text-sm text-red-600">{error}</p>}
 
           <button
             type="submit"
-            disabled={loading}
+            disabled={loading || (!!siteKey && !captchaToken)}
             className="w-full bg-[#534AB7] text-white py-2 rounded-md text-sm font-medium hover:bg-[#4339A0] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? 'Sending…' : 'Send reset link'}

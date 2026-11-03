@@ -108,7 +108,7 @@ export async function signOut() {
   redirect('/')
 }
 
-export async function forgotPassword(email: string) {
+export async function forgotPassword(email: string, captchaToken?: string) {
   // IP-based rate limit: max 3 attempts per hour per IP
   const headersList = await headers()
   const ip =
@@ -135,6 +135,7 @@ export async function forgotPassword(email: string) {
 
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: `${siteUrl}/auth/reset-redirect`,
+    ...(captchaToken ? { captchaToken } : {}),
   })
 
   if (error) return { error: friendlyError(error.message) }
