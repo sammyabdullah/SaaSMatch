@@ -35,12 +35,13 @@ export async function signUp(email: string, password: string, role: string) {
   redirect('/auth/confirmed')
 }
 
-export async function signIn(email: string, password: string) {
+export async function signIn(email: string, password: string, captchaToken?: string) {
   const supabase = await createClient()
 
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password,
+    options: captchaToken ? { captchaToken } : undefined,
   })
 
   if (error) {
