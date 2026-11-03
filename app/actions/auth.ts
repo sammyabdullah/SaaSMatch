@@ -1,8 +1,9 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { friendlyError } from '@/lib/errors'
+import { headers } from 'next/headers'
 
 export async function signUp(email: string, password: string, role: string) {
   const ALLOWED_ROLES = ['founder', 'investor', 'lender']
@@ -108,6 +109,27 @@ export async function signOut() {
 }
 
 export async function forgotPassword(email: string) {
+  // IP-based rate limit: max 3 attempts per hour per IP
+  const headersList = await headers()
+  const ip =
+    headersList.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+    headersList.get('x-real-ip') ||
+    'unknown'
+
+  const admin = createAdminClient()
+  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString()
+  const { count } = await admin
+    .from('password_reset_rate_limits')
+    .select('*', { count: 'exact', head: true })
+    .eq('ip', ip)
+    .gte('created_at', oneHourAgo)
+
+  if ((count ?? 0) >= 3) {
+    return { error: 'Too many reset attempts. Please wait before trying again.' }
+  }
+
+  await admin.from('password_reset_rate_limits').insert({ ip })
+
   const supabase = await createClient()
   const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://founderinvited.com'
 

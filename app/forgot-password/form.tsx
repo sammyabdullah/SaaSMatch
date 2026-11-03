@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/client'
+import { forgotPassword } from '@/app/actions/auth'
 
 interface Props {
   expiredLink?: boolean
@@ -19,17 +19,9 @@ export default function ForgotPasswordForm({ expiredLink }: Props) {
     setError('')
     setLoading(true)
     try {
-      const supabase = createClient()
-      const { error: authError } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${process.env.NEXT_PUBLIC_APP_URL ?? window.location.origin}/auth/reset-redirect`,
-      })
-      if (authError) {
-        const msg = authError.message.toLowerCase()
-        if (msg.includes('for security purposes') || msg.includes('after 60 seconds') || msg.includes('rate limit')) {
-          setError('Please wait a moment before requesting another reset email.')
-        } else {
-          setError('Something went wrong. Please try again.')
-        }
+      const result = await forgotPassword(email)
+      if (result?.error) {
+        setError(result.error)
       } else {
         setSent(true)
       }

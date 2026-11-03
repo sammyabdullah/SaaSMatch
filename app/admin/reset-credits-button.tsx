@@ -11,7 +11,7 @@ export default function ResetCreditsButton() {
   const [errorMsg, setErrorMsg] = useState('')
 
   async function handleReset() {
-    if (!confirm('Reset all founders to 50 connection requests immediately?')) return
+    if (!confirm('Reset all founders to 80 connection requests immediately?')) return
     setLoading(true)
     setStatus('idle')
     try {
@@ -35,7 +35,7 @@ export default function ResetCreditsButton() {
       <button onClick={handleReset} disabled={loading} className={btnCls}>
         {loading ? 'Resetting…' : 'Reset founder credits now'}
       </button>
-      {status === 'done' && <p className="text-sm text-green-600">Done — all founders reset to 50 requests.</p>}
+      {status === 'done' && <p className="text-sm text-green-600">Done — all founders reset to 80 requests.</p>}
       {status === 'error' && <p className="text-sm text-red-500">{errorMsg}</p>}
     </div>
   )
