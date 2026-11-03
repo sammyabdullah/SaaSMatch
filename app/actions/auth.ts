@@ -48,10 +48,14 @@ export async function signIn(email: string, password: string) {
     if (msg.includes('invalid login') || msg.includes('invalid credentials') || msg.includes('user not found')) {
       return { error: 'Email not registered or incorrect password.' }
     }
-    if (msg.includes('email not confirmed')) {
+    if (msg.includes('email not confirmed') || msg.includes('email_not_confirmed')) {
       return { error: 'email_not_confirmed' }
     }
-    return { error: 'Sign in failed. Please try again.' }
+    if (msg.includes('rate limit') || msg.includes('too many')) {
+      return { error: 'Too many attempts. Please wait a few minutes and try again.' }
+    }
+    // Return the actual Supabase message so we can diagnose unexpected failures
+    return { error: error.message || 'Sign in failed. Please try again.' }
   }
 
   const userId = data.user.id
