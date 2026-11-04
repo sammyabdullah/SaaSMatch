@@ -43,8 +43,8 @@ export default function DangerZone({ role }: Props) {
     try {
       await deleteAccount()
       // deleteAccount redirects to '/', so we won't reach this
-    } catch {
-      setDeleteError('An error occurred. Please try again.')
+    } catch (e) {
+      setDeleteError(e instanceof Error ? e.message : 'An error occurred. Please try again.')
       setDeleteLoading(false)
     }
   }

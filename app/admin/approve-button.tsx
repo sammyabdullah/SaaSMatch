@@ -66,23 +66,30 @@ export function RejectButton({ founderId }: { founderId: string }) {
 export function DeleteFounderButton({ founderId }: { founderId: string }) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
   async function handleDelete() {
     if (!confirm('Permanently delete this founder profile? The auth account will remain intact. This cannot be undone.')) return
     setLoading(true)
+    setError('')
     try {
       await deleteFounderProfile(founderId)
       router.refresh()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Delete failed')
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <button onClick={handleDelete} disabled={loading}
-      className="px-4 py-2 border border-red-200 text-red-600 text-sm font-medium rounded-md hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-      {loading ? 'Deleting…' : 'Delete profile'}
-    </button>
+    <div>
+      <button onClick={handleDelete} disabled={loading}
+        className="px-4 py-2 border border-red-200 text-red-600 text-sm font-medium rounded-md hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+        {loading ? 'Deleting…' : 'Delete profile'}
+      </button>
+      {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
+    </div>
   )
 }
 
@@ -148,23 +155,30 @@ export function RejectInvestorButton({ investorId }: { investorId: string }) {
 export function DeleteInvestorButton({ investorId }: { investorId: string }) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
   async function handleDelete() {
     if (!confirm('Permanently delete this investor profile? The auth account will remain intact. This cannot be undone.')) return
     setLoading(true)
+    setError('')
     try {
       await deleteInvestorProfile(investorId)
       router.refresh()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Delete failed')
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <button onClick={handleDelete} disabled={loading}
-      className="px-4 py-2 border border-red-200 text-red-600 text-sm font-medium rounded-md hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-      {loading ? 'Deleting…' : 'Delete profile'}
-    </button>
+    <div>
+      <button onClick={handleDelete} disabled={loading}
+        className="px-4 py-2 border border-red-200 text-red-600 text-sm font-medium rounded-md hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+        {loading ? 'Deleting…' : 'Delete profile'}
+      </button>
+      {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
+    </div>
   )
 }
 
@@ -230,22 +244,29 @@ export function RejectLenderButton({ lenderId }: { lenderId: string }) {
 export function DeleteLenderButton({ lenderId }: { lenderId: string }) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
   async function handleDelete() {
     if (!confirm('Permanently delete this lender profile? The auth account will remain intact. This cannot be undone.')) return
     setLoading(true)
+    setError('')
     try {
       await deleteLenderProfile(lenderId)
       router.refresh()
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Delete failed')
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <button onClick={handleDelete} disabled={loading}
-      className="px-4 py-2 border border-red-200 text-red-600 text-sm font-medium rounded-md hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-      {loading ? 'Deleting…' : 'Delete profile'}
-    </button>
+    <div>
+      <button onClick={handleDelete} disabled={loading}
+        className="px-4 py-2 border border-red-200 text-red-600 text-sm font-medium rounded-md hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+        {loading ? 'Deleting…' : 'Delete profile'}
+      </button>
+      {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
+    </div>
   )
 }
